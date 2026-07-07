@@ -9,8 +9,21 @@
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主要內容</a>
-  <div class="app-shell">
-    <header class="hero">
+  <div class="app-shell classic-shell">
+    <nav class="top-links" aria-label="主選單">
+      <a href="#main">[首頁]</a>
+      <a href="#game-panel">[遊戲說明]</a>
+      <a href="#world-summary">[玩家列表]</a>
+      <a href="#world-summary">[傳說的英雄]</a>
+      <a href="#world-summary">[各項排行]</a>
+      <a href="#world-summary">[世界情勢]</a>
+      <a href="#game-panel">[都市情報]</a>
+      <a href="#game-panel">[圖像一覧]</a>
+      <a href="#news-log">[紀錄]</a>
+      <a href="#game-panel">[裝備清單]</a>
+    </nav>
+
+    <header class="hero classic-hero">
       <div class="hero__badge">ISEKAI GUILD</div>
       <div class="hero__copy">
         <p class="eyebrow">異世界召喚公會</p>
@@ -24,148 +37,188 @@
       </section>
     </header>
 
-    <main id="main" class="main-grid">
-      <aside class="panel sidebar" aria-label="遊戲導覽">
-        <div class="brand-card">
-          <div class="brand-mark" aria-hidden="true">豆</div>
-          <div>
-            <h2>豆豆異界公會</h2>
-            <p>第一版：單機可玩、雲端可部署。</p>
+    <main id="main" class="classic-grid">
+      <section class="classic-main-column" aria-label="主要情報與遊戲區">
+        <section class="panel info-panel online-panel" aria-label="目前線上人員">
+          <h2 class="classic-title">目前線上人員</h2>
+          <p class="online-list">★小豆勇者★微豆術士★月光便當★霧森旅人★紅豆騎士★星砂貓★風車晴空★夜芽參謀★晨露巡守★異界豆腐★雷鳴饅頭★光之賢者</p>
+        </section>
+
+        <section id="game-panel" class="panel game-card" aria-live="polite">
+          <section id="create-view" class="create-view">
+            <div class="section-heading">
+              <p class="eyebrow">召喚儀式</p>
+              <h2>登錄你的異界冒險者</h2>
+            </div>
+            <form id="create-form" class="create-form">
+              <label>
+                角色名稱
+                <input id="hero-name" name="hero-name" type="text" minlength="2" maxlength="12" placeholder="例如：小豆勇者" required>
+              </label>
+              <label>
+                屬性
+                <select id="hero-element" name="hero-element" required>
+                  <option value="火">火｜爆發傷害</option>
+                  <option value="水">水｜穩定恢復</option>
+                  <option value="風">風｜速度閃避</option>
+                  <option value="星">星｜均衡成長</option>
+                  <option value="雷">雷｜爆擊機率</option>
+                  <option value="光">光｜防禦祝福</option>
+                  <option value="闇">闇｜高風險高收益</option>
+                </select>
+              </label>
+              <label>
+                出身
+                <select id="hero-archetype" name="hero-archetype" required>
+                  <option value="blade">豆豆劍士｜攻擊較高</option>
+                  <option value="sage">微光術士｜MP 較高</option>
+                  <option value="ranger">草原巡守｜速度較高</option>
+                </select>
+              </label>
+              <button class="primary-action" type="submit">建立角色</button>
+            </form>
+          </section>
+
+          <section id="game-view" class="game-view is-hidden">
+            <div class="player-summary">
+              <div>
+                <p class="eyebrow">目前角色</p>
+                <h2 id="player-title">尚未建立</h2>
+              </div>
+              <button id="rest-button" class="ghost-button" type="button">旅店休息</button>
+            </div>
+
+            <div class="stat-grid" id="stat-grid"></div>
+
+            <section class="view-panel" data-panel="battle">
+              <div class="section-heading">
+                <p class="eyebrow">作戰區</p>
+                <h2>選擇地圖並出擊</h2>
+              </div>
+              <div id="map-list" class="map-list"></div>
+              <div class="battle-actions">
+                <button id="battle-button" class="primary-action" type="button">接受討伐委託</button>
+                <button id="clear-log-button" class="ghost-button" type="button">清除紀錄</button>
+              </div>
+              <div id="battle-log" class="battle-log" aria-label="戰鬥紀錄"></div>
+            </section>
+
+            <section class="view-panel is-hidden" data-panel="character">
+              <div class="section-heading">
+                <p class="eyebrow">角色資料</p>
+                <h2>能力與成長</h2>
+              </div>
+              <div id="character-sheet" class="character-sheet"></div>
+            </section>
+
+            <section class="view-panel is-hidden" data-panel="inventory">
+              <div class="section-heading">
+                <p class="eyebrow">整備區</p>
+                <h2>背包與商店</h2>
+              </div>
+              <div class="two-column">
+                <div>
+                  <h3>背包</h3>
+                  <div id="inventory-list" class="card-list"></div>
+                </div>
+                <div>
+                  <h3>豆豆商店</h3>
+                  <div id="shop-list" class="card-list"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="view-panel is-hidden" data-panel="quest">
+              <div class="section-heading">
+                <p class="eyebrow">任務屋</p>
+                <h2>今日委託</h2>
+              </div>
+              <div id="quest-board" class="quest-board"></div>
+            </section>
+
+            <section class="view-panel is-hidden" data-panel="world">
+              <div class="section-heading">
+                <p class="eyebrow">世界情勢</p>
+                <h2>豆豆異界大陸</h2>
+              </div>
+              <div id="world-view" class="world-view"></div>
+            </section>
+
+            <section class="view-panel is-hidden" data-panel="save">
+              <div class="section-heading">
+                <p class="eyebrow">存檔管理</p>
+                <h2>匯出、匯入、重置</h2>
+              </div>
+              <div class="save-actions">
+                <button id="export-button" class="ghost-button" type="button">匯出存檔</button>
+                <button id="import-button" class="ghost-button" type="button">匯入存檔</button>
+                <button id="reset-button" class="danger-button" type="button">重置角色</button>
+              </div>
+              <textarea id="save-data" rows="10" placeholder="匯出的 JSON 會出現在這裡，也可以貼上存檔後匯入。"></textarea>
+            </section>
+          </section>
+        </section>
+
+        <section class="panel info-panel" aria-label="系統公告">
+          <h2 class="classic-title">系統公告</h2>
+          <div class="classic-log-list">
+            <p>●[公會公告] 排版已改為經典文字 RPG 入口：上方連結、主情報欄、右側功能欄。</p>
+            <p>●[更新] 異世界主題保留魔法色彩，但版面改回早期網頁遊戲的資訊分區。</p>
+            <p>●[提醒] 第一版使用 localStorage 存檔，清除瀏覽器資料會移除角色。</p>
           </div>
-        </div>
-        <nav class="tab-nav" aria-label="主要功能">
-          <button class="tab-button is-active" type="button" data-view="battle">戰鬥</button>
-          <button class="tab-button" type="button" data-view="character">角色</button>
-          <button class="tab-button" type="button" data-view="inventory">背包</button>
-          <button class="tab-button" type="button" data-view="quest">任務</button>
-          <button class="tab-button" type="button" data-view="world">世界</button>
-          <button class="tab-button" type="button" data-view="save">存檔</button>
-        </nav>
-        <div class="notice-box">
-          <h3>召喚者指南</h3>
+        </section>
+
+        <section id="news-log" class="panel info-panel" aria-label="最新情報與戰鬥紀錄">
+          <h2 class="classic-title">最新情報 / 戰鬥紀錄</h2>
+          <div class="classic-log-list">
+            <p>●[打寶] 小豆勇者於晨露草原獲得星砂護符。</p>
+            <p>●[任務] 召喚者完成草原討伐，公會發放 160 金幣。</p>
+            <p>●[魔王] 豆豆大陸深處出現裂縫魔書，等待冒險者調查。</p>
+          </div>
+        </section>
+      </section>
+
+      <aside class="classic-side-column" aria-label="右側功能區">
+        <section class="panel sidebar start-panel">
+          <div class="brand-card">
+            <div class="brand-mark" aria-hidden="true">豆</div>
+            <div>
+              <h2>開始遊戲</h2>
+              <p>切換功能區，管理你的異界冒險。</p>
+            </div>
+          </div>
+          <nav class="tab-nav" aria-label="主要功能">
+            <button class="tab-button is-active" type="button" data-view="battle">戰鬥</button>
+            <button class="tab-button" type="button" data-view="character">角色</button>
+            <button class="tab-button" type="button" data-view="inventory">背包</button>
+            <button class="tab-button" type="button" data-view="quest">任務</button>
+            <button class="tab-button" type="button" data-view="world">世界</button>
+            <button class="tab-button" type="button" data-view="save">存檔</button>
+          </nav>
+        </section>
+
+        <section class="panel side-box">
+          <h2 class="classic-title">召喚者指南</h2>
           <ol>
             <li>先在公會登錄角色。</li>
             <li>去「晨露草原」打怪。</li>
             <li>HP 不足就回旅店恢復。</li>
             <li>存到金幣後購買異界裝備。</li>
           </ol>
-        </div>
+        </section>
+
+        <section class="panel side-box">
+          <h2 class="classic-title">伺服器維護時間</h2>
+          <p>■靜態版無需維護</p>
+          <p>■存檔位於瀏覽器魔法書</p>
+        </section>
+
+        <section id="world-summary" class="panel side-box">
+          <h2 class="classic-title">改版專區</h2>
+          <p>經典排版模式：已套用。</p>
+          <p>下一步可加入多人 D1 資料庫。</p>
+        </section>
       </aside>
-
-      <section class="panel game-card" aria-live="polite">
-        <section id="create-view" class="create-view">
-          <div class="section-heading">
-            <p class="eyebrow">召喚儀式</p>
-            <h2>登錄你的異界冒險者</h2>
-          </div>
-          <form id="create-form" class="create-form">
-            <label>
-              角色名稱
-              <input id="hero-name" name="hero-name" type="text" minlength="2" maxlength="12" placeholder="例如：小豆勇者" required>
-            </label>
-            <label>
-              屬性
-              <select id="hero-element" name="hero-element" required>
-                <option value="火">火｜爆發傷害</option>
-                <option value="水">水｜穩定恢復</option>
-                <option value="風">風｜速度閃避</option>
-                <option value="星">星｜均衡成長</option>
-                <option value="雷">雷｜爆擊機率</option>
-                <option value="光">光｜防禦祝福</option>
-                <option value="闇">闇｜高風險高收益</option>
-              </select>
-            </label>
-            <label>
-              出身
-              <select id="hero-archetype" name="hero-archetype" required>
-                <option value="blade">豆豆劍士｜攻擊較高</option>
-                <option value="sage">微光術士｜MP 較高</option>
-                <option value="ranger">草原巡守｜速度較高</option>
-              </select>
-            </label>
-            <button class="primary-action" type="submit">建立角色</button>
-          </form>
-        </section>
-
-        <section id="game-view" class="game-view is-hidden">
-          <div class="player-summary">
-            <div>
-              <p class="eyebrow">目前角色</p>
-              <h2 id="player-title">尚未建立</h2>
-            </div>
-            <button id="rest-button" class="ghost-button" type="button">旅店休息</button>
-          </div>
-
-          <div class="stat-grid" id="stat-grid"></div>
-
-          <section class="view-panel" data-panel="battle">
-            <div class="section-heading">
-              <p class="eyebrow">作戰區</p>
-              <h2>選擇地圖並出擊</h2>
-            </div>
-            <div id="map-list" class="map-list"></div>
-            <div class="battle-actions">
-              <button id="battle-button" class="primary-action" type="button">接受討伐委託</button>
-              <button id="clear-log-button" class="ghost-button" type="button">清除紀錄</button>
-            </div>
-            <div id="battle-log" class="battle-log" aria-label="戰鬥紀錄"></div>
-          </section>
-
-          <section class="view-panel is-hidden" data-panel="character">
-            <div class="section-heading">
-              <p class="eyebrow">角色資料</p>
-              <h2>能力與成長</h2>
-            </div>
-            <div id="character-sheet" class="character-sheet"></div>
-          </section>
-
-          <section class="view-panel is-hidden" data-panel="inventory">
-            <div class="section-heading">
-              <p class="eyebrow">整備區</p>
-              <h2>背包與商店</h2>
-            </div>
-            <div class="two-column">
-              <div>
-                <h3>背包</h3>
-                <div id="inventory-list" class="card-list"></div>
-              </div>
-              <div>
-                <h3>豆豆商店</h3>
-                <div id="shop-list" class="card-list"></div>
-              </div>
-            </div>
-          </section>
-
-          <section class="view-panel is-hidden" data-panel="quest">
-            <div class="section-heading">
-              <p class="eyebrow">任務屋</p>
-              <h2>今日委託</h2>
-            </div>
-            <div id="quest-board" class="quest-board"></div>
-          </section>
-
-          <section class="view-panel is-hidden" data-panel="world">
-            <div class="section-heading">
-              <p class="eyebrow">世界情勢</p>
-              <h2>豆豆異界大陸</h2>
-            </div>
-            <div id="world-view" class="world-view"></div>
-          </section>
-
-          <section class="view-panel is-hidden" data-panel="save">
-            <div class="section-heading">
-              <p class="eyebrow">存檔管理</p>
-              <h2>匯出、匯入、重置</h2>
-            </div>
-            <div class="save-actions">
-              <button id="export-button" class="ghost-button" type="button">匯出存檔</button>
-              <button id="import-button" class="ghost-button" type="button">匯入存檔</button>
-              <button id="reset-button" class="danger-button" type="button">重置角色</button>
-            </div>
-            <textarea id="save-data" rows="10" placeholder="匯出的 JSON 會出現在這裡，也可以貼上存檔後匯入。"></textarea>
-          </section>
-        </section>
-      </section>
     </main>
   </div>
   <script type="module" src="./assets/app.js"></script>
