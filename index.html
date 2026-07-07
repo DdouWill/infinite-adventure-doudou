@@ -12,15 +12,15 @@
   <div class="app-shell classic-shell">
     <nav class="top-links" aria-label="主選單">
       <a href="#main">[首頁]</a>
-      <a href="#game-panel">[遊戲說明]</a>
-      <a href="#world-summary">[玩家列表]</a>
-      <a href="#world-summary">[傳說的英雄]</a>
-      <a href="#world-summary">[各項排行]</a>
-      <a href="#world-summary">[世界情勢]</a>
-      <a href="#game-panel">[都市情報]</a>
-      <a href="#game-panel">[圖像一覧]</a>
+      <a href="#help-panel">[遊戲說明]</a>
+      <a href="#player-list-panel">[玩家列表]</a>
+      <a href="#legend-panel">[傳說的英雄]</a>
+      <a href="#ranking-panel">[各項排行]</a>
+      <a href="#world-panel">[世界情勢]</a>
+      <a href="#town-panel">[都市情報]</a>
+      <a href="#icon-panel">[圖像一覧]</a>
       <a href="#news-log">[紀錄]</a>
-      <a href="#game-panel">[裝備清單]</a>
+      <a href="#equip-panel">[裝備清單]</a>
     </nav>
 
     <header class="hero classic-hero">
@@ -31,17 +31,17 @@
         <p>穿越到豆豆大陸，接下冒險公會的委託。建立角色、討伐魔物、鍛造裝備、探索國度，所有進度都先封存在你的瀏覽器魔法書裡。</p>
       </div>
       <section class="hero__status" aria-label="目前世界狀態">
-        <div><strong id="online-count">18</strong><span>線上冒險者</span></div>
-        <div><strong>3</strong><span>勢力</span></div>
+        <div><strong id="online-count">19</strong><span>線上冒險者</span></div>
+        <div><strong>400</strong><span>最大上線人數</span></div>
         <div><strong>7</strong><span>屬性</span></div>
       </section>
     </header>
 
     <main id="main" class="classic-grid">
       <section class="classic-main-column" aria-label="主要情報與遊戲區">
-        <section class="panel info-panel online-panel" aria-label="目前線上人員">
-          <h2 class="classic-title">目前線上人員</h2>
-          <p class="online-list">★小豆勇者★微豆術士★月光便當★霧森旅人★紅豆騎士★星砂貓★風車晴空★夜芽參謀★晨露巡守★異界豆腐★雷鳴饅頭★光之賢者</p>
+        <section id="player-list-panel" class="panel info-panel online-panel" aria-label="目前線上人員">
+          <h2 class="classic-title">目前線上人員：(19人)&nbsp;&nbsp;最大上線人數：(400人)</h2>
+          <p class="online-list">★小豆勇者★微豆術士★月光便當★霧森旅人★紅豆騎士★星砂貓★風車晴空★夜芽參謀★晨露巡守★異界豆腐★雷鳴饅頭★光之賢者★神秘商人★迷宮鐵匠★公會櫃台★星門守衛★旅店老闆★魔書使者★封印調查員</p>
         </section>
 
         <section id="game-panel" class="panel game-card" aria-live="polite">
@@ -159,33 +159,99 @@
           </section>
         </section>
 
-        <section class="panel info-panel" aria-label="系統公告">
+        <section id="system-news" class="panel info-panel" aria-label="系統公告">
           <h2 class="classic-title">系統公告</h2>
-          <div class="classic-log-list">
-            <p>●[公會公告] 排版已改為經典文字 RPG 入口：上方連結、主情報欄、右側功能欄。</p>
-            <p>●[更新] 異世界主題保留魔法色彩，但版面改回早期網頁遊戲的資訊分區。</p>
-            <p>●[提醒] 第一版使用 localStorage 存檔，清除瀏覽器資料會移除角色。</p>
+          <p class="notice-legend"><strong>Steven公告為紅色</strong><strong>飛飛公告為藍色</strong></p>
+          <div class="classic-log-list scroll-box">
+            <p>●[系統公告]【更新】豆豆版首頁補齊原版資訊區塊：開始遊戲、公告、紀錄、排行與頁尾版本資訊。</p>
+            <p>●[系統公告] 地圖選單保留簡化版，後續可擴充稀有試鍊、活動、PVP 與世界地圖分組。</p>
+            <p>●[系統公告] 異世界主題保留魔法金框，但排版回歸經典文字 RPG 入口。</p>
+            <p>●[系統公告] 第一版使用 localStorage 存檔，清除瀏覽器資料會移除角色。</p>
+            <p>●[系統公告] 手機版改用單欄與靜態導覽，避免原版固定底欄遮住操作。</p>
           </div>
         </section>
 
-        <section id="news-log" class="panel info-panel" aria-label="最新情報與戰鬥紀錄">
-          <h2 class="classic-title">最新情報 / 戰鬥紀錄</h2>
-          <div class="classic-log-list">
-            <p>●[打寶] 小豆勇者於晨露草原獲得星砂護符。</p>
-            <p>●[任務] 召喚者完成草原討伐，公會發放 160 金幣。</p>
-            <p>●[魔王] 豆豆大陸深處出現裂縫魔書，等待冒險者調查。</p>
+        <section id="news-log" class="panel info-panel" aria-label="最新情報">
+          <h2 class="classic-title">最新情報</h2>
+          <div class="classic-log-list scroll-box">
+            <p>●[打寶] 小豆勇者於晨露草原獲得星砂護符!!</p>
+            <p>●[任務] 晨露村民感謝微豆術士完成草原巡邏，贈送微光藥水。</p>
+            <p>●[活動] 星砂貓於迷霧森林發現七彩冰棒!!</p>
+            <p>●[魔女] 神秘商人在魔女的店購入了某項物品。</p>
+            <p>●[原料黑商] 各城鎮的原料黑商已經將貨物運送到達。</p>
+            <p>●[系統公告] 系統已進行備份，本機存檔狀態安全。</p>
+            <p>●[發現] 雷鳴饅頭於古井中發現了封印卷軸。</p>
           </div>
+        </section>
+
+        <section id="battle-records" class="panel info-panel" aria-label="戰鬥紀錄">
+          <h2 class="classic-title">戰鬥紀錄</h2>
+          <div class="classic-log-list scroll-box">
+            <p>●【魔王】紅豆騎士 打倒 霧森裂縫守衛 獲得勝利！！！</p>
+            <p>●【魔王】小豆勇者，對晨露草原王進行攻擊。</p>
+            <p>●【魔王】夜芽參謀 討伐 古井水妖 失敗了。</p>
+            <p>●【競技】風車晴空與星砂貓進行友誼戰。</p>
+            <p>●【塔王】微豆術士突破修行者之塔第 3 層。</p>
+            <p>●【國戰】光之賢者支援星門防線，士氣上升。</p>
+          </div>
+        </section>
+
+        <section class="classic-info-grid" aria-label="公開資料索引">
+          <article id="help-panel" class="panel info-panel mini-panel">
+            <h2 class="classic-title">遊戲說明</h2>
+            <p>建立角色 → 出擊戰鬥 → 升級賺金幣 → 購買裝備 → 完成公會任務。這版是單機 demo，後續可接 D1 做多人資料。</p>
+          </article>
+          <article id="legend-panel" class="panel info-panel mini-panel">
+            <h2 class="classic-title">傳說的英雄</h2>
+            <ol class="rank-list">
+              <li><span>1. 微豆術士</span><strong>Lv.12</strong></li>
+              <li><span>2. 小豆勇者</span><strong>Lv.10</strong></li>
+              <li><span>3. 星砂貓</span><strong>Lv.9</strong></li>
+            </ol>
+          </article>
+          <article id="ranking-panel" class="panel info-panel mini-panel">
+            <h2 class="classic-title">各項排行</h2>
+            <ol class="rank-list">
+              <li><span>討伐數</span><strong>36</strong></li>
+              <li><span>任務完成</span><strong>18</strong></li>
+              <li><span>持有金幣</span><strong>920</strong></li>
+            </ol>
+          </article>
+          <article id="world-panel" class="panel info-panel mini-panel">
+            <h2 class="classic-title">世界情勢</h2>
+            <p>星門公會、晨露王國、霧森旅團三方維持均勢。封印之門仍在觀測中。</p>
+          </article>
+          <article id="town-panel" class="panel info-panel mini-panel">
+            <h2 class="classic-title">都市情報</h2>
+            <p>晨露村：旅店、豆豆商店、公會櫃台已開放。霧森城與星門港為後續擴充地點。</p>
+          </article>
+          <article id="icon-panel" class="panel info-panel mini-panel">
+            <h2 class="classic-title">圖像一覧</h2>
+            <p class="icon-row" aria-label="角色圖像展示">🛡️ ⚔️ 🧙 🐾 🏰 🌙 🔮 👑</p>
+          </article>
+          <article id="equip-panel" class="panel info-panel mini-panel">
+            <h2 class="classic-title">裝備清單</h2>
+            <ul class="compact-list">
+              <li>木劍｜攻擊 +2</li>
+              <li>旅人斗篷｜防禦 +2</li>
+              <li>星砂護符｜幸運 +1</li>
+            </ul>
+          </article>
         </section>
       </section>
 
-      <aside class="classic-side-column" aria-label="右側功能區">
+      <aside class="classic-side-column" aria-label="左側功能區">
         <section class="panel sidebar start-panel">
           <div class="brand-card">
             <div class="brand-mark" aria-hidden="true">豆</div>
             <div>
               <h2>開始遊戲</h2>
-              <p>切換功能區，管理你的異界冒險。</p>
+              <p>建立角色或讀取瀏覽器魔法書。</p>
             </div>
+          </div>
+          <div class="start-actions">
+            <a class="classic-action" href="#game-panel">建立角色</a>
+            <a class="classic-action secondary" href="#game-panel">繼續冒險</a>
           </div>
           <nav class="tab-nav" aria-label="主要功能">
             <button class="tab-button is-active" type="button" data-view="battle">戰鬥</button>
@@ -213,13 +279,47 @@
           <p>■存檔位於瀏覽器魔法書</p>
         </section>
 
-        <section id="world-summary" class="panel side-box">
+        <section class="panel side-box">
           <h2 class="classic-title">改版專區</h2>
-          <p>經典排版模式：已套用。</p>
-          <p>下一步可加入多人 D1 資料庫。</p>
+          <p><a href="#system-news">改版公告</a></p>
+          <p><a href="#news-log">最新情報</a></p>
+        </section>
+
+        <section class="panel side-box">
+          <h2 class="classic-title">問題回報</h2>
+          <p><a href="#system-news">回報異常 / 建議</a></p>
+        </section>
+
+        <section class="panel side-box">
+          <h2 class="classic-title">社團公告</h2>
+          <p>冒險公會討論區：未開放</p>
+          <p>可先以 GitHub Issues 作為後續替代入口。</p>
+        </section>
+
+        <section class="panel side-box">
+          <h2 class="classic-title">刪除人物</h2>
+          <p><a href="#game-panel">進入存檔管理後可重置角色</a></p>
+        </section>
+
+        <section id="world-summary" class="panel side-box">
+          <h2 class="classic-title">封閉專區</h2>
+          <p>封印之門：尚未開放</p>
+          <p>預定內容：世界 Boss、塔王、國戰。</p>
         </section>
       </aside>
     </main>
+
+    <footer class="panel classic-footer" aria-label="版本資訊">
+      <h2>無限冒險-豆豆版 Ver0.1</h2>
+      <table>
+        <tbody>
+          <tr><th>靈感來源</th><td>經典文字 RPG 首頁資訊架構 / BadGameShow 排版語法</td></tr>
+          <tr><th>目前版本</th><td>純 HTML/CSS/JS 單機 demo，可部署到 Cloudflare Pages</td></tr>
+          <tr><th>製作</th><td>微豆</td></tr>
+          <tr><th>說明</th><td>本作為學習與展示用 demo，未使用原站素材與玩家資料。</td></tr>
+        </tbody>
+      </table>
+    </footer>
   </div>
   <script type="module" src="./assets/app.js"></script>
 </body>
