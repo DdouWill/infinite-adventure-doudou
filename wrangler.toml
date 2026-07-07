@@ -1,0 +1,7 @@
+name = "infinite-adventure-doudou"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-07-07"
+
+# Cloudflare Pages Free tier static deployment.
+# This project intentionally does not define Functions, D1, KV, R2, Queues,
+# Durable Objects, Workers paid features, or custom paid services.

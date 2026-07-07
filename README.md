@@ -26,9 +26,17 @@ python3 -m http.server 4173
 http://127.0.0.1:4173
 ```
 
-## Cloudflare Pages 部署
+## Cloudflare Pages Free tier 部署
 
-### 建議設定
+本專案已固定走 **Cloudflare Pages Free tier / 純靜態部署**：
+
+- 不使用 Pages Functions。
+- 不使用 D1、KV、R2、Queues、Durable Objects 或 Workers paid features。
+- 只輸出 `dist/` 靜態檔案。
+- 使用 `_headers` 提供 CSP 與基本安全標頭。
+- `wrangler.toml` 只設定 `pages_build_output_dir = "dist"`。
+
+### Cloudflare Pages 後台建議設定
 
 | 項目 | 值 |
 |---|---|
@@ -37,7 +45,21 @@ http://127.0.0.1:4173
 | Build output directory | `dist` |
 | Root directory | `/` |
 
-`npm run check` 會執行語法檢查、單元測試、inline script/style 檢查，並產生 `dist/`。
+`npm run check` 會執行語法檢查、單元測試、inline script/style 檢查、Free tier 靜態部署檢查，並產生 `dist/`。
+
+### Wrangler CLI 部署
+
+非互動環境需要先登入 Cloudflare 或設定 `CLOUDFLARE_API_TOKEN`，再執行：
+
+```bash
+npm run deploy:cf:free
+```
+
+如果只想本機確認 Free tier 靜態部署設定：
+
+```bash
+npm run check:cloudflare-free
+```
 
 ### 靜態安全設定
 
@@ -60,8 +82,10 @@ http://127.0.0.1:4173
 │   ├── app.js
 │   ├── game-core.js
 │   └── styles.css
+├── wrangler.toml
 ├── scripts/
 │   ├── build.mjs
+│   ├── check-cloudflare-free.mjs
 │   └── check-inline.mjs
 └── tests/
     └── game-core.test.mjs
