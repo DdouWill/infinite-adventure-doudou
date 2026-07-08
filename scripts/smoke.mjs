@@ -21,7 +21,7 @@ async function assertTerminalLoginGate(page, label) {
   const createVisible = await page.locator('#create-view').isVisible();
   if (createVisible) throw new Error(`${label} smoke failed: character creation should not be visible before login.`);
   const loginText = await page.locator('#login-view').innerText();
-  for (const expected of ['AUTH_GATE', '帳號', '密碼', '登入遊戲', '系統公告', '伺服器狀態']) {
+  for (const expected of ['AUTH_GATE', '帳號', '密碼', '登入遊戲', '帳號註冊', '自行建立', 'Google 帳號資訊', '系統公告', '伺服器狀態']) {
     if (!loginText.includes(expected)) throw new Error(`${label} smoke failed: terminal login block missing ${expected}.`);
   }
   const forbiddenText = ['BadGameShow', '註冊帳號', '原版', '注意事項'];
@@ -55,7 +55,46 @@ async function loginThroughGate(page, account, password) {
   if (!createViewVisible) throw new Error('Login smoke failed: character creation should be visible after login when no save exists.');
 }
 
+async function registerLocalThroughGate(page, account, password) {
+  await page.click('#register-toggle-button');
+  await page.fill('#register-id', account);
+  await page.fill('#register-pass', password);
+  await page.fill('#register-pass-confirm', password);
+  await page.click('#register-submit');
+  await page.waitForFunction(() => document.querySelector('#login-view')?.classList.contains('is-hidden'));
+  const session = await page.evaluate(() => JSON.parse(localStorage.getItem('infinite-adventure-doudou-login-v1')));
+  if (session.source !== 'local-register' || session.account !== account) {
+    throw new Error(`Register smoke failed: local registration session mismatch ${JSON.stringify(session)}.`);
+  }
+  const heroName = await page.locator('#hero-name').inputValue();
+  if (heroName !== account) throw new Error(`Register smoke failed: local registration did not prefill hero name (${heroName}).`);
+}
+
+async function registerGoogleInfoThroughGate(page, email, displayName) {
+  await page.click('#register-toggle-button');
+  await page.fill('#google-email', email);
+  await page.fill('#google-name', displayName);
+  await page.click('#google-register-submit');
+  await page.waitForFunction(() => document.querySelector('#login-view')?.classList.contains('is-hidden'));
+  const session = await page.evaluate(() => JSON.parse(localStorage.getItem('infinite-adventure-doudou-login-v1')));
+  if (session.source !== 'google-info' || session.account !== email || session.displayName !== displayName) {
+    throw new Error(`Register smoke failed: Google info session mismatch ${JSON.stringify(session)}.`);
+  }
+  const heroName = await page.locator('#hero-name').inputValue();
+  if (heroName !== displayName) throw new Error(`Register smoke failed: Google info did not prefill hero name (${heroName}).`);
+}
+
 const browser = await chromium.launch({ headless: true });
+const localRegisterProbe = await browser.newPage({ viewport: { width: 1024, height: 900 } });
+await localRegisterProbe.goto(url, { waitUntil: 'networkidle' });
+await assertTerminalLoginGate(localRegisterProbe, 'Local register');
+await registerLocalThroughGate(localRegisterProbe, 'newhero', 'pass02');
+await localRegisterProbe.close();
+const googleRegisterProbe = await browser.newPage({ viewport: { width: 1024, height: 900 } });
+await googleRegisterProbe.goto(url, { waitUntil: 'networkidle' });
+await assertTerminalLoginGate(googleRegisterProbe, 'Google info register');
+await registerGoogleInfoThroughGate(googleRegisterProbe, 'adventurer@gmail.com', '星門旅人');
+await googleRegisterProbe.close();
 const desktop = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 await desktop.goto(url, { waitUntil: 'networkidle' });
 await assertTerminalLoginGate(desktop, 'Desktop');

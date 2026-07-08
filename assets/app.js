@@ -29,6 +29,7 @@ import { referenceCatalog } from './reference-catalog.js';
 const STORAGE_KEY = 'infinite-adventure-doudou-save-v1';
 const LOGIN_KEY = 'infinite-adventure-doudou-login-v1';
 const LOGIN_TOKEN_PATTERN = /^[A-Za-z0-9_]{4,8}$/;
+const GOOGLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 let loginSession = loadLoginSession();
 let state = loadPlayer();
 let selectedMapId = 'meadow';
@@ -70,6 +71,14 @@ const nodes = {
   loginMessage: $('#login-message'),
   loginId: $('#login-id'),
   loginPass: $('#login-pass'),
+  registerToggleButton: $('#register-toggle-button'),
+  registerPanel: $('#register-panel'),
+  registerMessage: $('#register-message'),
+  localRegisterForm: $('#local-register-form'),
+  googleRegisterForm: $('#google-register-form'),
+  registerId: $('#register-id'),
+  googleEmail: $('#google-email'),
+  googleName: $('#google-name'),
   createView: $('#create-view'),
   gameView: $('#game-view'),
   createForm: $('#create-form'),
@@ -142,18 +151,50 @@ nodes.loginForm.addEventListener('submit', (event) => {
     nodes.loginMessage.textContent = '帳號與密碼請使用 4～8 個半形英數字或底線。';
     return;
   }
-  loginSession = { account, loginAt: new Date().toISOString() };
-  saveLoginSession();
   nodes.loginMessage.textContent = '登入成功，正在進入遊戲介面...';
-  if (!state && nodes.createForm.elements['hero-name'] && !nodes.createForm.elements['hero-name'].value) {
-    nodes.createForm.elements['hero-name'].value = account;
-  }
-  render();
-  window.location.hash = 'game-panel';
+  completeLoginSession({ account, source: 'password' }, account);
 });
 
 nodes.loginForm.addEventListener('reset', () => {
   nodes.loginMessage.textContent = '';
+});
+
+nodes.registerToggleButton.addEventListener('click', () => {
+  nodes.registerPanel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  nodes.registerId.focus();
+  nodes.registerMessage.textContent = '可自行建立本機帳號，或輸入 Google 帳號資訊建立本機 session。';
+});
+
+nodes.localRegisterForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const form = new FormData(nodes.localRegisterForm);
+  const account = String(form.get('register-id') || '').trim();
+  const password = String(form.get('register-pass') || '').trim();
+  const confirmPassword = String(form.get('register-pass-confirm') || '').trim();
+  if (!LOGIN_TOKEN_PATTERN.test(account) || !LOGIN_TOKEN_PATTERN.test(password) || !LOGIN_TOKEN_PATTERN.test(confirmPassword)) {
+    nodes.registerMessage.textContent = '自行建立帳號時，帳號與密碼都要是 4～8 個半形英數字或底線。';
+    return;
+  }
+  if (password !== confirmPassword) {
+    nodes.registerMessage.textContent = '兩次密碼輸入不一致。';
+    return;
+  }
+  nodes.registerMessage.textContent = '本機帳號建立完成，正在進入遊戲介面...';
+  completeLoginSession({ account, source: 'local-register' }, account);
+});
+
+nodes.googleRegisterForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const form = new FormData(nodes.googleRegisterForm);
+  const email = String(form.get('google-email') || '').trim();
+  const displayName = String(form.get('google-name') || '').trim();
+  if (!GOOGLE_EMAIL_PATTERN.test(email)) {
+    nodes.registerMessage.textContent = '請輸入有效的 Google Email。';
+    return;
+  }
+  const heroName = deriveGoogleHeroName(displayName, email);
+  nodes.registerMessage.textContent = 'Google 帳號資訊已接受，正在建立本機 session...';
+  completeLoginSession({ account: email, displayName: heroName, source: 'google-info' }, heroName);
 });
 
 $$('[data-login-focus]').forEach((button) => {
@@ -930,6 +971,29 @@ function loadPlayer() {
   }
 }
 
+function completeLoginSession(session, heroName) {
+  loginSession = { ...session, loginAt: new Date().toISOString() };
+  saveLoginSession();
+  prefillHeroName(heroName || session.displayName || session.account);
+  render();
+  window.location.hash = 'game-panel';
+}
+
+function prefillHeroName(value) {
+  const input = nodes.createForm.elements['hero-name'];
+  if (!state && input && !input.value) input.value = sanitizeHeroName(value);
+}
+
+function deriveGoogleHeroName(displayName, email) {
+  const fallback = String(email).split('@')[0] || 'Google旅人';
+  return sanitizeHeroName(displayName || fallback);
+}
+
+function sanitizeHeroName(value) {
+  const name = String(value || '').trim().replace(/\s+/g, '').slice(0, 12);
+  return name.length >= 2 ? name : 'Google旅人';
+}
+
 function saveLoginSession() {
   localStorage.setItem(LOGIN_KEY, JSON.stringify(loginSession));
 }
@@ -938,7 +1002,10 @@ function loadLoginSession() {
   try {
     const raw = localStorage.getItem(LOGIN_KEY);
     const session = raw ? JSON.parse(raw) : null;
-    return session && LOGIN_TOKEN_PATTERN.test(session.account) ? session : null;
+    const account = String(session?.account || '');
+    if (!account) return null;
+    if (session.source === 'google-info') return GOOGLE_EMAIL_PATTERN.test(account) ? session : null;
+    return LOGIN_TOKEN_PATTERN.test(account) ? session : null;
   } catch {
     return null;
   }
