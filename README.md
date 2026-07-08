@@ -48,6 +48,8 @@ http://127.0.0.1:4173
 
 `npm run check` 會執行語法檢查、單元測試、inline script/style 檢查、Free tier 靜態部署檢查，並產生 `dist/`。
 
+> 目前 Cloudflare Pages 專案若沒有設定 Build command，仍會直接讀取 repo 內已提交的 `dist/`。因此本 repo 會提交 `dist/` 作為 no-build 部署保底；若你在 Cloudflare 後台把 Build command 設為 `npm run check`，Cloudflare 也會在部署前重新產生同一份 `dist/`。
+
 ### Wrangler CLI 部署
 
 非互動環境需要先登入 Cloudflare 或設定 `CLOUDFLARE_API_TOKEN`，再執行：

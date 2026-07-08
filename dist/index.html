@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="無限冒險：終端異界：純 HTML/CSS/JS 文字 RPG demo，可部署到 Cloudflare Pages。">
+  <meta name="google-oauth-client-id" content="">
+  <title>無限冒險：終端異界</title>
+  <link rel="stylesheet" href="./assets/styles.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要內容</a>
+  <section id="login-view" class="terminal-login" aria-label="登入遊戲">
+    <div class="terminal-login__frame">
+      <header class="terminal-login__header">
+        <pre class="terminal-login__mark" aria-label="TERMINAL GATE ASCII mark">+---+
+|∞&gt;_|
++---+</pre>
+        <div>
+          <p class="terminal-login__eyebrow">[BOOT] ISEKAI_GUILD_AUTH</p>
+          <h1>無限冒險：終端異界</h1>
+          <code>guest@adventure:~$ ./login --mode=terminal --gate=AUTH_GATE</code>
+        </div>
+      </header>
+
+      <section id="login-online-list" class="terminal-login__online" aria-label="目前在線名單">
+        <div class="terminal-panel-title"><span>@</span><strong>目前在線名單</strong><em><span id="login-online-count">19</span> ONLINE / MAX 400</em></div>
+        <ul class="terminal-login__online-names">
+          <li>晨星勇者</li>
+          <li>光紋術士</li>
+          <li>月光便當</li>
+          <li>霧森旅人</li>
+          <li>紅蓮騎士</li>
+          <li>星砂貓</li>
+          <li>風車晴空</li>
+          <li>夜芽參謀</li>
+          <li>晨露巡守</li>
+          <li>異界旅人</li>
+          <li>雷鳴旅者</li>
+          <li>光之賢者</li>
+          <li>神秘商人</li>
+          <li>迷宮鐵匠</li>
+          <li>公會櫃台</li>
+          <li>星門守衛</li>
+          <li>旅店老闆</li>
+          <li>魔書使者</li>
+          <li>封印調查員</li>
+        </ul>
+      </section>
+
+      <div class="terminal-login__grid">
+        <main class="terminal-login__panel terminal-login__panel--main" aria-label="登入終端">
+          <div class="terminal-panel-title"><span>&gt;</span><strong>AUTH_GATE</strong><em>LOGIN REQUIRED</em></div>
+          <img id="login-keyart" class="terminal-login__keyart" src="./assets/generated/login-terminal-keyart.png" alt="終端異界入口原創圖像" width="1600" height="983">
+          <form id="login-form" class="terminal-login__form" autocomplete="on">
+            <label>
+              <span>帳號</span>
+              <input id="login-id" name="id" type="text" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="adventurer" autocomplete="username" required>
+              <small>4～8 個半形英數字或底線</small>
+            </label>
+            <label>
+              <span>密碼</span>
+              <input id="login-pass" name="pass" type="password" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="********" autocomplete="current-password" required>
+              <small>本機 demo gate，不連線任何外部帳密服務</small>
+            </label>
+            <div class="terminal-login__actions">
+              <button id="login-submit" class="terminal-button terminal-button--primary" type="submit">登入遊戲</button>
+              <button class="terminal-button" type="reset">清除重寫</button>
+              <button id="register-toggle-button" class="terminal-button" type="button" aria-controls="register-modal" aria-expanded="false">帳號註冊</button>
+            </div>
+            <p id="login-message" class="login-message" role="status" aria-live="polite"></p>
+          </form>
+
+          <div id="register-modal" class="terminal-modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="register-modal-title" hidden>
+            <button class="terminal-modal__backdrop" type="button" data-register-close aria-label="關閉帳號註冊視窗"></button>
+            <section id="register-panel" class="terminal-register terminal-modal__dialog" aria-label="帳號註冊">
+              <div class="terminal-panel-title terminal-modal__title"><span>+</span><strong id="register-modal-title">帳號註冊</strong><em>LOCAL / GOOGLE OAUTH</em><button id="register-modal-close" class="terminal-button terminal-modal__close" type="button" data-register-close>關閉</button></div>
+              <div class="terminal-register__grid">
+                <form id="local-register-form" class="terminal-register__form" autocomplete="on">
+                  <h2>自行建立</h2>
+                  <label>
+                    <span>新帳號</span>
+                    <input id="register-id" name="register-id" type="text" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="newhero" autocomplete="username" required>
+                  </label>
+                  <label>
+                    <span>新密碼</span>
+                    <input id="register-pass" name="register-pass" type="password" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="********" autocomplete="new-password" required>
+                  </label>
+                  <label>
+                    <span>確認密碼</span>
+                    <input id="register-pass-confirm" name="register-pass-confirm" type="password" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="********" autocomplete="new-password" required>
+                  </label>
+                  <button id="register-submit" class="terminal-button terminal-button--primary" type="submit">建立本機帳號</button>
+                </form>
+
+                <section id="google-register-panel" class="terminal-register__form terminal-google-auth" aria-label="Google 帳號授權">
+                  <h2>Google 帳號授權</h2>
+                  <p>按下按鍵後會開啟 Google 授權視窗，選擇帳號並允許讀取基本 profile / email。</p>
+                  <button id="google-oauth-button" class="terminal-button terminal-button--primary terminal-google-auth__button" type="button">使用 Google 授權</button>
+                  <small>需要設定 Google OAuth Client ID；正式驗證仍建議由後端確認 Google token。</small>
+                  <p id="google-oauth-status" class="terminal-google-auth__status" role="status" aria-live="polite"></p>
+                </section>
+              </div>
+              <p id="register-message" class="login-message" role="status" aria-live="polite"></p>
+            </section>
+          </div>
+        </main>
+
+        <aside class="terminal-login__side" aria-label="登入側欄資訊">
+          <section class="terminal-login__panel">
+            <div class="terminal-panel-title"><span>#</span><strong>系統公告</strong></div>
+            <ul>
+              <li>登入成功後才會載入遊戲 shell。</li>
+              <li>角色資料仍保存在本機 localStorage。</li>
+              <li>請勿輸入真實常用密碼。</li>
+            </ul>
+          </section>
+          <section class="terminal-login__panel">
+            <div class="terminal-panel-title"><span>$</span><strong>快速入口</strong></div>
+            <div class="terminal-login__quick-actions">
+              <button class="terminal-button" type="button" data-login-focus="id">聚焦帳號</button>
+              <button class="terminal-button" type="button" data-login-focus="pass">聚焦密碼</button>
+            </div>
+          </section>
+          <section class="terminal-login__panel">
+            <div class="terminal-panel-title"><span>!</span><strong>伺服器狀態</strong></div>
+            <dl class="terminal-status-list">
+              <div><dt>AUTH</dt><dd>LOCAL OK</dd></div>
+              <div><dt>SAVE</dt><dd>BROWSER</dd></div>
+              <div><dt>MODE</dt><dd>STATIC DEMO</dd></div>
+            </dl>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </section>
+  <div class="app-shell classic-shell is-hidden">
+    <div class="function-menu" id="function-menu">
+      <button id="function-menu-button" class="function-menu__button" type="button" aria-controls="function-menu-panel" aria-expanded="false">
+        <span class="function-menu__label">情報 / 解說</span>
+        <span class="function-menu__icon" aria-hidden="true">☰</span>
+      </button>
+      <div id="function-menu-panel" class="function-menu__panel" aria-label="情報與解說功能選單" hidden>
+        <div class="function-menu__group">
+          <h2>情報</h2>
+          <a class="function-menu__home" href="#main">回主畫面</a>
+          <details id="player-list-panel" class="function-menu__item">
+            <summary>目前線上人員</summary>
+            <div class="function-menu__detail">
+              <p><strong>目前線上人員：</strong>19人　<strong>最大上線人數：</strong>400人</p>
+              <p>★晨星勇者★光紋術士★月光便當★霧森旅人★紅蓮騎士★星砂貓★風車晴空★夜芽參謀★晨露巡守★異界旅人★雷鳴旅者★光之賢者★神秘商人★迷宮鐵匠★公會櫃台★星門守衛★旅店老闆★魔書使者★封印調查員</p>
+            </div>
+          </details>
+          <details id="system-news" class="function-menu__item">
+            <summary>系統公告</summary>
+            <div class="function-menu__detail">
+              <p>●【同步】已查閱 BadGameShow 公開首頁、排行、狀態頁、小白指南與 PTT 老玩家回憶文。</p>
+              <p>● 新手指南改用「草原 → 裝備檢定 → 修行者高塔 → 廢棄後山」路線。</p>
+              <p>● 地圖選單已加入一般、試煉、特殊、封閉專區分組。</p>
+              <p>● 第一版使用 localStorage 存檔，清除瀏覽器資料會移除角色。</p>
+            </div>
+          </details>
+          <details id="news-log" class="function-menu__item">
+            <summary>最新情報</summary>
+            <div class="function-menu__detail">
+              <p>●[打寶] 晨星勇者於晨露草原獲得星砂護符!!</p>
+              <p>●[任務] 光紋術士完成草原巡邏，獲得微光藥水。</p>
+              <p>●[活動] 星砂貓於迷霧森林發現七彩冰棒!!</p>
+              <p>●[魔女] 神秘商人在魔女的店購入某項物品。</p>
+            </div>
+          </details>
+          <details id="battle-records" class="function-menu__item">
+            <summary>戰鬥紀錄</summary>
+            <div class="function-menu__detail">
+              <p>●【魔王】紅蓮騎士打倒霧森裂縫守衛。</p>
+              <p>●【魔王】晨星勇者對晨露草原王進行攻擊。</p>
+              <p>●【塔王】光紋術士突破高塔第 3 層。</p>
+              <p>●【國戰】光之賢者支援星門防線，士氣上升。</p>
+            </div>
+          </details>
+          <details id="ranking-panel" class="function-menu__item">
+            <summary>各項排行</summary>
+            <div class="function-menu__detail">
+              <p class="reference-note">參考原站排行頁的高密度欄位，但使用終端版合成資料與文字頭像。</p>
+              <div class="dense-table-wrap">
+                <table class="classic-ranking-table" aria-label="終端版排行表">
+                  <thead>
+                    <tr><th>順位</th><th>頭像</th><th>名稱</th><th>屬性</th><th>HP</th><th>MP</th><th>職業</th><th>戰數</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>★1位</td><td><img class="avatar-image" src="./assets/original/chara/37.gif" alt="光紋術士圖像" width="28" height="28"></td><td>光紋術士</td><td>光</td><td>1880/1880</td><td>920/920</td><td>賢者</td><td>388戰386勝</td></tr>
+                    <tr><td>2位</td><td><img class="avatar-image" src="./assets/original/chara/47.gif" alt="晨星勇者圖像" width="28" height="28"></td><td>晨星勇者</td><td>火</td><td>1640/1640</td><td>360/360</td><td>劍士</td><td>301戰286勝</td></tr>
+                    <tr><td>3位</td><td><img class="avatar-image" src="./assets/original/chara/42.gif" alt="星砂貓圖像" width="28" height="28"></td><td>星砂貓</td><td>風</td><td>1320/1320</td><td>520/520</td><td>巡守</td><td>244戰230勝</td></tr>
+                    <tr><td>4位</td><td><img class="avatar-image" src="./assets/original/chara/48.gif" alt="夜芽參謀圖像" width="28" height="28"></td><td>夜芽參謀</td><td>闇</td><td>1210/1210</td><td>610/610</td><td>影術士</td><td>219戰199勝</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="monthly-rank-grid" aria-label="本月分類排行">
+                <section><h3>打寶之王</h3><p>豪大饅頭 / 4254</p><p>後山武君 / 3970</p></section>
+                <section><h3>原料之王</h3><p>光紋術士 / 3794</p><p>星砂貓 / 2812</p></section>
+                <section><h3>魔女最愛</h3><p>初星 / 167</p><p>風行烈 / 164</p></section>
+                <section><h3>神武之王</h3><p>劍士 / 78</p><p>夜芽參謀 / 48</p></section>
+              </div>
+            </div>
+          </details>
+          <details id="legend-panel" class="function-menu__item">
+            <summary>傳說的英雄</summary>
+            <div class="function-menu__detail">
+              <ol class="menu-rank-list">
+                <li><span>1. 光紋術士</span><strong>Lv.12</strong></li>
+                <li><span>2. 晨星勇者</span><strong>Lv.10</strong></li>
+                <li><span>3. 星砂貓</span><strong>Lv.9</strong></li>
+              </ol>
+            </div>
+          </details>
+          <details id="world-panel" class="function-menu__item">
+            <summary>世界情勢</summary>
+            <div class="function-menu__detail">
+              <p>星門公會、晨露王國、霧森旅團三方維持均勢。封印之門仍在觀測中。</p>
+            </div>
+          </details>
+          <details id="town-panel" class="function-menu__item">
+            <summary>都市情報</summary>
+            <div class="function-menu__detail">
+              <p>晨露村：旅店、公會商店、公會櫃台已開放。霧森城與星門港為後續擴充地點。</p>
+            </div>
+          </details>
+          <details id="public-index-panel" class="function-menu__item">
+            <summary>公開索引</summary>
+            <div class="function-menu__detail public-index-grid">
+              <span>[首頁]</span><span>[遊戲說明]</span><span>[玩家列表]</span><span>[傳說的英雄]</span><span>[各項排行]</span><span>[世界情勢]</span><span>[都市情報]</span><span>[圖像一覧]</span><span>[紀錄]</span><span>[武器清單]</span><span>[道具清單]</span><span>[招式清單]</span><span>[戰鬥地圖]</span>
+            </div>
+          </details>
+        </div>
+        <div class="function-menu__group">
+          <h2>解說</h2>
+          <details id="help-panel" class="function-menu__item">
+            <summary>遊戲說明</summary>
+            <div class="function-menu__detail">
+              <p>終端版現在把情報 / 解說集中在右上角選單，主畫面只保留建立角色、戰鬥、背包、任務、世界與存檔等操作。</p>
+            </div>
+          </details>
+          <details id="guide-panel" class="function-menu__item">
+            <summary>新手指南</summary>
+            <div class="function-menu__detail">
+              <ol class="menu-route-list">
+                <li><strong>草原起步</strong><span>先完成草原討伐，熟悉 HP / MP、旅店與任務。</span></li>
+                <li><strong>裝備檢定</strong><span>存錢買短劍 / 長劍 / 護甲，再穩定刷沼地。</span></li>
+                <li><strong>森林 / 高塔</strong><span>完成草原與沼地節奏後，再挑戰掉寶與高塔試煉。</span></li>
+                <li><strong>廢棄後山</strong><span>進階打寶、分身寵物與高風險收益區。</span></li>
+              </ol>
+            </div>
+          </details>
+          <details id="map-guide-panel" class="function-menu__item">
+            <summary>戰鬥地圖</summary>
+            <div class="function-menu__detail">
+              <p class="reference-note">目前只顯示已確認座標；更多地點會隨冒險紀錄更新。</p>
+              <div id="reference-map-catalog" class="reference-catalog-table" aria-label="原版地圖清單"></div>
+            </div>
+          </details>
+          <details id="mechanics-panel" class="function-menu__item">
+            <summary>招式 / 奧義清單</summary>
+            <div class="function-menu__detail">
+              <p class="reference-note">招式取自原站技能清單；奧義取自原站奧義清單。戰鬥中會以終端版數值縮放發動。</p>
+              <div id="reference-technique-catalog" class="reference-catalog-table" aria-label="原版技能清單"></div>
+              <div id="reference-ougi-catalog" class="reference-catalog-table" aria-label="原版奧義清單"></div>
+            </div>
+          </details>
+          <details id="equip-panel" class="function-menu__item">
+            <summary>武器清單</summary>
+            <div class="function-menu__detail">
+              <p class="reference-note">武器全數由原站公開裝備清單匯入；遊戲商店取核心可玩子集。</p>
+              <div id="reference-weapon-catalog" class="reference-catalog-table" aria-label="原版武器清單"></div>
+            </div>
+          </details>
+          <details id="item-panel" class="function-menu__item">
+            <summary>道具清單</summary>
+            <div class="function-menu__detail">
+              <p class="reference-note">道具取自原站道具說明，終端版將部分道具做成可使用消耗品。</p>
+              <div id="reference-item-catalog" class="reference-catalog-table" aria-label="原版道具清單"></div>
+            </div>
+          </details>
+          <details id="icon-panel" class="function-menu__item">
+            <summary>圖像一覧</summary>
+            <div class="function-menu__detail">
+              <p class="reference-note">參考原站 No.1–No.70 方格排列；終端版改用原站公開角色圖像，並保留 No.1–No.70 方格排列。</p>
+              <div class="icon-grid" aria-label="原版角色圖像展示"><span class="icon-grid__cell"><em>No.1</em><img class="icon-grid__image" src="./assets/original/chara/1.gif" alt="No.1 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.2</em><img class="icon-grid__image" src="./assets/original/chara/2.gif" alt="No.2 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.3</em><img class="icon-grid__image" src="./assets/original/chara/3.gif" alt="No.3 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.4</em><img class="icon-grid__image" src="./assets/original/chara/4.gif" alt="No.4 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.5</em><img class="icon-grid__image" src="./assets/original/chara/5.gif" alt="No.5 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.6</em><img class="icon-grid__image" src="./assets/original/chara/6.gif" alt="No.6 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.7</em><img class="icon-grid__image" src="./assets/original/chara/7.gif" alt="No.7 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.8</em><img class="icon-grid__image" src="./assets/original/chara/8.gif" alt="No.8 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.9</em><img class="icon-grid__image" src="./assets/original/chara/9.gif" alt="No.9 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.10</em><img class="icon-grid__image" src="./assets/original/chara/10.gif" alt="No.10 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.11</em><img class="icon-grid__image" src="./assets/original/chara/11.gif" alt="No.11 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.12</em><img class="icon-grid__image" src="./assets/original/chara/12.gif" alt="No.12 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.13</em><img class="icon-grid__image" src="./assets/original/chara/13.gif" alt="No.13 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.14</em><img class="icon-grid__image" src="./assets/original/chara/14.gif" alt="No.14 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.15</em><img class="icon-grid__image" src="./assets/original/chara/15.gif" alt="No.15 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.16</em><img class="icon-grid__image" src="./assets/original/chara/16.gif" alt="No.16 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.17</em><img class="icon-grid__image" src="./assets/original/chara/17.gif" alt="No.17 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.18</em><img class="icon-grid__image" src="./assets/original/chara/18.gif" alt="No.18 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.19</em><img class="icon-grid__image" src="./assets/original/chara/19.gif" alt="No.19 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.20</em><img class="icon-grid__image" src="./assets/original/chara/20.gif" alt="No.20 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.21</em><img class="icon-grid__image" src="./assets/original/chara/21.gif" alt="No.21 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.22</em><img class="icon-grid__image" src="./assets/original/chara/22.gif" alt="No.22 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.23</em><img class="icon-grid__image" src="./assets/original/chara/23.gif" alt="No.23 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.24</em><img class="icon-grid__image" src="./assets/original/chara/24.gif" alt="No.24 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.25</em><img class="icon-grid__image" src="./assets/original/chara/25.gif" alt="No.25 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.26</em><img class="icon-grid__image" src="./assets/original/chara/26.gif" alt="No.26 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.27</em><img class="icon-grid__image" src="./assets/original/chara/27.gif" alt="No.27 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.28</em><img class="icon-grid__image" src="./assets/original/chara/28.gif" alt="No.28 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.29</em><img class="icon-grid__image" src="./assets/original/chara/29.gif" alt="No.29 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.30</em><img class="icon-grid__image" src="./assets/original/chara/30.gif" alt="No.30 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.31</em><img class="icon-grid__image" src="./assets/original/chara/31.gif" alt="No.31 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.32</em><img class="icon-grid__image" src="./assets/original/chara/32.gif" alt="No.32 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.33</em><img class="icon-grid__image" src="./assets/original/chara/33.gif" alt="No.33 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.34</em><img class="icon-grid__image" src="./assets/original/chara/34.gif" alt="No.34 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.35</em><img class="icon-grid__image" src="./assets/original/chara/35.gif" alt="No.35 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.36</em><img class="icon-grid__image" src="./assets/original/chara/36.gif" alt="No.36 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.37</em><img class="icon-grid__image" src="./assets/original/chara/37.gif" alt="No.37 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.38</em><img class="icon-grid__image" src="./assets/original/chara/38.gif" alt="No.38 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.39</em><img class="icon-grid__image" src="./assets/original/chara/39.gif" alt="No.39 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.40</em><img class="icon-grid__image" src="./assets/original/chara/40.gif" alt="No.40 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.41</em><img class="icon-grid__image" src="./assets/original/chara/41.gif" alt="No.41 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.42</em><img class="icon-grid__image" src="./assets/original/chara/42.gif" alt="No.42 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.43</em><img class="icon-grid__image" src="./assets/original/chara/43.gif" alt="No.43 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.44</em><img class="icon-grid__image" src="./assets/original/chara/44.gif" alt="No.44 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.45</em><img class="icon-grid__image" src="./assets/original/chara/45.gif" alt="No.45 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.46</em><img class="icon-grid__image" src="./assets/original/chara/46.gif" alt="No.46 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.47</em><img class="icon-grid__image" src="./assets/original/chara/47.gif" alt="No.47 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.48</em><img class="icon-grid__image" src="./assets/original/chara/48.gif" alt="No.48 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.49</em><img class="icon-grid__image" src="./assets/original/chara/49.gif" alt="No.49 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.50</em><img class="icon-grid__image" src="./assets/original/chara/50.gif" alt="No.50 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.51</em><img class="icon-grid__image" src="./assets/original/chara/51.gif" alt="No.51 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.52</em><img class="icon-grid__image" src="./assets/original/chara/52.gif" alt="No.52 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.53</em><img class="icon-grid__image" src="./assets/original/chara/53.gif" alt="No.53 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.54</em><img class="icon-grid__image" src="./assets/original/chara/54.gif" alt="No.54 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.55</em><img class="icon-grid__image" src="./assets/original/chara/55.gif" alt="No.55 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.56</em><img class="icon-grid__image" src="./assets/original/chara/56.gif" alt="No.56 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.57</em><img class="icon-grid__image" src="./assets/original/chara/57.gif" alt="No.57 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.58</em><img class="icon-grid__image" src="./assets/original/chara/58.gif" alt="No.58 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.59</em><img class="icon-grid__image" src="./assets/original/chara/59.gif" alt="No.59 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.60</em><img class="icon-grid__image" src="./assets/original/chara/60.gif" alt="No.60 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.61</em><img class="icon-grid__image" src="./assets/original/chara/61.gif" alt="No.61 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.62</em><img class="icon-grid__image" src="./assets/original/chara/62.gif" alt="No.62 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.63</em><img class="icon-grid__image" src="./assets/original/chara/63.gif" alt="No.63 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.64</em><img class="icon-grid__image" src="./assets/original/chara/64.gif" alt="No.64 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.65</em><img class="icon-grid__image" src="./assets/original/chara/65.gif" alt="No.65 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.66</em><img class="icon-grid__image" src="./assets/original/chara/66.gif" alt="No.66 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.67</em><img class="icon-grid__image" src="./assets/original/chara/67.gif" alt="No.67 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.68</em><img class="icon-grid__image" src="./assets/original/chara/68.gif" alt="No.68 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.69</em><img class="icon-grid__image" src="./assets/original/chara/69.gif" alt="No.69 原版角色圖像" loading="lazy" width="42" height="42"></span><span class="icon-grid__cell"><em>No.70</em><img class="icon-grid__image" src="./assets/original/chara/70.gif" alt="No.70 原版角色圖像" loading="lazy" width="42" height="42"></span></div>
+            </div>
+          </details>
+          <details id="lineage-panel" class="function-menu__item">
+            <summary>版本系譜</summary>
+            <div class="function-menu__detail lineage-card">
+              <h3>Farland History II Ver2.11</h3>
+              <dl>
+                <div><dt>原作</dt><dd>bean</dd></div>
+                <div><dt>參考</dt><dd>The Wars of Roses Ver6.4 / maccyu</dd></div>
+                <div><dt>系譜</dt><dd>老頭版 → JK / 石器 / Farland → BadGameShow → 終端版</dd></div>
+              </dl>
+              <p>本版同步公開說明清單的名稱 / 分類 / 數值語法，並使用原站公開角色／怪物圖像；玩家資料仍為合成展示資料。</p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </div>
+
+    <header class="hero classic-hero">
+      <pre class="hero__badge" aria-label="TERMINAL RPG ASCII logo">+--+
+|>|
++--+
+~$</pre>
+      <div class="hero__copy">
+        <p class="eyebrow">[OK] ISEKAI GUILD SHELL</p>
+        <h1>無限冒險：終端異界</h1>
+        <p><code>user@terminal:~$ ./start-adventure --mode=classic --battle=turn-based</code></p>
+      </div>
+    </header>
+
+    <main id="main" class="classic-grid">
+      <section class="classic-main-column" aria-label="主要遊戲區">
+
+        <section id="game-panel" class="panel game-card" aria-live="polite">
+          <section id="create-view" class="create-view">
+            <div class="section-heading">
+              <p class="eyebrow">召喚儀式</p>
+              <h2>登錄你的異界冒險者</h2>
+            </div>
+            <form id="create-form" class="create-form">
+              <label>
+                角色名稱
+                <input id="hero-name" name="hero-name" type="text" minlength="2" maxlength="12" placeholder="例如：晨星勇者" required>
+              </label>
+              <label>
+                屬性
+                <select id="hero-element" name="hero-element" required>
+                  <option value="火">火｜爆發傷害</option>
+                  <option value="水">水｜穩定恢復</option>
+                  <option value="風">風｜速度閃避</option>
+                  <option value="星">星｜均衡成長</option>
+                  <option value="雷">雷｜爆擊機率</option>
+                  <option value="光">光｜防禦祝福</option>
+                  <option value="闇">闇｜高風險高收益</option>
+                </select>
+              </label>
+              <label>
+                出身
+                <select id="hero-archetype" name="hero-archetype" required>
+                  <option value="blade">劍士｜攻擊較高</option>
+                  <option value="sage">術士｜MP 較高</option>
+                  <option value="ranger">巡守｜速度較高</option>
+                </select>
+              </label>
+              <button class="primary-action" type="submit">建立角色</button>
+            </form>
+          </section>
+
+          <section id="game-view" class="game-view is-hidden">
+            <div class="player-summary">
+              <div>
+                <p class="eyebrow">目前角色</p>
+                <h2 id="player-title">尚未建立</h2>
+              </div>
+              <button id="rest-button" class="ghost-button" type="button">旅店休息</button>
+            </div>
+
+            <div class="stat-grid" id="stat-grid"></div>
+
+            <section class="view-panel" data-panel="battle">
+              <div class="section-heading">
+                <p class="eyebrow">作戰區</p>
+                <h2>選擇地圖並出擊</h2>
+              </div>
+              <div id="adventure-guide" class="adventure-guide" aria-label="冒險指南"></div>
+              <div id="map-list" class="map-list"></div>
+              <div class="battle-actions">
+                <button id="battle-button" class="primary-action" type="button">接受討伐委託</button>
+                <button id="clear-log-button" class="ghost-button" type="button">清除紀錄</button>
+              </div>
+              <div id="battle-log" class="battle-log" aria-label="戰鬥紀錄"></div>
+            </section>
+
+            <section class="view-panel is-hidden" data-panel="character">
+              <div class="section-heading">
+                <p class="eyebrow">角色資料</p>
+                <h2>能力與成長</h2>
+              </div>
+              <div id="character-sheet" class="character-sheet"></div>
+            </section>
+
+            <section class="view-panel is-hidden" data-panel="inventory">
+              <div class="section-heading">
+                <p class="eyebrow">整備區</p>
+                <h2>背包與商店</h2>
+              </div>
+              <div class="two-column">
+                <div>
+                  <h3>背包</h3>
+                  <div id="inventory-list" class="card-list"></div>
+                </div>
+                <div>
+                  <h3>公會商店</h3>
+                  <div id="shop-list" class="card-list"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="view-panel is-hidden" data-panel="quest">
+              <div class="section-heading">
+                <p class="eyebrow">任務屋</p>
+                <h2>今日委託</h2>
+              </div>
+              <div id="quest-board" class="quest-board"></div>
+            </section>
+
+            <section class="view-panel is-hidden" data-panel="world">
+              <div class="section-heading">
+                <p class="eyebrow">世界情勢</p>
+                <h2>終端異界大陸</h2>
+              </div>
+              <div id="world-view" class="world-view"></div>
+            </section>
+
+            <section class="view-panel is-hidden" data-panel="save">
+              <div class="section-heading">
+                <p class="eyebrow">存檔管理</p>
+                <h2>匯出、匯入、重置</h2>
+              </div>
+              <div class="save-actions">
+                <button id="export-button" class="ghost-button" type="button">匯出存檔</button>
+                <button id="import-button" class="ghost-button" type="button">匯入存檔</button>
+                <button id="logout-button" class="ghost-button" type="button">登出帳號</button>
+                <button id="reset-button" class="danger-button" type="button">重置角色</button>
+              </div>
+              <textarea id="save-data" rows="10" placeholder="匯出的 JSON 會出現在這裡，也可以貼上存檔後匯入。"></textarea>
+            </section>
+          </section>
+        </section>
+      </section>
+
+      <aside class="classic-side-column" aria-label="左側功能區">
+        <section class="panel sidebar start-panel">
+          <div class="brand-card">
+            <div class="brand-mark" aria-hidden="true">&gt;</div>
+            <div>
+              <h2>開始遊戲</h2>
+              <p>建立角色或讀取瀏覽器魔法書。</p>
+            </div>
+          </div>
+          <div class="start-actions">
+            <a class="classic-action" href="#game-panel">建立角色</a>
+            <a class="classic-action secondary" href="#game-panel">繼續冒險</a>
+          </div>
+          <nav class="tab-nav" aria-label="主要功能">
+            <button class="tab-button is-active" type="button" data-view="battle">戰鬥</button>
+            <button class="tab-button" type="button" data-view="character">角色</button>
+            <button class="tab-button" type="button" data-view="inventory">背包</button>
+            <button class="tab-button" type="button" data-view="quest">任務</button>
+            <button class="tab-button" type="button" data-view="world">世界</button>
+            <button class="tab-button" type="button" data-view="save">存檔</button>
+          </nav>
+        </section>
+      </aside>
+    </main>
+
+    <section id="battle-page" class="battle-page is-hidden" aria-label="回合戰鬥畫面" aria-live="polite">
+      <div class="battle-page__frame">
+        <header class="battle-page__header">
+          <div>
+            <p class="eyebrow">Battle Page</p>
+            <h2 id="battle-page-title">戰鬥開始</h2>
+          </div>
+          <span id="battle-page-status" class="battle-page__status">回合演出中</span>
+        </header>
+        <div class="battle-page__arena">
+          <article class="battle-actor battle-actor--player">
+            <span>冒險者</span>
+            <img id="battle-player-portrait" class="battle-portrait" src="./assets/original/chara/14.gif" alt="冒險者圖像" width="96" height="96">
+            <strong id="battle-player-name">冒險者</strong>
+            <progress id="battle-player-hp" class="battle-meter battle-meter--hp" max="100" value="100"></progress>
+            <small id="battle-player-hp-text">HP 100/100</small>
+            <progress id="battle-player-mp" class="battle-meter battle-meter--mp" max="100" value="100"></progress>
+            <small id="battle-player-mp-text">MP 100/100</small>
+          </article>
+          <div class="battle-versus" aria-hidden="true">VS</div>
+          <article class="battle-actor battle-actor--monster">
+            <span id="battle-map-name">戰鬥地圖</span>
+            <img id="battle-monster-portrait" class="battle-portrait" src="./assets/original/monster/3.gif" alt="魔物圖像" width="96" height="96">
+            <strong id="battle-monster-name">魔物</strong>
+            <progress id="battle-monster-hp" class="battle-meter battle-meter--enemy" max="100" value="100"></progress>
+            <small id="battle-monster-hp-text">HP 100/100</small>
+          </article>
+        </div>
+        <div id="battle-turn-feed" class="battle-turn-feed" aria-label="回合攻擊紀錄"></div>
+        <div class="battle-page__actions">
+          <button id="battle-return-button" class="primary-action" type="button" disabled>戰鬥進行中...</button>
+          <span id="battle-return-hint">回合結束後即可返回主畫面。</span>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script type="module" src="./assets/app.js"></script>
+</body>
+</html>

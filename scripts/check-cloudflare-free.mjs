@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { cwd, exit } from 'node:process';
 
@@ -13,7 +14,16 @@ function read(path) {
   return readFileSync(join(root, path), 'utf8');
 }
 
-for (const path of [
+function isGitTracked(path) {
+  try {
+    execFileSync('git', ['ls-files', '--error-unmatch', path], { cwd: root, stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const requiredDistFiles = [
   'dist/index.html',
   'dist/_headers',
   'dist/robots.txt',
@@ -21,8 +31,19 @@ for (const path of [
   'dist/assets/game-core.js',
   'dist/assets/styles.css',
   'wrangler.toml',
-]) {
+];
+
+for (const path of requiredDistFiles) {
   requireFile(path);
+}
+
+if (existsSync(join(root, '.git'))) {
+  for (const path of requiredDistFiles.filter((file) => file.startsWith('dist/'))) {
+    if (!isGitTracked(path)) failures.push(`${path} must be committed so Cloudflare Pages no-build deploys can find the configured dist output directory`);
+  }
+  if (existsSync(join(root, '.gitignore')) && /^dist\/$/m.test(read('.gitignore'))) {
+    failures.push('.gitignore must not ignore dist/ because this Pages project currently deploys committed dist output when no build command is configured');
+  }
 }
 
 if (existsSync(join(root, 'functions'))) {
