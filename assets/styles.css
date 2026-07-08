@@ -372,8 +372,8 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 }
 
 .game-card {
-  min-height: 560px;
-  padding: clamp(16px, 2.4vw, 24px);
+  min-height: 0;
+  padding: clamp(14px, 2vw, 20px);
 }
 
 .classic-title {
@@ -631,14 +631,88 @@ textarea { margin-top: 14px; resize: vertical; }
   justify-content: space-between;
   gap: 14px;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(246, 201, 109, 0.18);
 }
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin-bottom: 20px;
+  grid-template-columns: minmax(220px, 0.9fr) minmax(360px, 1.8fr);
+  grid-template-areas:
+    "overview resources"
+    "overview chips";
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.character-overview { grid-area: overview; }
+
+.character-overview__title strong {
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+
+.character-overview__meta {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0;
+}
+
+.character-overview__meta div {
+  display: grid;
+  grid-template-columns: 3.2rem minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding-top: 5px;
+  border-top: 1px solid rgba(246, 201, 109, 0.14);
+}
+
+.character-overview__meta dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.character-overview__meta dd {
+  margin: 0;
+  color: #fff4d5;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.resource-strip {
+  grid-area: resources;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stat-chip-row {
+  grid-area: chips;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.resource-strip .resource-card,
+.stat-card--compact {
+  padding: 8px 10px;
+}
+
+.resource-card { gap: 5px; }
+
+.resource-card__header strong,
+.stat-card--compact strong {
+  font-size: 1.02rem;
+}
+
+.resource-card small {
+  font-size: 0.72rem;
+}
+
+.stat-card--compact span,
+.resource-card__header span {
+  font-size: 0.74rem;
 }
 
 .section-heading { margin-bottom: 14px; }
@@ -654,16 +728,16 @@ textarea { margin-top: 14px; resize: vertical; }
 .map-list {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .map-card {
   position: relative;
   display: grid;
-  gap: 8px;
-  min-height: 142px;
-  padding: 14px;
+  gap: 6px;
+  min-height: 112px;
+  padding: 12px;
   overflow: hidden;
   border: 1px solid rgba(246, 201, 109, 0.26);
   border-radius: 14px;
@@ -712,9 +786,9 @@ textarea { margin-top: 14px; resize: vertical; }
 .battle-log {
   display: grid;
   gap: 8px;
-  max-height: 300px;
+  max-height: 230px;
   overflow: auto;
-  margin-top: 16px;
+  margin-top: 12px;
   padding: 12px;
   border: 1px solid rgba(246, 201, 109, 0.22);
   border-radius: 14px;
@@ -882,8 +956,16 @@ th {
   .hero::after { display: none; }
   .hero__badge { width: 64px; height: 64px; border-radius: 20px; font-size: 0.78rem; }
   .hero__status,
-  .stat-grid,
   .map-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "overview"
+      "resources"
+      "chips";
+  }
+  .resource-strip { grid-template-columns: 1fr; }
+  .stat-chip-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tab-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .start-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tab-button { text-align: center; padding: 0 8px; }
@@ -895,11 +977,11 @@ th {
 
 @media (max-width: 520px) {
   .hero__status,
-  .stat-grid,
   .map-list,
   .battle-actions,
   .save-actions,
   .tab-nav { grid-template-columns: 1fr; }
+  .stat-chip-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .start-actions { grid-template-columns: 1fr; }
   .classic-footer table,
   .classic-footer tbody,

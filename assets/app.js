@@ -137,6 +137,21 @@ function renderStats() {
     { label: 'EXP', current: state.exp, max: state.nextExp, tone: 'exp', caption: '升級進度' }
   ].map(({ label, current, max, tone, caption }) => resourceCard({ label, current, max, tone, caption }));
 
+  const equipped = compactEquipmentSummary(state);
+  const overview = `
+    <article class="stat-card character-overview">
+      <div class="character-overview__title">
+        <span>角色情報</span>
+        <strong>${escapeHtml(state.element)}・${escapeHtml(state.job)}｜Lv.${state.level}</strong>
+      </div>
+      <dl class="character-overview__meta">
+        <div><dt>戰績</dt><dd>${state.wins}勝/${state.losses}敗</dd></div>
+        <div><dt>戰數</dt><dd>${state.battles}</dd></div>
+        <div><dt>裝備</dt><dd>${escapeHtml(equipped)}</dd></div>
+      </dl>
+    </article>
+  `;
+
   const values = [
     ['金幣', state.gold],
     ['攻擊', stats.attack],
@@ -149,9 +164,13 @@ function renderStats() {
       <span>${escapeHtml(label)}</span>
       <strong>${escapeHtml(String(value))}</strong>
     </article>
-  `);
+  `).join('');
 
-  nodes.statGrid.innerHTML = [...resourceCards, ...statCards].join('');
+  nodes.statGrid.innerHTML = `
+    ${overview}
+    <section class="resource-strip" aria-label="角色資源條">${resourceCards.join('')}</section>
+    <section class="stat-chip-row" aria-label="角色能力摘要">${statCards}</section>
+  `;
 }
 
 function resourceCard({ label, current, max, tone, caption }) {
@@ -168,6 +187,16 @@ function resourceCard({ label, current, max, tone, caption }) {
       <small>${escapeHtml(caption)}｜${percent}%</small>
     </article>
   `;
+}
+
+function compactEquipmentSummary(player) {
+  return ['weapon', 'armor', 'trinket']
+    .map((slot) => {
+      const itemId = player.equipment?.[slot];
+      const item = itemId ? getItem(itemId) : null;
+      return item ? item.name : `${slotLabel(slot)}未裝`;
+    })
+    .join(' / ');
 }
 
 function renderMaps() {
