@@ -24,29 +24,12 @@
         </div>
       </header>
 
-      <section id="login-online-list" class="terminal-login__online" aria-label="目前在線名單">
-        <div class="terminal-panel-title"><span>@</span><strong>目前在線名單</strong><em><span id="login-online-count">19</span> ONLINE / MAX 400</em></div>
-        <ul class="terminal-login__online-names">
-          <li>晨星勇者</li>
-          <li>光紋術士</li>
-          <li>月光便當</li>
-          <li>霧森旅人</li>
-          <li>紅蓮騎士</li>
-          <li>星砂貓</li>
-          <li>風車晴空</li>
-          <li>夜芽參謀</li>
-          <li>晨露巡守</li>
-          <li>異界旅人</li>
-          <li>雷鳴旅者</li>
-          <li>光之賢者</li>
-          <li>神秘商人</li>
-          <li>迷宮鐵匠</li>
-          <li>公會櫃台</li>
-          <li>星門守衛</li>
-          <li>旅店老闆</li>
-          <li>魔書使者</li>
-          <li>封印調查員</li>
+      <section id="login-online-list" class="terminal-login__online" aria-label="本機遊玩帳號">
+        <div class="terminal-panel-title"><span>@</span><strong>本機遊玩帳號</strong><em><span id="login-online-count">0</span> LOCAL ACTIVE</em></div>
+        <ul id="login-online-names" class="terminal-login__online-names">
+          <li class="terminal-login__online-empty">尚無本機遊玩帳號</li>
         </ul>
+        <p class="terminal-login__online-note">僅顯示此瀏覽器實際登入或建立過的帳號；不顯示系統臆造名單。</p>
       </section>
 
       <div class="terminal-login__grid">
@@ -146,10 +129,13 @@
           <h2>情報</h2>
           <a class="function-menu__home" href="#main">回主畫面</a>
           <details id="player-list-panel" class="function-menu__item">
-            <summary>目前線上人員</summary>
+            <summary>本機遊玩帳號</summary>
             <div class="function-menu__detail">
-              <p><strong>目前線上人員：</strong>19人　<strong>最大上線人數：</strong>400人</p>
-              <p>★晨星勇者★光紋術士★月光便當★霧森旅人★紅蓮騎士★星砂貓★風車晴空★夜芽參謀★晨露巡守★異界旅人★雷鳴旅者★光之賢者★神秘商人★迷宮鐵匠★公會櫃台★星門守衛★旅店老闆★魔書使者★封印調查員</p>
+              <p><strong>本機遊玩帳號：</strong><span id="online-count">0</span> 人</p>
+              <ul id="player-list-names" class="function-menu__account-list">
+                <li class="function-menu__account-empty">尚無本機遊玩帳號</li>
+              </ul>
+              <p class="reference-note">純靜態 Pages 版本只能顯示此瀏覽器實際登入或建立過的帳號；全站即時在線名單需後端同步。</p>
             </div>
           </details>
           <details id="system-news" class="function-menu__item">

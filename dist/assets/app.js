@@ -28,6 +28,7 @@ import { referenceCatalog } from './reference-catalog.js';
 
 const STORAGE_KEY = 'infinite-adventure-doudou-save-v1';
 const LOGIN_KEY = 'infinite-adventure-doudou-login-v1';
+const ACTIVE_PLAYERS_KEY = 'infinite-adventure-doudou-active-players-v1';
 const LOGIN_TOKEN_PATTERN = /^[A-Za-z0-9_]{4,8}$/;
 const GOOGLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GOOGLE_OAUTH_SCOPE = 'openid email profile';
@@ -103,6 +104,9 @@ const nodes = {
   resetButton: $('#reset-button'),
   saveData: $('#save-data'),
   onlineCount: $('#online-count'),
+  loginOnlineCount: $('#login-online-count'),
+  loginOnlineNames: $('#login-online-names'),
+  playerListNames: $('#player-list-names'),
   functionMenu: $('#function-menu'),
   functionMenuButton: $('#function-menu-button'),
   functionMenuPanel: $('#function-menu-panel'),
@@ -210,6 +214,11 @@ nodes.createForm.addEventListener('submit', (event) => {
     archetype: form.get('hero-archetype')
   });
   savePlayer();
+  if (loginSession) {
+    loginSession = { ...loginSession, displayName: state.name };
+    saveLoginSession();
+    recordActivePlayer(loginSession, state.name);
+  }
   render();
 });
 
@@ -449,7 +458,7 @@ function battleTurnDelayMs() {
 }
 
 function render() {
-  if (nodes.onlineCount) nodes.onlineCount.textContent = String(18 + new Date().getMinutes() % 9);
+  renderActivePlayerLists();
   if (!loginSession) {
     nodes.loginView.classList.remove('is-hidden');
     nodes.appShell.classList.add('is-hidden');
@@ -1052,10 +1061,86 @@ function setGoogleOauthStatus(message) {
   nodes.googleOauthStatus.textContent = message;
 }
 
+function loadActivePlayers() {
+  try {
+    const players = JSON.parse(localStorage.getItem(ACTIVE_PLAYERS_KEY) || '[]');
+    if (!Array.isArray(players)) return [];
+    return players
+      .map((player) => ({
+        account: String(player?.account || '').trim(),
+        displayName: sanitizeActivePlayerName(player?.displayName || player?.account),
+        source: String(player?.source || 'local').trim(),
+        lastSeenAt: String(player?.lastSeenAt || '')
+      }))
+      .filter((player) => player.account && player.displayName)
+      .slice(0, 12);
+  } catch {
+    return [];
+  }
+}
+
+function saveActivePlayers(players) {
+  localStorage.setItem(ACTIVE_PLAYERS_KEY, JSON.stringify(players.slice(0, 12)));
+}
+
+function recordActivePlayer(session, heroName) {
+  const account = String(session?.account || '').trim();
+  if (!account) return;
+  const displayName = sanitizeActivePlayerName(heroName || session.displayName || account);
+  const nextPlayer = {
+    account,
+    displayName,
+    source: session.source || 'local',
+    lastSeenAt: new Date().toISOString()
+  };
+  const existing = loadActivePlayers().filter((player) => player.account !== account);
+  saveActivePlayers([nextPlayer, ...existing]);
+}
+
+function renderActivePlayerLists() {
+  const players = loadActivePlayers();
+  const count = String(players.length);
+  if (nodes.loginOnlineCount) nodes.loginOnlineCount.textContent = count;
+  if (nodes.onlineCount) nodes.onlineCount.textContent = count;
+  renderActivePlayerList(nodes.loginOnlineNames, players, 'terminal-login__online-empty');
+  renderActivePlayerList(nodes.playerListNames, players, 'function-menu__account-empty');
+}
+
+function renderActivePlayerList(container, players, emptyClass) {
+  if (!container) return;
+  container.innerHTML = '';
+  if (players.length === 0) {
+    const item = document.createElement('li');
+    item.className = emptyClass;
+    item.textContent = '尚無本機遊玩帳號';
+    container.append(item);
+    return;
+  }
+  for (const player of players) {
+    const item = document.createElement('li');
+    const name = document.createElement('strong');
+    name.textContent = player.displayName;
+    const meta = document.createElement('small');
+    meta.textContent = accountSourceLabel(player.source);
+    item.append(name, meta);
+    container.append(item);
+  }
+}
+
+function sanitizeActivePlayerName(value) {
+  const name = String(value || '').trim().replace(/\s+/g, '').slice(0, 18);
+  return name || '本機旅人';
+}
+
+function accountSourceLabel(source) {
+  return source === 'google-oauth' ? 'Google OAuth' : '本機帳號';
+}
+
 function completeLoginSession(session, heroName) {
   if (!nodes.registerModal.hidden) closeRegisterModal();
   loginSession = { ...session, loginAt: new Date().toISOString() };
   saveLoginSession();
+  recordActivePlayer(loginSession, heroName || session.displayName || session.account);
   prefillHeroName(heroName || session.displayName || session.account);
   render();
   window.location.hash = 'game-panel';

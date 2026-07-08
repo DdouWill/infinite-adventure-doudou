@@ -5,6 +5,7 @@ const { chromium } = require('playwright');
 
 const url = withBattleDelay(process.env.SMOKE_URL || 'http://127.0.0.1:4173');
 const screenshotsDir = process.env.SMOKE_SCREENSHOTS || 'screenshots';
+const ACTIVE_PLAYERS_KEY = 'infinite-adventure-doudou-active-players-v1';
 
 function withBattleDelay(rawUrl) {
   const nextUrl = new URL(rawUrl);
@@ -13,7 +14,7 @@ function withBattleDelay(rawUrl) {
   return nextUrl.toString();
 }
 
-async function assertTerminalLoginGate(page, label) {
+async function assertTerminalLoginGate(page, label, options = {}) {
   const loginVisible = await page.locator('#login-view').isVisible();
   if (!loginVisible) throw new Error(`${label} smoke failed: login view should be visible before entering game.`);
   const appVisible = await page.locator('.app-shell').isVisible();
@@ -25,8 +26,22 @@ async function assertTerminalLoginGate(page, label) {
     if (!loginText.includes(expected)) throw new Error(`${label} smoke failed: terminal login block missing ${expected}.`);
   }
   const onlineListText = await page.locator('#login-online-list').innerText();
-  for (const expected of ['目前在線名單', '在線', '晨星勇者', '光紋術士', '星砂貓', '星門守衛', '封印調查員']) {
-    if (!onlineListText.includes(expected)) throw new Error(`${label} smoke failed: login online list missing ${expected}.`);
+  for (const expected of ['本機遊玩帳號', 'LOCAL']) {
+    if (!onlineListText.includes(expected)) throw new Error(`${label} smoke failed: login local player list missing ${expected}.`);
+  }
+  for (const forbidden of ['晨星勇者', '光紋術士', '星砂貓', '星門守衛', '封印調查員']) {
+    if (onlineListText.includes(forbidden)) throw new Error(`${label} smoke failed: login list must not show fabricated account ${forbidden}.`);
+  }
+  const expectedAccounts = options.expectedAccounts || [];
+  if (expectedAccounts.length === 0 && !onlineListText.includes('尚無本機遊玩帳號')) {
+    throw new Error(`${label} smoke failed: empty local account list should say there are no real played accounts.`);
+  }
+  for (const expectedAccount of expectedAccounts) {
+    if (!onlineListText.includes(expectedAccount)) throw new Error(`${label} smoke failed: local account list missing actual account ${expectedAccount}.`);
+  }
+  const renderedAccountCount = await page.locator('#login-online-names li:not(.terminal-login__online-empty)').count();
+  if (renderedAccountCount !== expectedAccounts.length) {
+    throw new Error(`${label} smoke failed: local account count mismatch ${renderedAccountCount}/${expectedAccounts.length}.`);
   }
   const onlineListLayout = await page.evaluate(() => {
     const header = document.querySelector('.terminal-login__header')?.getBoundingClientRect();
@@ -100,6 +115,22 @@ async function closeRegisterModal(page, label) {
   if (expanded !== 'false') throw new Error(`${label} smoke failed: register button aria-expanded not false after closing modal.`);
 }
 
+async function assertActivePlayers(page, expectedNames) {
+  const activePlayers = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '[]'), ACTIVE_PLAYERS_KEY);
+  for (const expectedName of expectedNames) {
+    if (!activePlayers.some((player) => player.displayName === expectedName || player.account === expectedName)) {
+      throw new Error(`Active player smoke failed: missing actual player ${expectedName} in ${JSON.stringify(activePlayers)}.`);
+    }
+  }
+}
+
+async function seedActivePlayers(page, players) {
+  await page.evaluate(({ key, players: seededPlayers }) => {
+    localStorage.setItem(key, JSON.stringify(seededPlayers));
+  }, { key: ACTIVE_PLAYERS_KEY, players });
+  await page.reload({ waitUntil: 'networkidle' });
+}
+
 async function registerLocalThroughGate(page, account, password) {
   await openRegisterModal(page, 'Local register');
   await page.fill('#register-id', account);
@@ -113,6 +144,7 @@ async function registerLocalThroughGate(page, account, password) {
   }
   const heroName = await page.locator('#hero-name').inputValue();
   if (heroName !== account) throw new Error(`Register smoke failed: local registration did not prefill hero name (${heroName}).`);
+  await assertActivePlayers(page, [account]);
 }
 
 async function authorizeGoogleThroughGate(page, email, displayName) {
@@ -151,9 +183,20 @@ async function authorizeGoogleThroughGate(page, email, displayName) {
   if (!userInfoRequest?.auth?.includes('smoke-access-token')) throw new Error(`Register smoke failed: Google OAuth userinfo request missing bearer token ${JSON.stringify(userInfoRequest)}.`);
   const heroName = await page.locator('#hero-name').inputValue();
   if (heroName !== displayName) throw new Error(`Register smoke failed: Google OAuth did not prefill hero name (${heroName}).`);
+  await assertActivePlayers(page, [displayName]);
 }
 
 const browser = await chromium.launch({ headless: true });
+const actualListProbe = await browser.newPage({ viewport: { width: 1024, height: 900 } });
+await actualListProbe.goto(url, { waitUntil: 'networkidle' });
+await assertTerminalLoginGate(actualListProbe, 'Empty actual local account list');
+await seedActivePlayers(actualListProbe, [
+  { account: 'play01', displayName: 'play01', source: 'password', lastSeenAt: '2026-07-08T00:00:00.000Z' },
+  { account: 'oauth@example.com', displayName: '星門旅人', source: 'google-oauth', lastSeenAt: '2026-07-08T00:01:00.000Z' }
+]);
+await assertTerminalLoginGate(actualListProbe, 'Seeded actual local account list', { expectedAccounts: ['play01', '星門旅人'] });
+await actualListProbe.screenshot({ path: `${screenshotsDir}/desktop-login-actual-accounts.png`, fullPage: true });
+await actualListProbe.close();
 const localRegisterProbe = await browser.newPage({ viewport: { width: 1024, height: 900 } });
 await localRegisterProbe.goto(url, { waitUntil: 'networkidle' });
 await assertTerminalLoginGate(localRegisterProbe, 'Local register');
@@ -219,6 +262,12 @@ const menuIconStyle = await desktop.locator('#function-menu-panel .function-menu
 });
 if (menuIconStyle.display !== 'grid' || menuIconStyle.borderTopWidth !== '1px') {
   throw new Error(`Desktop smoke failed: terminal menu icon style missing ${JSON.stringify(menuIconStyle)}.`);
+}
+await desktop.locator('#player-list-panel summary').click();
+const actualPlayerPanelText = await desktop.locator('#player-list-panel').innerText();
+if (!actualPlayerPanelText.includes('test01')) throw new Error('Desktop smoke failed: player-list menu should show the actual logged-in account.');
+for (const forbidden of ['晨星勇者', '光紋術士', '星砂貓', '星門守衛']) {
+  if (actualPlayerPanelText.includes(forbidden)) throw new Error(`Desktop smoke failed: player-list menu leaked fabricated account ${forbidden}.`);
 }
 await desktop.locator('#guide-panel summary').click();
 const openedGuideText = await desktop.locator('#guide-panel').innerText();
@@ -496,6 +545,6 @@ const mobileSelectedMapText = await mobile.locator('.selected-map-card').innerTe
 if (!mobileSelectedMapText.includes('廢棄後山')) throw new Error('Mobile smoke failed: map dropdown summary did not update.');
 await desktop.click('.tab-button[data-view="save"]');
 await desktop.click('#logout-button');
-await assertTerminalLoginGate(desktop, 'Desktop logout');
+await assertTerminalLoginGate(desktop, 'Desktop logout', { expectedAccounts: ['終端測試員'] });
 await browser.close();
 console.log('Smoke test passed.');

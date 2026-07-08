@@ -3209,6 +3209,9 @@ textarea:focus-visible {
 }
 
 .terminal-login__online-names li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: 1px solid var(--border);
   background: #000;
   color: var(--text);
@@ -3218,10 +3221,52 @@ textarea:focus-visible {
   white-space: nowrap;
 }
 
+.terminal-login__online-names li small {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.terminal-login__online-empty {
+  color: var(--muted);
+}
+
+.terminal-login__online-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
 .terminal-login__online-names li::before {
   content: '★';
-  margin-right: 4px;
   color: var(--primary);
+}
+
+.function-menu__account-list {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.function-menu__account-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  background: #000;
+}
+
+.function-menu__account-list li::before {
+  content: '★';
+  color: var(--primary);
+}
+
+.function-menu__account-list li small,
+.function-menu__account-empty {
+  color: var(--muted);
 }
 
 .terminal-login__grid {
