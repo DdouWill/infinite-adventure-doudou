@@ -1948,7 +1948,7 @@ th {
 
 .create-form label::before,
 .save-actions::before {
-  content: "user@doudou:~$ ";
+  content: "user@guild:~$ ";
   color: var(--secondary);
 }
 
@@ -2377,7 +2377,7 @@ select optgroup {
 }
 
 
-/* Local character / monster sprite layer. */
+/* Original-reference character / monster GIF layer. */
 .character-info__header {
   grid-template-columns: auto 1fr;
   align-items: center;

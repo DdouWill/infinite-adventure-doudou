@@ -88,7 +88,9 @@ await desktop.locator('#icon-panel summary').click();
 const iconCellCount = await desktop.locator('#icon-panel .icon-grid__cell').count();
 if (iconCellCount !== 70) throw new Error(`Desktop smoke failed: icon grid should contain 70 cells, got ${iconCellCount}.`);
 const iconImageCount = await desktop.locator('#icon-panel .icon-grid__image').count();
-if (iconImageCount < 30) throw new Error('Desktop smoke failed: icon grid should use local sprite thumbnails.');
+if (iconImageCount !== 70) throw new Error(`Desktop smoke failed: icon grid should use 70 original character GIFs, got ${iconImageCount}.`);
+const firstIconSrc = await desktop.locator('#icon-panel .icon-grid__image').first().getAttribute('src');
+if (!firstIconSrc.includes('/assets/original/chara/1.gif')) throw new Error(`Desktop smoke failed: first original character GIF missing (${firstIconSrc}).`);
 const menuRankingImageCount = await desktop.locator('#ranking-panel .avatar-image').count();
 if (menuRankingImageCount < 4) throw new Error('Desktop smoke failed: menu ranking should use character sprite images.');
 await desktop.locator('#lineage-panel summary').click();
@@ -143,6 +145,10 @@ if (!battlePageText.includes('施放') && !battlePageText.includes('使出')) {
 }
 const battleSpriteCount = await desktop.locator('#battle-page .battle-portrait').count();
 if (battleSpriteCount !== 2) throw new Error('Desktop smoke failed: battle page should show player and monster sprites.');
+const battleSpriteSrcs = await desktop.locator('#battle-page .battle-portrait').evaluateAll((imgs) => imgs.map((img) => img.getAttribute('src')));
+if (!battleSpriteSrcs.some((src) => src?.includes('/assets/original/chara/')) || !battleSpriteSrcs.some((src) => src?.includes('/assets/original/monster/'))) {
+  throw new Error(`Desktop smoke failed: battle page should use original character/monster GIFs (${battleSpriteSrcs.join(',')}).`);
+}
 const battleTurnIconCount = await desktop.locator('#battle-page .battle-turn .turn-icon').count();
 if (battleTurnIconCount < 2) throw new Error('Desktop smoke failed: battle turns should show player/monster terminal icons.');
 const battleTurnAnimation = await desktop.locator('#battle-page .battle-turn').first().evaluate((el) => getComputedStyle(el).animationName);
@@ -198,7 +204,9 @@ for (const hiddenName of ['界斷者', '星界賢者', '影月獵神', '無界�
   if (rebirthText.includes(hiddenName)) throw new Error(`Desktop smoke failed: hidden career leaked before unlock (${hiddenName}).`);
 }
 const visibleBodyText = await desktop.locator('body').innerText();
-if (visibleBodyText.includes('豆豆')) throw new Error('Desktop smoke failed: legacy visible naming should be removed.');
+if (visibleBodyText.includes('豆豆') || visibleBodyText.toLowerCase().includes('doudou')) throw new Error('Desktop smoke failed: legacy visible naming should be removed.');
+const createFormPrompt = await desktop.locator('.create-form label').first().evaluate((el) => getComputedStyle(el, '::before').content);
+if (createFormPrompt.toLowerCase().includes('doudou')) throw new Error(`Desktop smoke failed: terminal prompt still uses legacy name (${createFormPrompt}).`);
 await desktop.click('.tab-button[data-view="quest"]');
 const questText = await desktop.locator('#quest-board').innerText();
 for (const expected of ['冒險目標', '第一次出擊', '討伐圖鑑', '地圖紀錄', '草原']) {

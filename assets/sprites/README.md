@@ -1,3 +1,5 @@
-# Local sprites
+# Legacy local placeholder sprites
 
-These black/white SVG sprites are original placeholders made for this demo after referencing public classic web-RPG layout patterns. They intentionally do not copy original game image assets.
+These black/white SVG sprites were original placeholders used before the project switched to BadGameShow public original-reference GIF assets under `assets/original/`.
+
+They are kept only as fallback/development material; current playable character and monster portraits use `assets/original/chara/*.gif` and `assets/original/monster/*.gif`.

@@ -110,10 +110,12 @@ test('ultimate hidden job only appears after all hidden careers are mastered and
 
 test('portrait helpers resolve local character and monster sprites', () => {
   const player = createPlayer({ name: '圖像勇者', element: '光', archetype: 'sage' });
-  assert.match(portraitForPlayer(player), /sprites\/heroes\/sage\.svg$/);
-  assert.match(portraitForMonster('跳跳史萊姆'), /sprites\/monsters\/slime\.svg$/);
+  assert.match(portraitForPlayer(player), /assets\/original\/chara\/37\.gif$/);
+  assert.match(portraitForMonster('草原鼠'), /assets\/original\/monster\/1\.gif$/);
+  assert.match(portraitForMonster('爪貓'), /assets\/original\/monster\/2\.gif$/);
+  assert.match(portraitForMonster('黃斑狗'), /assets\/original\/monster\/3\.gif$/);
   const encounter = createBattleEncounter(player, 'meadow', rngSequence([0, 0.1, 0.9]));
-  assert.match(encounter.scene.monster.portrait, /sprites\/monsters\/.+\.svg$/);
+  assert.match(encounter.scene.monster.portrait, /assets\/original\/monster\/[1-5]\.gif$/);
 });
 
 test('reference catalogs drive original-style maps, weapons, items, and consumables', () => {
