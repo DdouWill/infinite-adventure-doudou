@@ -307,26 +307,35 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 14px currentColor;
 }
 
+.resource-row--hp .resource-meter,
 .resource-card--hp .resource-meter { color: #ff6b86; }
+.resource-row--hp .resource-meter::-webkit-progress-value,
 .resource-card--hp .resource-meter::-webkit-progress-value {
   background: linear-gradient(90deg, #9b1632, #ff4f72 58%, #ffb0bf);
 }
+.resource-row--hp .resource-meter::-moz-progress-bar,
 .resource-card--hp .resource-meter::-moz-progress-bar {
   background: linear-gradient(90deg, #9b1632, #ff4f72 58%, #ffb0bf);
 }
 
+.resource-row--mp .resource-meter,
 .resource-card--mp .resource-meter { color: #70d6ff; }
+.resource-row--mp .resource-meter::-webkit-progress-value,
 .resource-card--mp .resource-meter::-webkit-progress-value {
   background: linear-gradient(90deg, #1764c8, #5bd4ff 58%, #c5f6ff);
 }
+.resource-row--mp .resource-meter::-moz-progress-bar,
 .resource-card--mp .resource-meter::-moz-progress-bar {
   background: linear-gradient(90deg, #1764c8, #5bd4ff 58%, #c5f6ff);
 }
 
+.resource-row--exp .resource-meter,
 .resource-card--exp .resource-meter { color: #f6c96d; }
+.resource-row--exp .resource-meter::-webkit-progress-value,
 .resource-card--exp .resource-meter::-webkit-progress-value {
   background: linear-gradient(90deg, #a86512, #f6c96d 58%, #fff0b0);
 }
+.resource-row--exp .resource-meter::-moz-progress-bar,
 .resource-card--exp .resource-meter::-moz-progress-bar {
   background: linear-gradient(90deg, #a86512, #f6c96d 58%, #fff0b0);
 }
@@ -638,28 +647,70 @@ textarea { margin-top: 14px; resize: vertical; }
 
 .stat-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 0.9fr) minmax(360px, 1.8fr);
-  grid-template-areas:
-    "overview resources"
-    "overview chips";
+  grid-template-columns: minmax(220px, 0.72fr) minmax(0, 2fr);
+  grid-template-areas: "vitals info";
   gap: 8px;
   margin-bottom: 14px;
 }
 
-.character-overview { grid-area: overview; }
+.vital-card { grid-area: vitals; }
+.character-info-card { grid-area: info; }
 
-.character-overview__title strong {
-  font-size: 1.05rem;
+.compact-block-title,
+.character-info__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(246, 201, 109, 0.16);
+}
+
+.compact-block-title strong,
+.character-info__header strong {
+  font-size: 1.04rem;
   line-height: 1.35;
 }
 
-.character-overview__meta {
+.resource-stack {
   display: grid;
-  gap: 5px;
-  margin: 8px 0 0;
+  gap: 2px;
+  margin-top: 6px;
 }
 
-.character-overview__meta div {
+.resource-row {
+  display: grid;
+  gap: 5px;
+  padding: 6px 0;
+}
+
+.resource-row + .resource-row {
+  border-top: 1px solid rgba(246, 201, 109, 0.12);
+}
+
+.resource-row small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.character-info__body {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) minmax(150px, 0.82fr);
+  grid-template-areas:
+    "meta exp"
+    "chips chips";
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.character-info__meta {
+  grid-area: meta;
+  display: grid;
+  gap: 5px;
+  margin: 0;
+}
+
+.character-info__meta div {
   display: grid;
   grid-template-columns: 3.2rem minmax(0, 1fr);
   gap: 8px;
@@ -668,24 +719,30 @@ textarea { margin-top: 14px; resize: vertical; }
   border-top: 1px solid rgba(246, 201, 109, 0.14);
 }
 
-.character-overview__meta dt {
+.character-info__meta div:first-child { padding-top: 0; border-top: 0; }
+
+.character-info__meta dt {
   color: var(--muted);
   font-size: 0.78rem;
 }
 
-.character-overview__meta dd {
+.character-info__meta dd {
   margin: 0;
   color: #fff4d5;
   font-size: 0.86rem;
   line-height: 1.45;
 }
 
-.resource-strip {
-  grid-area: resources;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+.character-info__exp {
+  grid-area: exp;
+  align-self: stretch;
+  padding: 8px 10px;
+  border: 1px solid rgba(246, 201, 109, 0.18);
+  border-radius: 10px;
+  background: rgba(9, 7, 16, 0.3);
 }
+
+.character-info__exp .resource-row { padding: 0; }
 
 .stat-chip-row {
   grid-area: chips;
@@ -694,24 +751,31 @@ textarea { margin-top: 14px; resize: vertical; }
   gap: 8px;
 }
 
-.resource-strip .resource-card,
-.stat-card--compact {
+.stat-chip {
+  min-height: 52px;
   padding: 8px 10px;
+  border: 1px solid rgba(246, 201, 109, 0.18);
+  border-radius: 10px;
+  background: rgba(9, 7, 16, 0.25);
 }
 
-.resource-card { gap: 5px; }
+.stat-chip span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
 
 .resource-card__header strong,
-.stat-card--compact strong {
+.stat-chip strong {
+  display: block;
+  color: var(--gold);
   font-size: 1.02rem;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 12px rgba(246, 201, 109, 0.28);
 }
 
-.resource-card small {
-  font-size: 0.72rem;
-}
-
-.stat-card--compact span,
 .resource-card__header span {
+  color: var(--muted);
   font-size: 0.74rem;
 }
 
@@ -960,11 +1024,18 @@ th {
   .stat-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
-      "overview"
-      "resources"
+      "vitals"
+      "info";
+  }
+  .resource-stack { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .resource-row + .resource-row { border-top: 0; }
+  .character-info__body {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "meta"
+      "exp"
       "chips";
   }
-  .resource-strip { grid-template-columns: 1fr; }
   .stat-chip-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tab-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .start-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -982,6 +1053,8 @@ th {
   .save-actions,
   .tab-nav { grid-template-columns: 1fr; }
   .stat-chip-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .resource-stack { grid-template-columns: 1fr; }
+  .resource-row + .resource-row { border-top: 1px solid rgba(246, 201, 109, 0.12); }
   .start-actions { grid-template-columns: 1fr; }
   .classic-footer table,
   .classic-footer tbody,

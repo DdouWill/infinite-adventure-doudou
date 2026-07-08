@@ -131,61 +131,65 @@ function render() {
 
 function renderStats() {
   const stats = totalStats(state);
-  const resourceCards = [
+  const vitalRows = [
     { label: 'HP', current: state.hp, max: state.maxHp, tone: 'hp', caption: '生命值' },
-    { label: 'MP', current: state.mp, max: state.maxMp, tone: 'mp', caption: '魔力值' },
-    { label: 'EXP', current: state.exp, max: state.nextExp, tone: 'exp', caption: '升級進度' }
-  ].map(({ label, current, max, tone, caption }) => resourceCard({ label, current, max, tone, caption }));
+    { label: 'MP', current: state.mp, max: state.maxMp, tone: 'mp', caption: '魔力值' }
+  ].map(({ label, current, max, tone, caption }) => resourceRow({ label, current, max, tone, caption })).join('');
+  const expRow = resourceRow({ label: 'EXP', current: state.exp, max: state.nextExp, tone: 'exp', caption: '升級進度' });
 
   const equipped = compactEquipmentSummary(state);
-  const overview = `
-    <article class="stat-card character-overview">
-      <div class="character-overview__title">
-        <span>角色情報</span>
-        <strong>${escapeHtml(state.element)}・${escapeHtml(state.job)}｜Lv.${state.level}</strong>
-      </div>
-      <dl class="character-overview__meta">
-        <div><dt>戰績</dt><dd>${state.wins}勝/${state.losses}敗</dd></div>
-        <div><dt>戰數</dt><dd>${state.battles}</dd></div>
-        <div><dt>裝備</dt><dd>${escapeHtml(equipped)}</dd></div>
-      </dl>
-    </article>
-  `;
-
-  const values = [
+  const statRows = [
     ['金幣', state.gold],
     ['攻擊', stats.attack],
     ['防禦', stats.defense],
     ['速度', stats.speed],
     ['熟練', state.mastery]
-  ];
-  const statCards = values.map(([label, value]) => `
-    <article class="stat-card stat-card--compact">
+  ].map(([label, value]) => `
+    <div class="stat-chip">
       <span>${escapeHtml(label)}</span>
       <strong>${escapeHtml(String(value))}</strong>
-    </article>
+    </div>
   `).join('');
 
   nodes.statGrid.innerHTML = `
-    ${overview}
-    <section class="resource-strip" aria-label="角色資源條">${resourceCards.join('')}</section>
-    <section class="stat-chip-row" aria-label="角色能力摘要">${statCards}</section>
+    <article class="stat-card vital-card" aria-label="HP 與 MP">
+      <div class="compact-block-title">
+        <span>生命 / 魔力</span>
+        <strong>HP・MP</strong>
+      </div>
+      <div class="resource-stack">${vitalRows}</div>
+    </article>
+    <article class="stat-card character-info-card" aria-label="其餘角色資訊">
+      <div class="character-info__header">
+        <span>角色情報</span>
+        <strong>${escapeHtml(state.element)}・${escapeHtml(state.job)}｜Lv.${state.level}</strong>
+      </div>
+      <div class="character-info__body">
+        <dl class="character-info__meta">
+          <div><dt>戰績</dt><dd>${state.wins}勝/${state.losses}敗</dd></div>
+          <div><dt>戰數</dt><dd>${state.battles}</dd></div>
+          <div><dt>裝備</dt><dd>${escapeHtml(equipped)}</dd></div>
+        </dl>
+        <div class="character-info__exp">${expRow}</div>
+        <div class="stat-chip-row" aria-label="角色能力摘要">${statRows}</div>
+      </div>
+    </article>
   `;
 }
 
-function resourceCard({ label, current, max, tone, caption }) {
+function resourceRow({ label, current, max, tone, caption }) {
   const safeMax = Math.max(1, Number(max) || 1);
   const safeCurrent = Math.min(safeMax, Math.max(0, Number(current) || 0));
   const percent = Math.round((safeCurrent / safeMax) * 100);
   return `
-    <article class="stat-card resource-card resource-card--${tone}">
+    <div class="resource-row resource-row--${tone}">
       <div class="resource-card__header">
         <span>${escapeHtml(label)}</span>
         <strong>${safeCurrent}/${safeMax}</strong>
       </div>
       <progress class="resource-meter" max="${safeMax}" value="${safeCurrent}" aria-label="${escapeHtml(label)} ${safeCurrent}/${safeMax}"></progress>
       <small>${escapeHtml(caption)}｜${percent}%</small>
-    </article>
+    </div>
   `;
 }
 
