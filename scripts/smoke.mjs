@@ -13,7 +13,7 @@ function withBattleDelay(rawUrl) {
   return nextUrl.toString();
 }
 
-async function assertOriginalLoginGate(page, label) {
+async function assertTerminalLoginGate(page, label) {
   const loginVisible = await page.locator('#login-view').isVisible();
   if (!loginVisible) throw new Error(`${label} smoke failed: login view should be visible before entering game.`);
   const appVisible = await page.locator('.app-shell').isVisible();
@@ -21,19 +21,26 @@ async function assertOriginalLoginGate(page, label) {
   const createVisible = await page.locator('#create-view').isVisible();
   if (createVisible) throw new Error(`${label} smoke failed: character creation should not be visible before login.`);
   const loginText = await page.locator('#login-view').innerText();
-  for (const expected of ['注意事項', '登入遊戲', '帳號', '密碼', '註冊帳號', '伺服器維護時間']) {
-    if (!loginText.includes(expected)) throw new Error(`${label} smoke failed: original-style login block missing ${expected}.`);
+  for (const expected of ['AUTH_GATE', '帳號', '密碼', '登入遊戲', '系統公告', '伺服器狀態']) {
+    if (!loginText.includes(expected)) throw new Error(`${label} smoke failed: terminal login block missing ${expected}.`);
   }
-  const logoSrc = await page.locator('#login-logo').getAttribute('src');
-  if (!logoSrc?.includes('/assets/original/ui/logo.png')) throw new Error(`${label} smoke failed: original login logo missing (${logoSrc}).`);
-  const sectionTitleIconCount = await page.locator('#login-view .login-section-title img').count();
-  if (sectionTitleIconCount < 3) throw new Error(`${label} smoke failed: original red section icons missing (${sectionTitleIconCount}).`);
-  const loginPanelStyle = await page.locator('.original-login__content').evaluate((el) => {
+  const forbiddenText = ['BadGameShow', '註冊帳號', '原版', '注意事項'];
+  for (const forbidden of forbiddenText) {
+    if (loginText.includes(forbidden)) throw new Error(`${label} smoke failed: copied/original login text leaked (${forbidden}).`);
+  }
+  const forbiddenAssets = await page.locator('#login-view img').evaluateAll((imgs) => imgs.map((img) => img.getAttribute('src') || '').filter((src) => src.includes('/assets/original/ui/') || src.includes('badgameshow')));
+  if (forbiddenAssets.length) throw new Error(`${label} smoke failed: copied login assets leaked ${forbiddenAssets.join(',')}.`);
+  const keyartSrc = await page.locator('#login-keyart').getAttribute('src');
+  if (!keyartSrc?.includes('/assets/generated/login-terminal-keyart.png')) throw new Error(`${label} smoke failed: generated terminal key art missing (${keyartSrc}).`);
+  const loginPanelStyle = await page.locator('.terminal-login__panel--main').evaluate((el) => {
     const style = getComputedStyle(el);
-    return { color: style.color, backgroundColor: style.backgroundColor, borderColor: style.borderColor };
+    return { color: style.color, backgroundColor: style.backgroundColor, borderColor: style.borderColor, borderRadius: style.borderRadius, fontFamily: style.fontFamily };
   });
-  if (loginPanelStyle.color !== 'rgb(0, 0, 0)' || loginPanelStyle.backgroundColor !== 'rgb(255, 255, 238)') {
-    throw new Error(`${label} smoke failed: original cream login panel style missing ${JSON.stringify(loginPanelStyle)}.`);
+  if (loginPanelStyle.color !== 'rgb(245, 245, 245)' || loginPanelStyle.backgroundColor !== 'rgb(10, 10, 10)' || loginPanelStyle.borderColor !== 'rgb(255, 255, 255)' || loginPanelStyle.borderRadius !== '0px') {
+    throw new Error(`${label} smoke failed: terminal login panel style missing ${JSON.stringify(loginPanelStyle)}.`);
+  }
+  if (!loginPanelStyle.fontFamily.toLowerCase().includes('mono') && !loginPanelStyle.fontFamily.toLowerCase().includes('consolas')) {
+    throw new Error(`${label} smoke failed: terminal login monospace font missing ${loginPanelStyle.fontFamily}.`);
   }
 }
 
@@ -51,7 +58,7 @@ async function loginThroughGate(page, account, password) {
 const browser = await chromium.launch({ headless: true });
 const desktop = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 await desktop.goto(url, { waitUntil: 'networkidle' });
-await assertOriginalLoginGate(desktop, 'Desktop');
+await assertTerminalLoginGate(desktop, 'Desktop');
 await desktop.screenshot({ path: `${screenshotsDir}/desktop-login.png`, fullPage: true });
 await loginThroughGate(desktop, 'test01', 'pass01');
 const terminalTheme = await desktop.evaluate(() => {
@@ -319,7 +326,7 @@ for (const expected of ['頭像', 'HP', 'MP', '職業', '戰數']) {
 await desktop.click('.tab-button[data-view="battle"]');
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
 await mobile.goto(url, { waitUntil: 'networkidle' });
-await assertOriginalLoginGate(mobile, 'Mobile');
+await assertTerminalLoginGate(mobile, 'Mobile');
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-login.png`, fullPage: true });
 await loginThroughGate(mobile, 'mobi01', 'pass01');
 const mobileMenuButtonBox = await mobile.locator('#function-menu-button').boundingBox();
@@ -375,6 +382,6 @@ const mobileSelectedMapText = await mobile.locator('.selected-map-card').innerTe
 if (!mobileSelectedMapText.includes('廢棄後山')) throw new Error('Mobile smoke failed: map dropdown summary did not update.');
 await desktop.click('.tab-button[data-view="save"]');
 await desktop.click('#logout-button');
-await assertOriginalLoginGate(desktop, 'Desktop logout');
+await assertTerminalLoginGate(desktop, 'Desktop logout');
 await browser.close();
 console.log('Smoke test passed.');

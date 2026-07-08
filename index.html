@@ -9,73 +9,68 @@
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主要內容</a>
-  <section id="login-view" class="original-login" aria-label="登入遊戲">
-    <div class="original-login__logo-bar">
-      <img id="login-logo" class="original-login__logo" src="./assets/original/ui/logo.png" alt="無限冒險 BadGameShow 原版標誌" width="250" height="250">
-    </div>
-    <div class="original-login__wrap">
-      <main class="original-login__main" aria-label="登入與注意事項">
-        <article class="original-login__content">
-          <h3 class="login-section-title"><img src="./assets/original/ui/xred.png" alt="" width="24" height="24">注意事項</h3>
-          <div class="login-articles">
-            <p>※登入遊戲後，即視為同意基本遊戲禮儀；請勿催促、命令或干擾其他冒險者。</p>
-            <p>※本終端版為本機 demo 登入，不會連線原站伺服器；帳號與密碼僅用於開啟本機遊戲介面。</p>
-            <p>※帳號與密碼請使用 4～8 個半形英數字或底線。</p>
-            <p class="login-warning">※測試版資料保存在瀏覽器 localStorage，清除瀏覽器資料會移除角色。</p>
-            <img class="original-login__cover" src="./assets/original/ui/cover.png" alt="原版測試版注意事項圖" width="630" height="233">
-          </div>
+  <section id="login-view" class="terminal-login" aria-label="登入遊戲">
+    <div class="terminal-login__frame">
+      <header class="terminal-login__header">
+        <pre class="terminal-login__mark" aria-label="TERMINAL GATE ASCII mark">+---+
+|∞&gt;_|
++---+</pre>
+        <div>
+          <p class="terminal-login__eyebrow">[BOOT] ISEKAI_GUILD_AUTH</p>
+          <h1>無限冒險：終端異界</h1>
+          <code>guest@adventure:~$ ./login --mode=terminal --gate=AUTH_GATE</code>
+        </div>
+      </header>
 
-          <h3 class="login-section-title"><img src="./assets/original/ui/xred.png" alt="" width="24" height="24">登入遊戲</h3>
-          <form id="login-form" class="original-login__form" autocomplete="on">
-            <table class="original-login__table">
-              <tbody>
-                <tr>
-                  <th scope="row">帳號</th>
-                  <td>
-                    <input id="login-id" name="id" type="text" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="遊戲帳號" autocomplete="username" required>
-                    <br><small>※帳號請使用４～８個半形字</small>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">密碼</th>
-                  <td>
-                    <input id="login-pass" name="pass" type="password" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="遊戲密碼" autocomplete="current-password" required>
-                    <br><small>※密碼請使用４～８個半形字</small>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="original-login__actions">
-              <button id="login-submit" class="original-button" type="submit">登入遊戲</button>
-              <button class="original-button" type="reset">清除重寫</button>
+      <div class="terminal-login__grid">
+        <main class="terminal-login__panel terminal-login__panel--main" aria-label="登入終端">
+          <div class="terminal-panel-title"><span>&gt;</span><strong>AUTH_GATE</strong><em>LOGIN REQUIRED</em></div>
+          <img id="login-keyart" class="terminal-login__keyart" src="./assets/generated/login-terminal-keyart.png" alt="終端異界入口原創圖像" width="1600" height="983">
+          <form id="login-form" class="terminal-login__form" autocomplete="on">
+            <label>
+              <span>帳號</span>
+              <input id="login-id" name="id" type="text" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="adventurer" autocomplete="username" required>
+              <small>4～8 個半形英數字或底線</small>
+            </label>
+            <label>
+              <span>密碼</span>
+              <input id="login-pass" name="pass" type="password" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="********" autocomplete="current-password" required>
+              <small>本機 demo gate，不連線任何外部帳密服務</small>
+            </label>
+            <div class="terminal-login__actions">
+              <button id="login-submit" class="terminal-button terminal-button--primary" type="submit">登入遊戲</button>
+              <button class="terminal-button" type="reset">清除重寫</button>
             </div>
             <p id="login-message" class="login-message" role="status" aria-live="polite"></p>
           </form>
-        </article>
-      </main>
+        </main>
 
-      <aside class="original-login__side" aria-label="原版側欄功能">
-        <section>
-          <h3 class="login-section-title"><img src="./assets/original/ui/xred.png" alt="" width="24" height="24">開始遊戲</h3>
-          <ul>
-            <li><button class="original-button" type="button" data-login-focus="id">註冊帳號</button><button class="original-button" type="button" data-login-focus="pass">登入遊戲</button></li>
-          </ul>
-        </section>
-        <section>
-          <h3 class="login-section-title"><img src="./assets/original/ui/xred.png" alt="" width="24" height="24">伺服器維護時間</h3>
-          <ul>
-            <li>■停機維護：<br>　每週星期五<br>　上午 0:00 至 18:00</li>
-            <li>■伺服重啟：<br>　每週星期五<br>　上午 7:00 至 08:30</li>
-          </ul>
-        </section>
-        <section>
-          <h3 class="login-section-title"><img src="./assets/original/ui/xred.png" alt="" width="24" height="24">公開索引</h3>
-          <ul>
-            <li>遊戲說明 / 玩家列表 / 各項排行 / 圖像一覧</li>
-            <li>武器清單 / 道具清單 / 招式清單 / 戰鬥地圖</li>
-          </ul>
-        </section>
-      </aside>
+        <aside class="terminal-login__side" aria-label="登入側欄資訊">
+          <section class="terminal-login__panel">
+            <div class="terminal-panel-title"><span>#</span><strong>系統公告</strong></div>
+            <ul>
+              <li>登入成功後才會載入遊戲 shell。</li>
+              <li>角色資料仍保存在本機 localStorage。</li>
+              <li>請勿輸入真實常用密碼。</li>
+            </ul>
+          </section>
+          <section class="terminal-login__panel">
+            <div class="terminal-panel-title"><span>$</span><strong>快速入口</strong></div>
+            <div class="terminal-login__quick-actions">
+              <button class="terminal-button" type="button" data-login-focus="id">聚焦帳號</button>
+              <button class="terminal-button" type="button" data-login-focus="pass">聚焦密碼</button>
+            </div>
+          </section>
+          <section class="terminal-login__panel">
+            <div class="terminal-panel-title"><span>!</span><strong>伺服器狀態</strong></div>
+            <dl class="terminal-status-list">
+              <div><dt>AUTH</dt><dd>LOCAL OK</dd></div>
+              <div><dt>SAVE</dt><dd>BROWSER</dd></div>
+              <div><dt>MODE</dt><dd>STATIC DEMO</dd></div>
+            </dl>
+          </section>
+        </aside>
+      </div>
     </div>
   </section>
   <div class="app-shell classic-shell is-hidden">
