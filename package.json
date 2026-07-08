@@ -4,7 +4,7 @@
   "description": "無限冒險-豆豆版：可部署到 Cloudflare Pages 的純 HTML/CSS/JS 文字 RPG demo。",
   "type": "module",
   "scripts": {
-    "check:syntax": "node --check assets/game-core.js && node --check assets/app.js && node --check scripts/build.mjs && node --check scripts/check-inline.mjs && node --check scripts/check-cloudflare-free.mjs && node --check scripts/smoke.mjs && node --check tests/game-core.test.mjs",
+    "check:syntax": "node --check assets/reference-catalog.js && node --check assets/game-core.js && node --check assets/app.js && node --check scripts/build.mjs && node --check scripts/check-inline.mjs && node --check scripts/check-cloudflare-free.mjs && node --check scripts/smoke.mjs && node --check tests/game-core.test.mjs",
     "check:inline": "node scripts/check-inline.mjs",
     "test": "node --test tests/*.test.mjs",
     "build": "node scripts/build.mjs",

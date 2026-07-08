@@ -1,74 +1,101 @@
+import { referenceCatalog } from './reference-catalog.js';
+
 export const elements = ['火', '水', '風', '星', '雷', '光', '闇'];
 
+function referenceMap(name) {
+  return referenceCatalog.maps.find((map) => map.name === name) || { name, category: '戰鬥地圖', description: '', drop: '' };
+}
+
+function makeMap(name, options) {
+  const reference = referenceMap(name);
+  return {
+    id: options.id,
+    name,
+    category: options.category || reference.category,
+    stage: options.stage,
+    level: options.level,
+    cost: options.cost,
+    description: reference.description,
+    routeHint: `原版掉落／特色：${reference.drop}`,
+    monsters: options.monsters,
+    reward: options.reward
+  };
+}
+
 export const maps = [
-  {
-    id: 'meadow',
-    name: '晨露草原',
-    category: '一般地圖',
-    stage: '新手起點',
-    level: 1,
-    cost: 0,
-    description: '新手練功地。先熟悉戰鬥、任務與旅店恢復。',
-    routeHint: '目標：完成草原討伐，存第一筆裝備錢。',
-    monsters: ['跳跳史萊姆', '迷路菇菇', '貪吃豆鳥'],
-    reward: { exp: 16, gold: 22, mastery: 8 }
-  },
-  {
-    id: 'marsh',
-    name: '霧氣沼地',
-    category: '一般地圖',
-    stage: '裝備檢定',
-    level: 3,
-    cost: 20,
-    description: '需要一點裝備。怪物會造成較高傷害。',
-    routeHint: '建議：買木劍或布衣後再穩定刷。',
-    monsters: ['泥沼蛙兵', '毒霧水母', '濕地咒偶'],
-    reward: { exp: 34, gold: 58, mastery: 17 }
-  },
-  {
-    id: 'tower',
-    name: '修行者高塔',
-    category: '試煉地圖',
-    stage: '能力上限',
-    level: 6,
-    cost: 60,
-    description: '參考小白指南的新手路線，高塔用來檢定能力與戰技。',
-    routeHint: '目標：刷熟練、升級，準備挑戰進階地圖。',
-    monsters: ['星光守衛', '裂紋魔書', '塔頂小惡魔'],
-    reward: { exp: 78, gold: 132, mastery: 38 }
-  },
-  {
-    id: 'ruins',
-    name: '廢棄後山',
-    category: '特殊地圖',
-    stage: '掉寶路線',
-    level: 9,
-    cost: 120,
-    description: '同步原版改版紀錄的掉寶地圖概念，風險高但報酬好。',
-    routeHint: '建議：有青銅胸甲與穩定勝率後再來。',
-    monsters: ['後山山賊', '霧隱獸', '寶箱守衛'],
-    reward: { exp: 128, gold: 220, mastery: 62 }
-  },
-  {
-    id: 'sealed_gate',
-    name: '封印之門',
-    category: '封閉專區',
-    stage: '魔王預告',
-    level: 12,
-    cost: 180,
-    description: '豆豆版預留的世界 Boss / 魔王城入口。',
-    routeHint: '目前作為高階挑戰展示，正式多人版再開放國戰。',
-    monsters: ['封印守護者', '星門魔像', '裂界使者'],
-    reward: { exp: 188, gold: 320, mastery: 96 }
-  }
+  makeMap('草原', { id: 'meadow', stage: '新手入門', level: 1, cost: 0, monsters: ['草原鼠', '爪貓', '黃斑狗', '獨色鳥', '紅蟻'], reward: { exp: 16, gold: 22, mastery: 8 } }),
+  makeMap('沼地', { id: 'marsh', stage: '裝備檢定', level: 3, cost: 20, monsters: ['犀牛', '蜂群'], reward: { exp: 34, gold: 58, mastery: 17 } }),
+  makeMap('森林', { id: 'forest', stage: '掉寶初階', level: 5, cost: 45, monsters: ['魔狼', '夜狐'], reward: { exp: 58, gold: 96, mastery: 28 } }),
+  makeMap('高塔', { id: 'tower', stage: '高塔試煉', level: 7, cost: 70, monsters: ['七彩鳥', '惡龍'], reward: { exp: 86, gold: 138, mastery: 42 } }),
+  makeMap('廢城', { id: 'ruined_city', stage: '原料狩獵', level: 9, cost: 110, monsters: ['七個小矮人(火)', '七個小矮人(水)', '七個小矮人(風)', '七個小矮人(雷)', '七個小矮人(星)', '七個小矮人(光)', '七個小矮人(暗)'], reward: { exp: 122, gold: 190, mastery: 58 } }),
+  makeMap('禁地', { id: 'forbidden', stage: '王座 26 層', level: 12, cost: 160, monsters: ['禁地守護者', '白羊座', '金牛座', '雙子座', '巨蟹座', '獅子座', '處女座', '天秤座', '天蠍座', '射手座', '山羊座', '水瓶座', '雙魚座', '魔王'], reward: { exp: 180, gold: 260, mastery: 86 } }),
+  makeMap('魔王城', { id: 'demon_castle', stage: '奧義石狩獵', level: 14, cost: 220, monsters: ['爆彈魔將', '星際劍皇', '歡樂外送魔'], reward: { exp: 230, gold: 340, mastery: 112 } }),
+  makeMap('寶箱的廢棄船', { id: 'treasure_ship', stage: '寶箱航線', level: 15, cost: 250, monsters: ['死神-路克', 'EnderMan', '寶箱的守財奴', '寵物箱子的封印箱', '裝備奧石的守門員'], reward: { exp: 248, gold: 390, mastery: 124 } }),
+  makeMap('廢棄後山', { id: 'ruins', stage: '分身寵物', level: 16, cost: 280, monsters: ['實驗失敗體', '母體帶孩子', '後山奇獸'], reward: { exp: 268, gold: 420, mastery: 132 } }),
+  makeMap('光明草原', { id: 'bright_meadow', stage: '界限突破', level: 8, cost: 80, monsters: ['螳螂', '蚱蜢', '蟑螂'], reward: { exp: 96, gold: 80, mastery: 70 } }),
+  makeMap('藍天之下', { id: 'blue_sky', stage: '稀有連鎖', level: 11, cost: 140, monsters: ['藍天守衛', '雲海飛獸', '天空幻影'], reward: { exp: 166, gold: 240, mastery: 96 } }),
+  makeMap('地獄', { id: 'hell', stage: '高級素材', level: 13, cost: 200, monsters: ['地獄犬', '熔岩惡魔', '解放守衛'], reward: { exp: 210, gold: 300, mastery: 120 } }),
+  makeMap('財寶洞穴', { id: 'treasure_cave', stage: '金錢洞穴', level: 2, cost: 15, monsters: ['洞穴鼠', '寶箱蟲', '金幣守衛'], reward: { exp: 24, gold: 120, mastery: 12 } }),
+  makeMap('修行者之塔', { id: 'training_tower', stage: '熟練練功', level: 4, cost: 35, monsters: ['塔中修行者', '試煉石像', '修行鳥'], reward: { exp: 48, gold: 88, mastery: 34 } }),
+  makeMap('神秘的湖泊', { id: 'mystic_lake', stage: '連鎖湖泊', level: 4, cost: 35, monsters: ['湖泊水靈', '沉水犀牛', '霧面魚'], reward: { exp: 46, gold: 82, mastery: 30 } }),
+  makeMap('黃金宮殿', { id: 'gold_palace', stage: '大量金錢', level: 6, cost: 65, monsters: ['黃金守衛', '宮殿魔狼', '女神像守衛'], reward: { exp: 68, gold: 260, mastery: 36 } }),
+  makeMap('暗黑雪原', { id: 'dark_snowfield', stage: '界限 +1', level: 8, cost: 95, monsters: ['雪原夜狐', '暗黑惡龍', '古董守護者'], reward: { exp: 112, gold: 170, mastery: 72 } }),
+  makeMap('星空下的夜', { id: 'starlit_night', stage: '稀有寶物', level: 10, cost: 130, monsters: ['星夜幻影', '流星獸', '夜空守衛'], reward: { exp: 148, gold: 230, mastery: 88 } }),
+  makeMap('神秘的女神像', { id: 'goddess_statue', stage: '鑰匙掉落', level: 6, cost: 60, monsters: ['女神像守衛', '希望鐘守護者', '太陽鑰守衛'], reward: { exp: 74, gold: 145, mastery: 44 } }),
+  makeMap('飛龍之塔', { id: 'dragon_tower', stage: '界限必升', level: 11, cost: 150, monsters: ['飛龍', '龍塔守衛', '古龍幻影'], reward: { exp: 176, gold: 260, mastery: 110 } }),
+  makeMap('傳說秘地', { id: 'legendary_secret', stage: '神秘寶箱', level: 12, cost: 180, monsters: ['秘地守護者', '神秘寶箱', '傳說幻影'], reward: { exp: 190, gold: 320, mastery: 112 } }),
+  makeMap('滿月下的夜', { id: 'full_moon_night', stage: '稀有連鎖', level: 10, cost: 135, monsters: ['滿月狼人', '夜狐', '月光守衛'], reward: { exp: 150, gold: 230, mastery: 90 } }),
+  makeMap('冒險者的試練', { id: 'adventurer_trial', stage: '戰數觸發', level: 3, cost: 25, monsters: ['試練草原鼠', '試練爪貓'], reward: { exp: 36, gold: 110, mastery: 18 } }),
+  makeMap('勇者的試練', { id: 'hero_trial', stage: '戰數觸發', level: 5, cost: 50, monsters: ['試練犀牛', '試練蜂群'], reward: { exp: 64, gold: 180, mastery: 32 } }),
+  makeMap('英雄的試練', { id: 'legend_trial', stage: '戰數觸發', level: 7, cost: 85, monsters: ['試練魔狼', '試練夜狐'], reward: { exp: 96, gold: 260, mastery: 48 } }),
+  makeMap('星空迷宮', { id: 'star_maze', stage: '迷宮跳板', level: 9, cost: 120, monsters: ['星空迷宮獸', '迷宮守門員', '流星傀儡'], reward: { exp: 130, gold: 220, mastery: 74 } }),
+  makeMap('秘寶迷宮', { id: 'secret_treasure_maze', stage: '迷宮跳板', level: 10, cost: 135, monsters: ['秘寶守財奴', '迷宮寶箱', '寶藏魔像'], reward: { exp: 150, gold: 300, mastery: 82 } }),
+  makeMap('艾恩葛朗特', { id: 'aincrad', stage: '世界地圖', level: 15, cost: 260, monsters: ['樓層守衛', '樓層武器', '艾恩葛朗特 Boss'], reward: { exp: 252, gold: 380, mastery: 136 } }),
+  makeMap('上塔之門', { id: 'upper_tower_gate', stage: 'BOSS 專屬', level: 18, cost: 360, monsters: ['上塔守門員', '樓層 Boss', '啟動武器-樓層'], reward: { exp: 360, gold: 520, mastery: 180 } })
 ];
 
+function catalogWeapon(id, name, price, slot = 'weapon') {
+  const weapon = referenceCatalog.weapons.find((item) => item.name === name);
+  const power = weapon?.power ?? 10;
+  const weight = weapon?.weight ?? 5;
+  return {
+    id,
+    type: slot,
+    name,
+    price,
+    attack: slot === 'weapon' ? Math.max(2, Math.round(power / 7)) : 0,
+    defense: slot === 'armor' ? Math.max(2, Math.round((power + weight) / 12)) : slot === 'trinket' ? Math.max(1, Math.round(power / 25)) : 0,
+    description: weapon ? `原版武器清單：${weapon.element}屬性，威力 ${weapon.power}，重量 ${weapon.weight}，產地 ${weapon.origin}。${weapon.ougi !== '無' ? `奧義：${weapon.ougi}` : ''}` : '參考原版裝備命名。'
+  };
+}
+
+function consumable(id, name, price, effect, value, description) {
+  return { id, type: 'consumable', name, price, attack: 0, defense: 0, effect, value, description };
+}
+
 export const shopItems = [
-  { id: 'wood_sword', type: 'weapon', name: '豆木短劍', price: 80, attack: 7, defense: 0, description: '公會發放的木劍升級版。' },
-  { id: 'wind_dagger', type: 'weapon', name: '風芽匕首', price: 220, attack: 15, defense: 0, description: '輕巧，適合想先秒怪的新手。' },
-  { id: 'linen_robe', type: 'armor', name: '旅行布衣', price: 90, attack: 0, defense: 6, description: '比公會制服更耐打。' },
-  { id: 'bronze_mail', type: 'armor', name: '青銅胸甲', price: 260, attack: 0, defense: 14, description: '穩定通過沼地的第一步。' },
-  { id: 'star_charm', type: 'trinket', name: '星砂護符', price: 180, attack: 3, defense: 3, description: '小幅提升攻防，附帶好心情。' }
+  catalogWeapon('short_sword', '短劍', 80),
+  catalogWeapon('long_sword', '長劍', 180),
+  catalogWeapon('short_bow', '短弓', 320),
+  catalogWeapon('double_axe', '雙刃斧', 560),
+  catalogWeapon('flame_sword', '炎之劍', 700),
+  catalogWeapon('ice_lance', '冰點下的槍', 860),
+  catalogWeapon('storm_staff', '暴風杖', 760),
+  catalogWeapon('thunder_sword', '雷鳴劍', 980),
+  catalogWeapon('firefly_bow', '螢的弓', 1200),
+  catalogWeapon('holy_lance', '聖槍', 2600),
+  catalogWeapon('cloth_armor', '護甲', 120, 'armor'),
+  catalogWeapon('water_robe', '袍', 240, 'armor'),
+  catalogWeapon('thunder_mail', '鎧', 520, 'armor'),
+  catalogWeapon('holy_armor', '聖甲', 900, 'armor'),
+  catalogWeapon('hope_bell', '希望之鐘', 480, 'trinket'),
+  catalogWeapon('dark_key', '暗闇之鑰', 580, 'trinket'),
+  consumable('herb', '藥草', 30, 'heal', 50, '原版道具：使用後可補血。'),
+  consumable('basic_potion', '初級回復藥', 120, 'heal', 120, '原版道具：在戰鬥後自動補血；豆豆版改為主動使用。'),
+  consumable('mastery_book', '熟練之書', 420, 'mastery', 1000, '原版道具：增加 1000 熟練。豆豆版同步為熟練大幅提升。'),
+  consumable('sword_book', '劍術之書', 360, 'attack', 3, '原版道具：增加劍術熟練；豆豆版轉為攻擊成長。'),
+  consumable('life_fruit', '生命之果', 520, 'maxHp', 12, '原版道具：生命力上限 +1；豆豆版轉為 HP 上限提升。'),
+  consumable('hope_fruit', '希望果實', 900, 'gold', 250, '原版道具：有機率進入星空下的夜；豆豆版轉為稀有冒險資金。')
 ];
 
 export const countries = [
@@ -89,6 +116,52 @@ export const heroPortraits = {
 };
 
 export const monsterPortraits = {
+  '草原鼠': './assets/sprites/monsters/slime.svg',
+  '爪貓': './assets/sprites/monsters/mist_beast.svg',
+  '黃斑狗': './assets/sprites/monsters/frog_soldier.svg',
+  '獨色鳥': './assets/sprites/monsters/bean_bird.svg',
+  '紅蟻': './assets/sprites/monsters/slime.svg',
+  '犀牛': './assets/sprites/monsters/frog_soldier.svg',
+  '蜂群': './assets/sprites/monsters/bean_bird.svg',
+  '魔狼': './assets/sprites/monsters/mist_beast.svg',
+  '夜狐': './assets/sprites/monsters/mist_beast.svg',
+  '七彩鳥': './assets/sprites/monsters/star_guard.svg',
+  '惡龍': './assets/sprites/monsters/rift_herald.svg',
+  '七個小矮人(火)': './assets/sprites/monsters/marsh_doll.svg',
+  '七個小矮人(水)': './assets/sprites/monsters/marsh_doll.svg',
+  '七個小矮人(風)': './assets/sprites/monsters/marsh_doll.svg',
+  '七個小矮人(雷)': './assets/sprites/monsters/marsh_doll.svg',
+  '七個小矮人(星)': './assets/sprites/monsters/marsh_doll.svg',
+  '七個小矮人(光)': './assets/sprites/monsters/marsh_doll.svg',
+  '七個小矮人(暗)': './assets/sprites/monsters/marsh_doll.svg',
+  '禁地守護者': './assets/sprites/monsters/seal_guardian.svg',
+  '白羊座': './assets/sprites/monsters/star_guard.svg',
+  '金牛座': './assets/sprites/monsters/star_guard.svg',
+  '雙子座': './assets/sprites/monsters/star_guard.svg',
+  '巨蟹座': './assets/sprites/monsters/star_guard.svg',
+  '獅子座': './assets/sprites/monsters/star_guard.svg',
+  '處女座': './assets/sprites/monsters/star_guard.svg',
+  '天秤座': './assets/sprites/monsters/star_guard.svg',
+  '天蠍座': './assets/sprites/monsters/star_guard.svg',
+  '射手座': './assets/sprites/monsters/star_guard.svg',
+  '山羊座': './assets/sprites/monsters/star_guard.svg',
+  '水瓶座': './assets/sprites/monsters/star_guard.svg',
+  '雙魚座': './assets/sprites/monsters/star_guard.svg',
+  '魔王': './assets/sprites/monsters/rift_herald.svg',
+  '爆彈魔將': './assets/sprites/monsters/tower_imp.svg',
+  '星際劍皇': './assets/sprites/monsters/star_golem.svg',
+  '歡樂外送魔': './assets/sprites/monsters/bean_bird.svg',
+  '死神-路克': './assets/sprites/monsters/rift_herald.svg',
+  'EnderMan': './assets/sprites/monsters/mist_beast.svg',
+  '寶箱的守財奴': './assets/sprites/monsters/chest_guard.svg',
+  '寵物箱子的封印箱': './assets/sprites/monsters/chest_guard.svg',
+  '裝備奧石的守門員': './assets/sprites/monsters/seal_guardian.svg',
+  '螳螂': './assets/sprites/monsters/slime.svg',
+  '蚱蜢': './assets/sprites/monsters/bean_bird.svg',
+  '蟑螂': './assets/sprites/monsters/slime.svg',
+  '地獄犬': './assets/sprites/monsters/mist_beast.svg',
+  '樓層武器': './assets/sprites/monsters/crack_book.svg',
+  '啟動武器-樓層': './assets/sprites/monsters/crack_book.svg',
   '跳跳史萊姆': './assets/sprites/monsters/slime.svg',
   '迷路菇菇': './assets/sprites/monsters/mushroom.svg',
   '貪吃豆鳥': './assets/sprites/monsters/bean_bird.svg',
@@ -147,7 +220,7 @@ export function createPlayer({ name, element, archetype }) {
     inventory: ['novice_badge'],
     equipment: { weapon: null, armor: null, trinket: null },
     quest: { id: 'first_hunt', title: '草原討伐', target: 3, progress: 0, completed: false },
-    log: ['歡迎來到豆豆冒險公會。先去晨露草原試試身手吧！'],
+    log: ['歡迎來到豆豆冒險公會。先去草原試試身手吧！'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -155,7 +228,7 @@ export function createPlayer({ name, element, archetype }) {
 
 export function getItem(itemId) {
   if (itemId === 'novice_badge') {
-    return { id: 'novice_badge', type: 'trinket', name: '新手豆徽章', price: 0, attack: 1, defense: 1, description: '象徵你加入公會的第一天。' };
+    return { id: 'novice_badge', type: 'trinket', name: '菜鳥新手徽章', price: 0, attack: 1, defense: 1, description: '參考原版「菜鳥新手」出身，象徵第一次登錄冒險。' };
   }
   return shopItems.find((item) => item.id === itemId) || null;
 }
@@ -310,15 +383,18 @@ function createMonster(map, name, rng) {
 }
 
 const playerBattleSkills = [
-  { name: '豆豆連斬', chance: 0.24, mpCost: 5, multiplier: 1.35, phrase: '揮出連續斬擊' },
-  { name: '星芒爆裂', chance: 0.16, mpCost: 9, multiplier: 1.62, phrase: '聚集星芒轟向敵人' },
-  { name: '微光護盾', chance: 0.14, mpCost: 7, multiplier: 0.82, guard: 0.45, phrase: '張開微光護盾後反擊' }
+  { name: '快速打擊', chance: 0.30, mpCost: 10, multiplier: 1.18, phrase: '以新手技能快速切入' },
+  { name: '斬擊', chance: 0.25, mpCost: 20, multiplier: 1.42, phrase: '揮出基礎劍技' },
+  { name: '破強劍', chance: 0.18, mpCost: 28, multiplier: 1.66, phrase: '以武士劍技突破防線' },
+  { name: '彗星斬', chance: 0.12, mpCost: 36, multiplier: 1.92, phrase: '拖出彗星軌跡斬向敵人' },
+  { name: '雷擊劍', chance: 0.08, mpCost: 42, multiplier: 2.18, phrase: '將雷光灌入劍身爆發' }
 ];
 
 const monsterBattleSkills = [
-  { name: '野性猛撲', chance: 0.24, multiplier: 1.35, phrase: '猛撲過來' },
-  { name: '濁霧衝擊', chance: 0.16, multiplier: 1.55, phrase: '吐出濁霧衝擊' },
-  { name: '硬殼防禦', chance: 0.12, multiplier: 0.78, phrase: '縮起身體後撞擊' }
+  { name: '強烈攻擊', chance: 0.25, multiplier: 1.32, phrase: '以強烈攻擊壓迫過來' },
+  { name: '猛毒斬', chance: 0.16, multiplier: 1.52, phrase: '帶著猛毒斬擊逼近' },
+  { name: '初級必殺', chance: 0.10, multiplier: 1.82, phrase: '嘗試發動必殺攻勢' },
+  { name: '魅惑', chance: 0.10, multiplier: 0.82, phrase: '以魅惑擾亂節奏後突襲' }
 ];
 
 function takePlayerTurn({ next, monster, stats, turns, round, rng }) {
@@ -425,11 +501,50 @@ export function buyItem(player, itemId) {
 export function equipItem(player, itemId) {
   const item = getItem(itemId);
   if (!item) throw new Error('找不到物品。');
+  if (!['weapon', 'armor', 'trinket'].includes(item.type)) throw new Error('這是道具，請使用而不是裝備。');
   const next = clonePlayer(player);
   if (!next.inventory.includes(itemId)) throw new Error('背包中沒有這個物品。');
   next.equipment[item.type] = item.id;
   next.updatedAt = new Date().toISOString();
   next.log = mergeLog(next.log, [`已裝備「${item.name}」。`]);
+  return next;
+}
+
+export function useItem(player, itemId) {
+  const item = getItem(itemId);
+  if (!item) throw new Error('找不到物品。');
+  if (item.type !== 'consumable') throw new Error('這個物品需要裝備，不能直接使用。');
+  const next = clonePlayer(player);
+  const index = next.inventory.indexOf(itemId);
+  if (index < 0) throw new Error('背包中沒有這個物品。');
+  next.inventory.splice(index, 1);
+  switch (item.effect) {
+    case 'heal':
+      next.hp = Math.min(next.maxHp, next.hp + item.value);
+      next.mp = Math.min(next.maxMp, next.mp + Math.round(item.value / 3));
+      next.log = mergeLog(next.log, [`使用「${item.name}」，HP / MP 回復。`]);
+      break;
+    case 'mastery':
+      next.mastery += item.value;
+      next.log = mergeLog(next.log, [`閱讀「${item.name}」，熟練增加 ${item.value}。`]);
+      break;
+    case 'attack':
+      next.attack += item.value;
+      next.log = mergeLog(next.log, [`使用「${item.name}」，攻擊永久 +${item.value}。`]);
+      break;
+    case 'maxHp':
+      next.maxHp += item.value;
+      next.hp += item.value;
+      next.log = mergeLog(next.log, [`使用「${item.name}」，HP 上限 +${item.value}。`]);
+      break;
+    case 'gold':
+      next.gold += item.value;
+      next.log = mergeLog(next.log, [`使用「${item.name}」，獲得 ${item.value} 金幣。`]);
+      break;
+    default:
+      next.log = mergeLog(next.log, [`使用「${item.name}」。`]);
+  }
+  next.updatedAt = new Date().toISOString();
   return next;
 }
 
@@ -506,9 +621,13 @@ function applyLevelUps(player) {
 }
 
 function randomDrop(level, rng) {
-  const candidates = level >= 5
-    ? ['star_charm', 'bronze_mail', 'wind_dagger']
-    : ['novice_badge', 'wood_sword', 'linen_robe'];
+  const candidates = level >= 12
+    ? ['holy_lance', 'hope_fruit', 'dark_key', 'life_fruit']
+    : level >= 7
+      ? ['flame_sword', 'ice_lance', 'mastery_book', 'hope_bell']
+      : level >= 4
+        ? ['short_bow', 'double_axe', 'basic_potion', 'sword_book']
+        : ['novice_badge', 'short_sword', 'herb'];
   const id = candidates[Math.floor(rng() * candidates.length)] || candidates[0];
   return getItem(id);
 }

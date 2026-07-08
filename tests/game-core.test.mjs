@@ -9,10 +9,13 @@ import {
   parsePlayer,
   portraitForMonster,
   portraitForPlayer,
+  shopItems,
+  maps,
   performBattle,
   restAtInn,
   serializePlayer,
-  totalStats
+  totalStats,
+  useItem
 } from '../assets/game-core.js';
 
 function rngSequence(values) {
@@ -36,6 +39,19 @@ test('portrait helpers resolve local character and monster sprites', () => {
   assert.match(encounter.scene.monster.portrait, /sprites\/monsters\/.+\.svg$/);
 });
 
+test('reference catalogs drive original-style maps, weapons, items, and consumables', () => {
+  assert.equal(maps.length, 29);
+  assert.ok(maps.some((map) => map.name === '草原'));
+  assert.ok(maps.some((map) => map.name === '上塔之門'));
+  assert.ok(shopItems.some((item) => item.name === '短劍'));
+  assert.ok(shopItems.some((item) => item.name === '藥草' && item.type === 'consumable'));
+  let player = createPlayer({ name: '道具勇者', element: '水', archetype: 'sage' });
+  player.inventory.push('mastery_book');
+  const used = useItem(player, 'mastery_book');
+  assert.equal(used.mastery, player.mastery + 1000);
+  assert.equal(used.inventory.includes('mastery_book'), false);
+});
+
 test('performBattle can win, grants rewards, and advances grassland quest', () => {
   const player = createPlayer({ name: '測試勇者', element: '火', archetype: 'blade' });
   const result = performBattle(player, 'meadow', rngSequence([0, 0, 0, 0.2, 0.99]));
@@ -57,7 +73,7 @@ test('createBattleEncounter builds turn-by-turn page data with probabilistic ski
   const encounter = createBattleEncounter(player, 'meadow', rngSequence([0, 0.1, 0.9, 0.1, 0.1, 0.1, 0.2, 0.1]));
   assert.ok(encounter.scene.turns.some((turn) => turn.side === 'player'));
   assert.ok(encounter.scene.turns.some((turn) => turn.side === 'monster'));
-  assert.ok(encounter.scene.turns.some((turn) => ['豆豆連斬', '星芒爆裂', '微光護盾', '野性猛撲', '濁霧衝擊', '硬殼防禦'].includes(turn.skill)));
+  assert.ok(encounter.scene.turns.some((turn) => ['快速打擊', '斬擊', '破強劍', '彗星斬', '雷擊劍', '強烈攻擊', '猛毒斬', '初級必殺', '魅惑'].includes(turn.skill)));
   assert.ok(encounter.scene.turns.some((turn) => turn.text.includes('戰鬥結束')));
   assert.equal(encounter.player.battles, player.battles + 1);
 });
@@ -73,9 +89,9 @@ test('performBattle blocks maps when gold is insufficient before charging cost',
 test('buyItem and equipItem update inventory and total stats', () => {
   let player = createPlayer({ name: '裝備勇者', element: '雷', archetype: 'blade' });
   player.gold = 999;
-  player = buyItem(player, 'wood_sword');
-  player = equipItem(player, 'wood_sword');
-  assert.equal(player.equipment.weapon, 'wood_sword');
+  player = buyItem(player, 'short_sword');
+  player = equipItem(player, 'short_sword');
+  assert.equal(player.equipment.weapon, 'short_sword');
   assert.ok(totalStats(player).attack > player.attack);
 });
 

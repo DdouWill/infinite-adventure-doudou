@@ -103,7 +103,7 @@
           <details id="public-index-panel" class="function-menu__item">
             <summary>公開索引</summary>
             <div class="function-menu__detail public-index-grid">
-              <span>[首頁]</span><span>[遊戲說明]</span><span>[玩家列表]</span><span>[傳說的英雄]</span><span>[各項排行]</span><span>[世界情勢]</span><span>[都市情報]</span><span>[圖像一覧]</span><span>[紀錄]</span><span>[裝備清單]</span>
+              <span>[首頁]</span><span>[遊戲說明]</span><span>[玩家列表]</span><span>[傳說的英雄]</span><span>[各項排行]</span><span>[世界情勢]</span><span>[都市情報]</span><span>[圖像一覧]</span><span>[紀錄]</span><span>[武器清單]</span><span>[道具清單]</span><span>[招式清單]</span><span>[戰鬥地圖]</span>
             </div>
           </details>
         </div>
@@ -120,35 +120,39 @@
             <div class="function-menu__detail">
               <ol class="menu-route-list">
                 <li><strong>草原起步</strong><span>先完成草原討伐，熟悉 HP / MP、旅店與任務。</span></li>
-                <li><strong>裝備檢定</strong><span>存錢買豆木短劍 / 旅行布衣，再穩定刷沼地。</span></li>
-                <li><strong>修行者高塔</strong><span>刷熟練與升級，準備挑戰進階地圖。</span></li>
-                <li><strong>廢棄後山</strong><span>進階打寶與高風險收益區。</span></li>
+                <li><strong>裝備檢定</strong><span>存錢買短劍 / 長劍 / 護甲，再穩定刷沼地。</span></li>
+                <li><strong>修行者之塔</strong><span>刷熟練與升級，準備挑戰森林、高塔與特殊地圖。</span></li>
+                <li><strong>廢棄後山</strong><span>進階打寶、分身寵物與高風險收益區。</span></li>
               </ol>
             </div>
           </details>
           <details id="map-guide-panel" class="function-menu__item">
             <summary>戰鬥地圖</summary>
             <div class="function-menu__detail">
-              <p><strong>一般地圖：</strong>草原、沼地，新手練等。</p>
-              <p><strong>試煉地圖：</strong>高塔，熟練與能力檢定。</p>
-              <p><strong>特殊地圖：</strong>廢棄後山，掉寶與活動感。</p>
-              <p><strong>封閉專區：</strong>封印之門，預留魔王 / 國戰。</p>
+              <p class="reference-note">全數參考原站戰鬥場所說明：常駐、資源消耗、稀有觸發、戰數觸發、世界地圖。</p>
+              <div id="reference-map-catalog" class="reference-catalog-table" aria-label="原版地圖清單"></div>
             </div>
           </details>
           <details id="mechanics-panel" class="function-menu__item">
-            <summary>資料 / 研究索引</summary>
+            <summary>招式 / 奧義清單</summary>
             <div class="function-menu__detail">
-              <p>基礎知識：HP / MP、EXP、金幣、熟練。</p>
-              <p>戰鬥公式：攻擊、防禦、速度影響勝率。</p>
-              <p>技能 / 奧義：神風、戰技、防禦術作為後續技能線。</p>
+              <p class="reference-note">招式取自原站技能清單；奧義取自原站奧義清單。戰鬥中會以豆豆版數值縮放發動。</p>
+              <div id="reference-technique-catalog" class="reference-catalog-table" aria-label="原版技能清單"></div>
+              <div id="reference-ougi-catalog" class="reference-catalog-table" aria-label="原版奧義清單"></div>
             </div>
           </details>
           <details id="equip-panel" class="function-menu__item">
-            <summary>裝備清單</summary>
+            <summary>武器清單</summary>
             <div class="function-menu__detail">
-              <p>豆木短劍｜攻擊 +7</p>
-              <p>旅行布衣｜防禦 +6</p>
-              <p>星砂護符｜攻防 +3</p>
+              <p class="reference-note">武器全數由原站公開裝備清單匯入；遊戲商店取核心可玩子集。</p>
+              <div id="reference-weapon-catalog" class="reference-catalog-table" aria-label="原版武器清單"></div>
+            </div>
+          </details>
+          <details id="item-panel" class="function-menu__item">
+            <summary>道具清單</summary>
+            <div class="function-menu__detail">
+              <p class="reference-note">道具取自原站道具說明，豆豆版將部分道具做成可使用消耗品。</p>
+              <div id="reference-item-catalog" class="reference-catalog-table" aria-label="原版道具清單"></div>
             </div>
           </details>
           <details id="icon-panel" class="function-menu__item">
@@ -167,7 +171,7 @@
                 <div><dt>參考</dt><dd>The Wars of Roses Ver6.4 / maccyu</dd></div>
                 <div><dt>系譜</dt><dd>老頭版 → JK / 石器 / Farland → BadGameShow → 豆豆版</dd></div>
               </dl>
-              <p>本版只同步資訊架構與互動語法，不使用原站素材或真實玩家資料。</p>
+              <p>本版同步公開說明清單的名稱 / 分類 / 數值語法，但不使用原站圖片素材或真實玩家資料。</p>
             </div>
           </details>
         </div>

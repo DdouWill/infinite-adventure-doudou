@@ -14,8 +14,10 @@ import {
   restAtInn,
   serializePlayer,
   shopItems,
-  totalStats
+  totalStats,
+  useItem
 } from './game-core.js';
+import { referenceCatalog } from './reference-catalog.js';
 
 const STORAGE_KEY = 'infinite-adventure-doudou-save-v1';
 let state = loadPlayer();
@@ -485,9 +487,11 @@ function renderInventory() {
         <div>
           <strong>${escapeHtml(item.name)} × ${count}</strong>
           <p>${escapeHtml(item.description)}</p>
-          <small>攻擊 +${item.attack || 0}｜防禦 +${item.defense || 0}</small>
+          <small>${itemSummary(item)}</small>
         </div>
-        <button class="ghost-button" type="button" data-equip="${item.id}">裝備</button>
+        ${item.type === 'consumable'
+          ? `<button class="ghost-button" type="button" data-use="${item.id}">使用</button>`
+          : `<button class="ghost-button" type="button" data-equip="${item.id}">裝備</button>`}
       </article>
     `;
   }).join('') || '<p>背包是空的。</p>';
@@ -497,7 +501,7 @@ function renderInventory() {
       <div>
         <strong>${escapeHtml(item.name)}</strong>
         <p>${escapeHtml(item.description)}</p>
-        <small>${item.price} 金幣｜攻擊 +${item.attack}｜防禦 +${item.defense}</small>
+        <small>${item.price} 金幣｜${itemSummary(item)}</small>
       </div>
       <button class="ghost-button" type="button" data-buy="${item.id}">購買</button>
     </article>
@@ -517,6 +521,18 @@ function renderInventory() {
       render();
     });
   });
+  $$('[data-use]').forEach((button) => {
+    button.addEventListener('click', () => {
+      state = useItem(state, button.dataset.use);
+      savePlayer();
+      render();
+    });
+  });
+}
+
+function itemSummary(item) {
+  if (item.type === 'consumable') return `道具｜${escapeHtml(item.effect || '使用')}${item.value ? ` +${escapeHtml(String(item.value))}` : ''}`;
+  return `${slotLabel(item.type)}｜攻擊 +${item.attack || 0}｜防禦 +${item.defense || 0}`;
 }
 
 function renderQuest() {
@@ -525,7 +541,7 @@ function renderQuest() {
     <article class="quest-card">
       <div>
         <h3>${escapeHtml(quest.title)}</h3>
-        <p>在晨露草原擊倒 ${quest.target} 隻怪物。</p>
+        <p>在草原擊倒 ${quest.target} 隻怪物。</p>
         <progress max="${quest.target}" value="${quest.progress}"></progress>
         <small>${quest.completed ? '已完成' : `${quest.progress}/${quest.target}`}</small>
       </div>
@@ -580,6 +596,30 @@ function renderWorld() {
   `;
 }
 
+function renderReferenceCatalog() {
+  renderReferenceTable('#reference-weapon-catalog', ['名稱', '奧義', '屬性', '威力', '重量', '價格', '產地'], referenceCatalog.weapons, (weapon) => [weapon.name, weapon.ougi, weapon.element, weapon.power, weapon.weight, weapon.price, weapon.origin]);
+  renderReferenceTable('#reference-item-catalog', ['名稱', '說明'], referenceCatalog.items, (item) => [item.name, item.description]);
+  renderReferenceTable('#reference-technique-catalog', ['技能', '威力', '發動率', '消耗MP', '職業', '說明'], referenceCatalog.techniques, (technique) => [technique.name, technique.power, `${technique.rate}%`, technique.mp, technique.job, technique.extra ? `${technique.description}｜${technique.extra}` : technique.description]);
+  renderReferenceTable('#reference-ougi-catalog', ['奧義', '需要熟練', '職業', '說明'], referenceCatalog.ougis, (ougi) => [ougi.name, ougi.mastery, ougi.job, ougi.description]);
+  renderReferenceTable('#reference-map-catalog', ['地圖', '分類', '入場', '掉落／特色', '說明'], referenceCatalog.maps, (map) => [map.name, map.category, map.cost, map.drop, map.description]);
+}
+
+function renderReferenceTable(selector, headings, rows, mapRow) {
+  const node = $(selector);
+  if (!node) return;
+  node.innerHTML = `
+    <p class="reference-catalog-count">共 ${rows.length} 筆</p>
+    <div class="dense-table-wrap reference-catalog-scroll">
+      <table>
+        <thead><tr>${headings.map((heading) => `<th>${escapeHtml(heading)}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${rows.map((row) => `<tr>${mapRow(row).map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
 function renderPanels() {
   $$('.tab-button').forEach((button) => {
     button.classList.toggle('is-active', button.dataset.view === currentView);
@@ -613,7 +653,7 @@ function slotLabel(slot) {
 }
 
 function escapeHtml(value) {
-  return value.replace(/[&<>'"]/g, (char) => ({
+  return String(value).replace(/[&<>'"]/g, (char) => ({
     '&': '&amp;',
     '<': '&lt;',
     '>': '&gt;',
@@ -622,4 +662,5 @@ function escapeHtml(value) {
   }[char]));
 }
 
+renderReferenceCatalog();
 render();
