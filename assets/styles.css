@@ -2981,3 +2981,188 @@ textarea:focus-visible {
     height: 1.75rem;
   }
 }
+
+/* Selective semantic color layer: keep terminal black/white structure, add color only where it improves recognition. */
+:root {
+  --tone-hp: #ff5f73;
+  --tone-mp: #58c7ff;
+  --tone-exp: #ffd166;
+  --tone-safe: #7ee787;
+  --tone-warning: #ffd166;
+  --tone-danger: #ff5f73;
+  --tone-gold: #ffd166;
+  --tone-attack: #ff9f6e;
+  --tone-defense: #7dd3fc;
+  --tone-speed: #c084fc;
+  --tone-mastery: #a3e635;
+}
+
+.resource-row,
+.readiness-pill,
+.readiness-card,
+.battle-turn,
+.battle-meter,
+.stat-chip,
+.item-card,
+.milestone-card,
+.quest-card {
+  --tone-color: var(--primary);
+}
+
+.resource-row--hp,
+.battle-meter--hp {
+  --tone-color: var(--tone-hp);
+}
+
+.resource-row--mp,
+.battle-meter--mp {
+  --tone-color: var(--tone-mp);
+}
+
+.resource-row--exp {
+  --tone-color: var(--tone-exp);
+}
+
+.battle-meter--enemy {
+  --tone-color: var(--tone-danger);
+}
+
+.resource-row .resource-card__header,
+.resource-row .resource-card__header strong,
+.resource-row .ascii-meter,
+.resource-row .ui-icon,
+.stat-chip strong,
+.stat-chip .ui-icon {
+  color: var(--tone-color);
+}
+
+.resource-row .ui-icon,
+.stat-chip .ui-icon,
+.item-card__icon,
+.quest-card__icon,
+.milestone-card__icon {
+  border-color: var(--tone-color);
+}
+
+.resource-row,
+.stat-chip,
+.item-card,
+.quest-card,
+.milestone-card {
+  border-color: var(--tone-color);
+}
+
+.resource-row .resource-meter,
+.battle-meter {
+  color: var(--tone-color);
+  accent-color: var(--tone-color);
+  border-color: var(--tone-color);
+}
+
+.resource-row .resource-meter::-webkit-progress-value,
+.battle-meter::-webkit-progress-value {
+  background:
+    repeating-linear-gradient(90deg, var(--tone-color) 0 6px, transparent 6px 8px),
+    var(--tone-color) !important;
+}
+
+.resource-row .resource-meter::-moz-progress-bar,
+.battle-meter::-moz-progress-bar {
+  background:
+    repeating-linear-gradient(90deg, var(--tone-color) 0 6px, transparent 6px 8px),
+    var(--tone-color) !important;
+}
+
+.readiness-pill--safe,
+.readiness-card[data-tone="safe"],
+.guide-card--safe {
+  --tone-color: var(--tone-safe);
+}
+
+.readiness-pill--warning,
+.readiness-card[data-tone="warning"],
+.guide-card--warning {
+  --tone-color: var(--tone-warning);
+}
+
+.readiness-pill--danger,
+.readiness-card[data-tone="danger"],
+.guide-card--danger {
+  --tone-color: var(--tone-danger);
+}
+
+.readiness-pill,
+.readiness-card,
+.guide-card {
+  border-color: var(--tone-color);
+}
+
+.readiness-pill,
+.readiness-card > span,
+.readiness-card .ui-icon {
+  color: var(--tone-color);
+}
+
+.battle-turn--player {
+  --tone-color: var(--tone-mp);
+}
+
+.battle-turn--monster {
+  --tone-color: var(--tone-hp);
+}
+
+.battle-turn--system {
+  --tone-color: var(--tone-exp);
+}
+
+.battle-turn {
+  border-color: var(--tone-color);
+  border-left-width: 4px;
+}
+
+.battle-turn .turn-icon,
+.battle-turn > span:not(.ui-icon) {
+  color: var(--tone-color);
+  border-color: var(--tone-color);
+}
+
+.battle-actor--player strong,
+#battle-player-hp-text {
+  color: var(--tone-hp);
+}
+
+#battle-player-mp-text {
+  color: var(--tone-mp);
+}
+
+.battle-actor--monster strong,
+#battle-monster-hp-text {
+  color: var(--tone-danger);
+}
+
+.stat-chip--gold { --tone-color: var(--tone-gold); }
+.stat-chip--attack { --tone-color: var(--tone-attack); }
+.stat-chip--defense { --tone-color: var(--tone-defense); }
+.stat-chip--speed { --tone-color: var(--tone-speed); }
+.stat-chip--mastery { --tone-color: var(--tone-mastery); }
+
+.item-card--consumable { --tone-color: var(--tone-safe); }
+.item-card--weapon { --tone-color: var(--tone-attack); }
+.item-card--armor { --tone-color: var(--tone-defense); }
+.item-card--trinket { --tone-color: var(--tone-speed); }
+
+.item-card strong,
+.quest-card strong,
+.milestone-card.is-complete:not(.is-claimed) h3,
+.milestone-card.is-complete:not(.is-claimed) .milestone-card__icon {
+  color: var(--tone-color);
+}
+
+.milestone-card.is-complete:not(.is-claimed) {
+  --tone-color: var(--tone-safe);
+  box-shadow: inset 3px 0 0 var(--tone-color) !important;
+}
+
+.quest-card--main {
+  --tone-color: var(--tone-exp);
+}

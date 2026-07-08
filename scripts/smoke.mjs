@@ -151,6 +151,16 @@ if (!battleSpriteSrcs.some((src) => src?.includes('/assets/original/chara/')) ||
 }
 const battleTurnIconCount = await desktop.locator('#battle-page .battle-turn .turn-icon').count();
 if (battleTurnIconCount < 2) throw new Error('Desktop smoke failed: battle turns should show player/monster terminal icons.');
+const battleToneColors = await desktop.evaluate(() => {
+  const tone = (selector) => getComputedStyle(document.querySelector(selector)).getPropertyValue('--tone-color').trim().toLowerCase();
+  return {
+    player: tone('.battle-turn--player'),
+    monster: tone('.battle-turn--monster')
+  };
+});
+if (battleToneColors.player !== '#58c7ff' || battleToneColors.monster !== '#ff5f73') {
+  throw new Error(`Desktop smoke failed: battle turn colors missing ${JSON.stringify(battleToneColors)}.`);
+}
 const battleTurnAnimation = await desktop.locator('#battle-page .battle-turn').first().evaluate((el) => getComputedStyle(el).animationName);
 if (!battleTurnAnimation.includes('terminal-line-in')) throw new Error(`Desktop smoke failed: battle turn line-in animation missing (${battleTurnAnimation}).`);
 await desktop.screenshot({ path: `${screenshotsDir}/desktop-battle-page.png` });
@@ -167,6 +177,25 @@ const characterPortraitVisible = await desktop.locator('.character-info-card .ch
 if (!characterPortraitVisible) throw new Error('Desktop smoke failed: character portrait sprite not visible in status block.');
 const expBars = await desktop.locator('.character-info-card .resource-row--exp .resource-meter').count();
 if (expBars !== 1) throw new Error('Desktop smoke failed: EXP should be inside character info block.');
+const statusToneColors = await desktop.evaluate(() => {
+  const tone = (selector) => {
+    const node = document.querySelector(selector);
+    return node ? getComputedStyle(node).getPropertyValue('--tone-color').trim().toLowerCase() : '';
+  };
+  return {
+    hp: tone('.resource-row--hp'),
+    mp: tone('.resource-row--mp'),
+    exp: tone('.resource-row--exp'),
+    readiness: tone('.readiness-pill')
+  };
+});
+const expectedToneColors = { hp: '#ff5f73', mp: '#58c7ff', exp: '#ffd166' };
+for (const [key, expected] of Object.entries(expectedToneColors)) {
+  if (statusToneColors[key] !== expected) throw new Error(`Desktop smoke failed: ${key} color token mismatch ${statusToneColors[key]} !== ${expected}.`);
+}
+if (!['#7ee787', '#ffd166', '#ff5f73'].includes(statusToneColors.readiness)) {
+  throw new Error(`Desktop smoke failed: readiness color token missing (${statusToneColors.readiness}).`);
+}
 const hpText = await desktop.locator('.vital-card .resource-row--hp .resource-card__header strong').innerText();
 if (!/\d+\/\d+/.test(hpText)) throw new Error('Desktop smoke failed: HP meter value missing.');
 const infoText = await desktop.locator('.character-info-card').innerText();

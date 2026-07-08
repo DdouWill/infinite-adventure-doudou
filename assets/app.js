@@ -393,13 +393,13 @@ function renderStats() {
   const equipped = compactEquipmentSummary(state);
   const portrait = portraitForPlayer(state);
   const statRows = [
-    ['金幣', state.gold, '$'],
-    ['攻擊', stats.attack, '†'],
-    ['防禦', stats.defense, '▣'],
-    ['速度', stats.speed, '»'],
-    ['熟練', state.mastery, '✦']
-  ].map(([label, value, icon]) => `
-    <div class="stat-chip">
+    ['金幣', state.gold, '$', 'gold'],
+    ['攻擊', stats.attack, '†', 'attack'],
+    ['防禦', stats.defense, '▣', 'defense'],
+    ['速度', stats.speed, '»', 'speed'],
+    ['熟練', state.mastery, '✦', 'mastery']
+  ].map(([label, value, icon, tone]) => `
+    <div class="stat-chip stat-chip--${escapeHtml(tone)}">
       ${iconMarkup(icon)}
       <span>${escapeHtml(label)}</span>
       <strong>${escapeHtml(String(value))}</strong>
