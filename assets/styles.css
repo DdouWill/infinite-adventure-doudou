@@ -260,6 +260,77 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .hero__status span,
 .stat-card span { color: var(--muted); font-size: 0.8rem; }
 
+.resource-card {
+  display: grid;
+  gap: 8px;
+}
+
+.resource-card__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.resource-card__header strong,
+.stat-card--compact strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.resource-card small {
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.resource-meter {
+  width: 100%;
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 246, 223, 0.16);
+  border-radius: 999px;
+  background: rgba(9, 7, 16, 0.72);
+  box-shadow: inset 0 0 9px rgba(0, 0, 0, 0.35);
+}
+
+.resource-meter::-webkit-progress-bar {
+  border-radius: 999px;
+  background: rgba(9, 7, 16, 0.72);
+}
+
+.resource-meter::-webkit-progress-value {
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 14px currentColor;
+}
+
+.resource-meter::-moz-progress-bar {
+  border-radius: 999px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 14px currentColor;
+}
+
+.resource-card--hp .resource-meter { color: #ff6b86; }
+.resource-card--hp .resource-meter::-webkit-progress-value {
+  background: linear-gradient(90deg, #9b1632, #ff4f72 58%, #ffb0bf);
+}
+.resource-card--hp .resource-meter::-moz-progress-bar {
+  background: linear-gradient(90deg, #9b1632, #ff4f72 58%, #ffb0bf);
+}
+
+.resource-card--mp .resource-meter { color: #70d6ff; }
+.resource-card--mp .resource-meter::-webkit-progress-value {
+  background: linear-gradient(90deg, #1764c8, #5bd4ff 58%, #c5f6ff);
+}
+.resource-card--mp .resource-meter::-moz-progress-bar {
+  background: linear-gradient(90deg, #1764c8, #5bd4ff 58%, #c5f6ff);
+}
+
+.resource-card--exp .resource-meter { color: #f6c96d; }
+.resource-card--exp .resource-meter::-webkit-progress-value {
+  background: linear-gradient(90deg, #a86512, #f6c96d 58%, #fff0b0);
+}
+.resource-card--exp .resource-meter::-moz-progress-bar {
+  background: linear-gradient(90deg, #a86512, #f6c96d 58%, #fff0b0);
+}
+
 .classic-grid {
   display: grid;
   grid-template-columns: 190px minmax(0, 1fr);
