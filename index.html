@@ -9,7 +9,76 @@
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主要內容</a>
-  <div class="app-shell classic-shell">
+  <section id="login-view" class="original-login" aria-label="登入遊戲">
+    <div class="original-login__logo-bar">
+      <img id="login-logo" class="original-login__logo" src="./assets/original/ui/logo.png" alt="無限冒險 BadGameShow 原版標誌" width="250" height="250">
+    </div>
+    <div class="original-login__wrap">
+      <main class="original-login__main" aria-label="登入與注意事項">
+        <article class="original-login__content">
+          <h3 class="login-section-title"><img src="./assets/original/ui/xred.png" alt="" width="24" height="24">注意事項</h3>
+          <div class="login-articles">
+            <p>※登入遊戲後，即視為同意基本遊戲禮儀；請勿催促、命令或干擾其他冒險者。</p>
+            <p>※本終端版為本機 demo 登入，不會連線原站伺服器；帳號與密碼僅用於開啟本機遊戲介面。</p>
+            <p>※帳號與密碼請使用 4～8 個半形英數字或底線。</p>
+            <p class="login-warning">※測試版資料保存在瀏覽器 localStorage，清除瀏覽器資料會移除角色。</p>
+            <img class="original-login__cover" src="./assets/original/ui/cover.png" alt="原版測試版注意事項圖" width="630" height="233">
+          </div>
+
+          <h3 class="login-section-title"><img src="./assets/original/ui/xred.png" alt="" width="24" height="24">登入遊戲</h3>
+          <form id="login-form" class="original-login__form" autocomplete="on">
+            <table class="original-login__table">
+              <tbody>
+                <tr>
+                  <th scope="row">帳號</th>
+                  <td>
+                    <input id="login-id" name="id" type="text" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="遊戲帳號" autocomplete="username" required>
+                    <br><small>※帳號請使用４～８個半形字</small>
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">密碼</th>
+                  <td>
+                    <input id="login-pass" name="pass" type="password" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="遊戲密碼" autocomplete="current-password" required>
+                    <br><small>※密碼請使用４～８個半形字</small>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="original-login__actions">
+              <button id="login-submit" class="original-button" type="submit">登入遊戲</button>
+              <button class="original-button" type="reset">清除重寫</button>
+            </div>
+            <p id="login-message" class="login-message" role="status" aria-live="polite"></p>
+          </form>
+        </article>
+      </main>
+
+      <aside class="original-login__side" aria-label="原版側欄功能">
+        <section>
+          <h3 class="login-section-title"><img src="./assets/original/ui/xred.png" alt="" width="24" height="24">開始遊戲</h3>
+          <ul>
+            <li><button class="original-button" type="button" data-login-focus="id">註冊帳號</button><button class="original-button" type="button" data-login-focus="pass">登入遊戲</button></li>
+          </ul>
+        </section>
+        <section>
+          <h3 class="login-section-title"><img src="./assets/original/ui/xred.png" alt="" width="24" height="24">伺服器維護時間</h3>
+          <ul>
+            <li>■停機維護：<br>　每週星期五<br>　上午 0:00 至 18:00</li>
+            <li>■伺服重啟：<br>　每週星期五<br>　上午 7:00 至 08:30</li>
+          </ul>
+        </section>
+        <section>
+          <h3 class="login-section-title"><img src="./assets/original/ui/xred.png" alt="" width="24" height="24">公開索引</h3>
+          <ul>
+            <li>遊戲說明 / 玩家列表 / 各項排行 / 圖像一覧</li>
+            <li>武器清單 / 道具清單 / 招式清單 / 戰鬥地圖</li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </section>
+  <div class="app-shell classic-shell is-hidden">
     <div class="function-menu" id="function-menu">
       <button id="function-menu-button" class="function-menu__button" type="button" aria-controls="function-menu-panel" aria-expanded="false">
         <span class="function-menu__label">情報 / 解說</span>
@@ -302,6 +371,7 @@
               <div class="save-actions">
                 <button id="export-button" class="ghost-button" type="button">匯出存檔</button>
                 <button id="import-button" class="ghost-button" type="button">匯入存檔</button>
+                <button id="logout-button" class="ghost-button" type="button">登出帳號</button>
                 <button id="reset-button" class="danger-button" type="button">重置角色</button>
               </div>
               <textarea id="save-data" rows="10" placeholder="匯出的 JSON 會出現在這裡，也可以貼上存檔後匯入。"></textarea>

@@ -3115,3 +3115,252 @@ textarea:focus-visible {
 .battle-log .record-line {
   border-left-color: var(--border);
 }
+
+/* Original-reference login gate */
+.original-login {
+  min-height: 100vh;
+  padding: 0 12px 28px;
+  color: #000;
+  background:
+    radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.08), transparent 26rem),
+    #000;
+  font-family: Arial, "Microsoft JhengHei", "PingFang TC", sans-serif;
+  font-size: 12px;
+}
+
+.original-login__logo-bar {
+  display: grid;
+  place-items: center;
+  padding: 12px 0 8px;
+}
+
+.original-login__logo {
+  width: 250px;
+  height: 250px;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.original-login__wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 12px;
+  width: min(100%, 980px);
+  margin: 0 auto;
+  align-items: start;
+}
+
+.original-login__content,
+.original-login__side section {
+  border: 3px double #883300;
+  color: #000;
+  background-color: #ffffee;
+}
+
+.original-login__content {
+  min-width: 0;
+  padding: 10px 12px 14px;
+}
+
+.original-login__main {
+  min-width: 0;
+}
+
+.original-login__side {
+  display: grid;
+  gap: 10px;
+}
+
+.original-login__side section {
+  padding: 8px 10px 10px;
+}
+
+.login-section-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 0 8px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #7c8990;
+  color: #111;
+  background: #d7e2e7;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.login-section-title img {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+.login-articles {
+  line-height: 1.75;
+}
+
+.login-articles p {
+  margin: 0;
+}
+
+.login-warning {
+  color: #d40000;
+  font-weight: 700;
+}
+
+.original-login__cover {
+  display: block;
+  width: min(100%, 630px);
+  height: auto;
+  margin: 10px auto 4px;
+  border: 1px solid #7c8990;
+}
+
+.original-login__form {
+  display: grid;
+  gap: 10px;
+}
+
+.original-login__table {
+  width: min(100%, 420px);
+  min-width: 0;
+  margin: 0 auto;
+  border: 0;
+  border-collapse: collapse;
+  color: #000;
+  background: transparent;
+  font-size: 12px;
+}
+
+.original-login__table th,
+.original-login__table td {
+  padding: 7px 8px;
+  border: 0;
+  color: #000;
+  background: transparent;
+  vertical-align: top;
+}
+
+.original-login__table th {
+  width: 70px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.original-login__table input {
+  width: 160px;
+  max-width: 100%;
+  min-height: 26px;
+  padding: 3px 5px;
+  border: 2px inset #d7e2e7;
+  color: #000;
+  background: #fff;
+  font: inherit;
+}
+
+.original-login__table small {
+  color: #333;
+}
+
+.original-login__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  padding: 13px 0;
+  border-top: 2px groove #d7e2e7;
+  border-bottom: 2px groove #d7e2e7;
+}
+
+.original-button {
+  min-height: 28px;
+  padding: 3px 12px;
+  border: 2px outset #d7e2e7;
+  border-radius: 0;
+  color: #000;
+  background: #eeeeee;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.original-button:hover,
+.original-button:focus-visible {
+  color: #0000ee;
+  background: #ffffff;
+  outline: 1px dotted #000;
+  outline-offset: 2px;
+}
+
+.login-message {
+  min-height: 1.5em;
+  margin: 0;
+  color: #005500;
+  text-align: center;
+  font-weight: 700;
+}
+
+.original-login__side ul {
+  display: grid;
+  gap: 7px;
+  margin: 0 0 4px;
+  padding-left: 16px;
+  color: #000;
+  line-height: 1.65;
+}
+
+.original-login__side li {
+  color: #000;
+}
+
+.original-login__side li .original-button + .original-button {
+  margin-left: 8px;
+}
+
+@media (max-width: 900px) {
+  .original-login {
+    padding-inline: 8px;
+  }
+
+  .original-login__logo {
+    width: 150px;
+    height: 150px;
+  }
+
+  .original-login__wrap {
+    width: 100%;
+    max-width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .original-login__content {
+    padding: 8px;
+  }
+
+  .original-login__cover {
+    width: 100%;
+    max-width: calc(100vw - 34px);
+  }
+
+  .original-login__side {
+    order: -1;
+  }
+
+  .original-login__table,
+  .original-login__table tbody,
+  .original-login__table tr,
+  .original-login__table th,
+  .original-login__table td {
+    display: block;
+    width: 100%;
+  }
+
+  .original-login__table th {
+    padding-bottom: 2px;
+    text-align: left;
+  }
+
+  .original-login__table input {
+    width: 100%;
+  }
+}

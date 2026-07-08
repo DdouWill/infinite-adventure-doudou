@@ -13,9 +13,47 @@ function withBattleDelay(rawUrl) {
   return nextUrl.toString();
 }
 
+async function assertOriginalLoginGate(page, label) {
+  const loginVisible = await page.locator('#login-view').isVisible();
+  if (!loginVisible) throw new Error(`${label} smoke failed: login view should be visible before entering game.`);
+  const appVisible = await page.locator('.app-shell').isVisible();
+  if (appVisible) throw new Error(`${label} smoke failed: game shell should be hidden before login.`);
+  const createVisible = await page.locator('#create-view').isVisible();
+  if (createVisible) throw new Error(`${label} smoke failed: character creation should not be visible before login.`);
+  const loginText = await page.locator('#login-view').innerText();
+  for (const expected of ['注意事項', '登入遊戲', '帳號', '密碼', '註冊帳號', '伺服器維護時間']) {
+    if (!loginText.includes(expected)) throw new Error(`${label} smoke failed: original-style login block missing ${expected}.`);
+  }
+  const logoSrc = await page.locator('#login-logo').getAttribute('src');
+  if (!logoSrc?.includes('/assets/original/ui/logo.png')) throw new Error(`${label} smoke failed: original login logo missing (${logoSrc}).`);
+  const sectionTitleIconCount = await page.locator('#login-view .login-section-title img').count();
+  if (sectionTitleIconCount < 3) throw new Error(`${label} smoke failed: original red section icons missing (${sectionTitleIconCount}).`);
+  const loginPanelStyle = await page.locator('.original-login__content').evaluate((el) => {
+    const style = getComputedStyle(el);
+    return { color: style.color, backgroundColor: style.backgroundColor, borderColor: style.borderColor };
+  });
+  if (loginPanelStyle.color !== 'rgb(0, 0, 0)' || loginPanelStyle.backgroundColor !== 'rgb(255, 255, 238)') {
+    throw new Error(`${label} smoke failed: original cream login panel style missing ${JSON.stringify(loginPanelStyle)}.`);
+  }
+}
+
+async function loginThroughGate(page, account, password) {
+  await page.fill('#login-id', account);
+  await page.fill('#login-pass', password);
+  await page.click('#login-submit');
+  await page.waitForFunction(() => document.querySelector('#login-view')?.classList.contains('is-hidden'));
+  const gameShellVisible = await page.locator('.app-shell').isVisible();
+  if (!gameShellVisible) throw new Error('Login smoke failed: game shell should become visible after login.');
+  const createViewVisible = await page.locator('#create-view').isVisible();
+  if (!createViewVisible) throw new Error('Login smoke failed: character creation should be visible after login when no save exists.');
+}
+
 const browser = await chromium.launch({ headless: true });
 const desktop = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 await desktop.goto(url, { waitUntil: 'networkidle' });
+await assertOriginalLoginGate(desktop, 'Desktop');
+await desktop.screenshot({ path: `${screenshotsDir}/desktop-login.png`, fullPage: true });
+await loginThroughGate(desktop, 'test01', 'pass01');
 const terminalTheme = await desktop.evaluate(() => {
   const body = getComputedStyle(document.body);
   const panel = getComputedStyle(document.querySelector('.game-card'));
@@ -281,6 +319,9 @@ for (const expected of ['頭像', 'HP', 'MP', '職業', '戰數']) {
 await desktop.click('.tab-button[data-view="battle"]');
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
 await mobile.goto(url, { waitUntil: 'networkidle' });
+await assertOriginalLoginGate(mobile, 'Mobile');
+await mobile.screenshot({ path: `${screenshotsDir}/mobile-login.png`, fullPage: true });
+await loginThroughGate(mobile, 'mobi01', 'pass01');
 const mobileMenuButtonBox = await mobile.locator('#function-menu-button').boundingBox();
 if (!mobileMenuButtonBox || Math.abs((mobileMenuButtonBox.x + mobileMenuButtonBox.width) - 382) > 3 || mobileMenuButtonBox.y > 16) {
   throw new Error('Mobile smoke failed: function menu button is not fixed at the top-right.');
@@ -332,5 +373,8 @@ if (mobileMapOptionText.includes('上塔之門') || mobileMapOptionText.includes
 await mobile.selectOption('#map-select', 'ruins');
 const mobileSelectedMapText = await mobile.locator('.selected-map-card').innerText();
 if (!mobileSelectedMapText.includes('廢棄後山')) throw new Error('Mobile smoke failed: map dropdown summary did not update.');
+await desktop.click('.tab-button[data-view="save"]');
+await desktop.click('#logout-button');
+await assertOriginalLoginGate(desktop, 'Desktop logout');
 await browser.close();
 console.log('Smoke test passed.');

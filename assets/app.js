@@ -27,6 +27,9 @@ import {
 import { referenceCatalog } from './reference-catalog.js';
 
 const STORAGE_KEY = 'infinite-adventure-doudou-save-v1';
+const LOGIN_KEY = 'infinite-adventure-doudou-login-v1';
+const LOGIN_TOKEN_PATTERN = /^[A-Za-z0-9_]{4,8}$/;
+let loginSession = loadLoginSession();
 let state = loadPlayer();
 let selectedMapId = 'meadow';
 let currentView = 'battle';
@@ -61,6 +64,12 @@ const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
 const nodes = {
+  loginView: $('#login-view'),
+  appShell: $('.app-shell'),
+  loginForm: $('#login-form'),
+  loginMessage: $('#login-message'),
+  loginId: $('#login-id'),
+  loginPass: $('#login-pass'),
   createView: $('#create-view'),
   gameView: $('#game-view'),
   createForm: $('#create-form'),
@@ -79,6 +88,7 @@ const nodes = {
   worldView: $('#world-view'),
   exportButton: $('#export-button'),
   importButton: $('#import-button'),
+  logoutButton: $('#logout-button'),
   resetButton: $('#reset-button'),
   saveData: $('#save-data'),
   onlineCount: $('#online-count'),
@@ -121,6 +131,36 @@ document.addEventListener('click', (event) => {
 
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') setFunctionMenuOpen(false);
+});
+
+nodes.loginForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const form = new FormData(nodes.loginForm);
+  const account = String(form.get('id') || '').trim();
+  const password = String(form.get('pass') || '').trim();
+  if (!LOGIN_TOKEN_PATTERN.test(account) || !LOGIN_TOKEN_PATTERN.test(password)) {
+    nodes.loginMessage.textContent = '帳號與密碼請使用 4～8 個半形英數字或底線。';
+    return;
+  }
+  loginSession = { account, loginAt: new Date().toISOString() };
+  saveLoginSession();
+  nodes.loginMessage.textContent = '登入成功，正在進入遊戲介面...';
+  if (!state && nodes.createForm.elements['hero-name'] && !nodes.createForm.elements['hero-name'].value) {
+    nodes.createForm.elements['hero-name'].value = account;
+  }
+  render();
+  window.location.hash = 'game-panel';
+});
+
+nodes.loginForm.addEventListener('reset', () => {
+  nodes.loginMessage.textContent = '';
+});
+
+$$('[data-login-focus]').forEach((button) => {
+  button.addEventListener('click', () => {
+    const target = button.dataset.loginFocus === 'pass' ? nodes.loginPass : nodes.loginId;
+    target?.focus();
+  });
 });
 
 nodes.createForm.addEventListener('submit', (event) => {
@@ -171,6 +211,16 @@ nodes.importButton.addEventListener('click', () => {
   } catch (error) {
     nodes.saveData.value = `匯入失敗：${error.message}`;
   }
+});
+
+nodes.logoutButton.addEventListener('click', () => {
+  localStorage.removeItem(LOGIN_KEY);
+  loginSession = null;
+  clearBattleTimers();
+  nodes.battlePage.classList.add('is-hidden');
+  setFunctionMenuOpen(false);
+  render();
+  window.location.hash = 'login';
 });
 
 nodes.resetButton.addEventListener('click', () => {
@@ -362,6 +412,15 @@ function battleTurnDelayMs() {
 
 function render() {
   if (nodes.onlineCount) nodes.onlineCount.textContent = String(18 + new Date().getMinutes() % 9);
+  if (!loginSession) {
+    nodes.loginView.classList.remove('is-hidden');
+    nodes.appShell.classList.add('is-hidden');
+    nodes.createView.classList.add('is-hidden');
+    nodes.gameView.classList.add('is-hidden');
+    return;
+  }
+  nodes.loginView.classList.add('is-hidden');
+  nodes.appShell.classList.remove('is-hidden');
   if (!state) {
     nodes.createView.classList.remove('is-hidden');
     nodes.gameView.classList.add('is-hidden');
@@ -866,6 +925,20 @@ function loadPlayer() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? parsePlayer(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveLoginSession() {
+  localStorage.setItem(LOGIN_KEY, JSON.stringify(loginSession));
+}
+
+function loadLoginSession() {
+  try {
+    const raw = localStorage.getItem(LOGIN_KEY);
+    const session = raw ? JSON.parse(raw) : null;
+    return session && LOGIN_TOKEN_PATTERN.test(session.account) ? session : null;
   } catch {
     return null;
   }
