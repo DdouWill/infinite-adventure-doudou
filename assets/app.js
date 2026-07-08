@@ -356,9 +356,16 @@ function resourceRow({ label, current, max, tone, caption }) {
         <strong>${safeCurrent}/${safeMax}</strong>
       </div>
       <progress class="resource-meter" max="${safeMax}" value="${safeCurrent}" aria-label="${escapeHtml(label)} ${safeCurrent}/${safeMax}"></progress>
+      <code class="ascii-meter" aria-hidden="true">${asciiBar(safeCurrent, safeMax)}</code>
       <small>${escapeHtml(caption)}｜${percent}%</small>
     </div>
   `;
+}
+
+function asciiBar(current, max) {
+  const total = 18;
+  const filled = Math.round((Math.max(0, current) / Math.max(1, max)) * total);
+  return `[${'|'.repeat(filled)}${'.'.repeat(total - filled)}]`;
 }
 
 function compactEquipmentSummary(player) {

@@ -1555,3 +1555,584 @@ body.battle-page-active { overflow: hidden; }
   .side-box { border-radius: 14px; }
   .hero__copy h1 { font-size: 2.15rem; }
 }
+
+
+/* Terminal CLI design system override
+   Source: role.txt Terminal CLI prompt. Keep this section as the single visual theme layer. */
+:root {
+  color-scheme: dark;
+  --bg: #0a0a0a;
+  --bg-soft: #0f160f;
+  --panel: #0a0a0a;
+  --panel-strong: #0a0a0a;
+  --parchment: rgba(51, 255, 0, 0.05);
+  --line: #1f521f;
+  --line-strong: #33ff00;
+  --text: #33ff00;
+  --muted: #1f8a1f;
+  --gold: #33ff00;
+  --amber: #ffb000;
+  --mana: #33ff00;
+  --green: #33ff00;
+  --violet: #33ff00;
+  --danger: #ff3333;
+  --primary: #33ff00;
+  --secondary: #ffb000;
+  --accent: #33ff00;
+  --error: #ff3333;
+  --border: #1f521f;
+  --shadow: none;
+  --inner-glow: none;
+  --radius: 0px;
+  --terminal-font: "JetBrains Mono", "Fira Code", "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-family: var(--terminal-font);
+}
+
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+html,
+body {
+  background-color: var(--bg);
+}
+
+body {
+  font-family: var(--terminal-font);
+  color: var(--text);
+  background:
+    linear-gradient(180deg, rgba(51, 255, 0, 0.035), transparent 18rem),
+    repeating-linear-gradient(90deg, rgba(51, 255, 0, 0.025) 0 1px, transparent 1px 16px),
+    #0a0a0a;
+  text-shadow: 0 0 5px rgba(51, 255, 0, 0.5);
+}
+
+body::before {
+  opacity: 0.16;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(51, 255, 0, 0.22) 0,
+    rgba(51, 255, 0, 0.22) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  mask-image: none;
+  transform: none;
+}
+
+body::after {
+  opacity: 0.06;
+  background:
+    radial-gradient(circle at center, transparent 0 58%, rgba(51, 255, 0, 0.18) 100%),
+    linear-gradient(90deg, transparent, rgba(51, 255, 0, 0.12), transparent);
+  transform: none;
+}
+
+::selection {
+  color: #0a0a0a;
+  background: var(--primary);
+  text-shadow: none;
+}
+
+button,
+input,
+select,
+textarea,
+code,
+pre,
+table,
+th,
+td {
+  font-family: var(--terminal-font);
+}
+
+h1,
+h2,
+h3,
+.classic-title,
+.section-heading h2,
+.player-summary h2,
+.function-menu__group h2,
+.battle-page__header h2,
+.eyebrow {
+  color: var(--primary);
+  font-family: var(--terminal-font);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 0 5px rgba(51, 255, 0, 0.55);
+}
+
+p,
+li,
+small,
+span,
+label,
+dd,
+dt,
+td,
+th {
+  font-family: var(--terminal-font);
+}
+
+.skip-link,
+.function-menu__button,
+.panel,
+.hero,
+.stat-card,
+.resource-row,
+.character-card,
+.item-card,
+.quest-card,
+.map-select-field,
+.selected-map-card,
+.view-panel,
+.sidebar,
+.battle-log,
+.table-wrap,
+.function-menu__panel,
+.function-menu__group h2,
+.function-menu__group a,
+.function-menu__item summary,
+.function-menu__detail,
+.battle-page__frame,
+.battle-actor,
+.battle-turn,
+.battle-page__status {
+  border: 1px solid var(--border);
+  background: #0a0a0a;
+  backdrop-filter: none;
+}
+
+.panel,
+.hero,
+.stat-card,
+.character-card,
+.item-card,
+.quest-card,
+.map-select-field,
+.selected-map-card,
+.battle-page__frame,
+.function-menu__panel {
+  background:
+    linear-gradient(180deg, rgba(51, 255, 0, 0.045), rgba(51, 255, 0, 0.012)),
+    #0a0a0a;
+}
+
+.hero::before,
+.hero::after,
+.hero__badge::after,
+.brand-mark::after,
+.classic-title::before,
+.tab-button::after,
+.map-select-field::before,
+.selected-map-card::before {
+  display: none !important;
+}
+
+.hero {
+  grid-template-columns: auto minmax(0, 1fr);
+  border-color: var(--primary);
+  background: #0a0a0a;
+}
+
+.hero::before {
+  content: none;
+}
+
+.hero__badge,
+.brand-mark {
+  display: block;
+  width: auto;
+  height: auto;
+  min-width: 7ch;
+  padding: 8px 10px;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  background: #0a0a0a;
+  font-size: 0.86rem;
+  line-height: 1.05;
+  text-align: left;
+  text-shadow: 0 0 5px rgba(51, 255, 0, 0.5);
+  white-space: pre;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  text-align: center;
+}
+
+.hero__copy h1 {
+  color: var(--primary);
+  letter-spacing: 0.02em;
+}
+
+.hero__copy h1::before {
+  content: "> ";
+  color: var(--secondary);
+}
+
+.hero__copy h1::after,
+.player-summary h2::after,
+.battle-page__status::after {
+  content: "_";
+  display: inline-block;
+  margin-left: 0.18em;
+  color: var(--primary);
+  animation: terminal-blink 1s steps(1, end) infinite;
+}
+
+.hero__copy p:last-child,
+.brand-card p,
+.item-card p,
+.quest-card p,
+.character-card p,
+.side-box p,
+.side-box li,
+.mini-panel p,
+.compact-list,
+.rank-list,
+.function-menu__detail,
+.battle-page__actions span {
+  color: var(--muted);
+}
+
+.hero__copy code,
+.ascii-meter,
+.battle-turn-feed,
+.battle-log {
+  color: var(--primary);
+  font-family: var(--terminal-font);
+}
+
+.eyebrow {
+  color: var(--secondary);
+}
+
+.eyebrow::before {
+  content: "$ ";
+  color: var(--primary);
+}
+
+.function-menu__button {
+  color: var(--primary);
+  background: #0a0a0a;
+  border-color: var(--primary);
+  text-transform: uppercase;
+}
+
+.function-menu__label::before { content: "--"; }
+.function-menu__icon { color: var(--secondary); }
+
+.function-menu__button:hover,
+.function-menu.is-open .function-menu__button,
+.function-menu__group a:hover,
+.function-menu__group a:focus-visible,
+.function-menu__item summary:hover,
+.function-menu__item summary:focus-visible,
+.primary-action:hover,
+.ghost-button:hover,
+.danger-button:hover,
+.classic-action:hover,
+.tab-button:hover,
+.tab-button.is-active {
+  color: #0a0a0a;
+  background: var(--primary);
+  border-color: var(--primary);
+  text-shadow: none;
+}
+
+.function-menu__panel {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-color: var(--primary);
+}
+
+.function-menu__group h2 {
+  color: var(--secondary);
+  background: #0a0a0a;
+}
+
+.function-menu__group h2::before { content: "+--- "; }
+.function-menu__group h2::after { content: " ---+"; }
+
+.function-menu__group a,
+.function-menu__item summary {
+  color: var(--primary);
+  background: #0a0a0a;
+}
+
+.function-menu__item summary::before { content: "> "; color: var(--secondary); }
+.function-menu__item summary::after { color: var(--primary); }
+.function-menu__detail { border-top: 0; }
+
+.classic-grid {
+  gap: 12px;
+}
+
+.panel::before,
+.stat-card::before,
+.map-select-field::before,
+.selected-map-card::before,
+.battle-page__frame::before {
+  content: attr(aria-label);
+}
+
+.section-heading,
+.player-summary,
+.compact-block-title,
+.character-info__header,
+.selected-map-card__header,
+.battle-page__header {
+  border-bottom: 1px dashed var(--border);
+}
+
+.section-heading h2::before,
+.player-summary h2::before,
+.compact-block-title span::before,
+.character-info__header span::before {
+  content: "// ";
+  color: var(--secondary);
+}
+
+.create-form label {
+  color: var(--primary);
+  text-transform: uppercase;
+}
+
+.create-form label::before,
+.save-actions::before {
+  content: "user@doudou:~$ ";
+  color: var(--secondary);
+}
+
+input,
+select,
+textarea {
+  color: var(--primary);
+  background: #0a0a0a;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  outline: 0;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  color: #0a0a0a;
+  background: var(--primary);
+  border-color: var(--primary);
+  text-shadow: none;
+}
+
+.primary-action,
+.ghost-button,
+.danger-button,
+.classic-action,
+.tab-button,
+.item-card button {
+  color: var(--primary);
+  background: #0a0a0a;
+  border: 1px solid var(--primary);
+  font-weight: 800;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.danger-button {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.danger-button:hover {
+  color: #0a0a0a;
+  background: var(--error);
+  border-color: var(--error);
+}
+
+.primary-action::before,
+.ghost-button::before,
+.danger-button::before,
+.classic-action::before,
+.item-card button::before { content: "[ "; }
+.primary-action::after,
+.ghost-button::after,
+.danger-button::after,
+.classic-action::after,
+.item-card button::after { content: " ]"; }
+
+.tab-button {
+  justify-content: start;
+  text-align: left;
+}
+
+.tab-button::before {
+  content: "$";
+  display: inline-block;
+  width: 1.25em;
+  color: var(--secondary);
+}
+
+.tab-button.is-active::before {
+  color: #0a0a0a;
+  content: ">";
+}
+
+.resource-meter,
+.battle-meter,
+progress {
+  height: 10px;
+  border: 1px solid var(--border);
+  background: #0a0a0a;
+}
+
+.resource-meter::-webkit-progress-bar,
+.battle-meter::-webkit-progress-bar,
+progress::-webkit-progress-bar {
+  background: #0a0a0a;
+}
+
+.resource-meter::-webkit-progress-value,
+.battle-meter::-webkit-progress-value,
+progress::-webkit-progress-value {
+  background:
+    repeating-linear-gradient(90deg, var(--primary) 0 6px, transparent 6px 8px),
+    var(--primary) !important;
+}
+
+.resource-meter::-moz-progress-bar,
+.battle-meter::-moz-progress-bar,
+progress::-moz-progress-bar {
+  background: repeating-linear-gradient(90deg, var(--primary) 0 6px, transparent 6px 8px), var(--primary) !important;
+}
+
+.ascii-meter {
+  display: block;
+  margin-top: 2px;
+  color: var(--secondary);
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+.resource-row--hp .resource-meter,
+.resource-row--mp .resource-meter,
+.resource-row--exp .resource-meter,
+.battle-meter--hp,
+.battle-meter--mp,
+.battle-meter--enemy {
+  color: var(--primary);
+}
+
+.stat-chip,
+.character-info__meta div,
+.selected-map-card__stats div,
+.clean-list li,
+.route-list li,
+.tag-list li,
+.rank-list li,
+.menu-rank-list li,
+.menu-route-list li {
+  border: 1px dashed var(--border);
+  background: #0a0a0a;
+}
+
+.stat-chip strong,
+.character-info__header strong,
+.resource-card__header strong,
+.selected-map-card strong,
+.map-card__category,
+.map-card__level,
+.rank-list strong,
+.icon-row,
+.menu-rank-list strong,
+.menu-route-list strong,
+.function-menu__detail strong {
+  color: var(--secondary);
+}
+
+.map-card__category,
+.map-card__level,
+.route-list span {
+  color: #0a0a0a;
+  background: var(--secondary);
+  border: 0;
+}
+
+.battle-page {
+  background:
+    repeating-linear-gradient(0deg, rgba(51, 255, 0, 0.08) 0 1px, transparent 1px 4px),
+    rgba(10, 10, 10, 0.96);
+  backdrop-filter: none;
+}
+
+.battle-page__frame {
+  border-color: var(--primary);
+}
+
+.battle-page__status {
+  color: #0a0a0a;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.battle-versus {
+  color: #0a0a0a;
+  background: var(--secondary);
+  border: 1px solid var(--secondary);
+}
+
+.battle-turn--player { border-color: var(--primary); }
+.battle-turn--monster { border-color: var(--error); color: var(--secondary); }
+.battle-turn--system { border-color: var(--secondary); color: var(--secondary); }
+
+.battle-page__actions {
+  background: linear-gradient(180deg, rgba(10, 10, 10, 0), #0a0a0a 28%);
+}
+
+.table-wrap table,
+table {
+  border-color: var(--border);
+  background: #0a0a0a;
+}
+
+th,
+td {
+  border-color: var(--border);
+}
+
+th {
+  color: var(--secondary);
+  background: rgba(51, 255, 0, 0.06);
+}
+
+@keyframes terminal-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+@media (max-width: 900px) {
+  .function-menu__panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero__badge {
+    font-size: 0.74rem;
+  }
+  .ascii-meter {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

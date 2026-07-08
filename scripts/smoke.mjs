@@ -16,8 +16,34 @@ function withBattleDelay(rawUrl) {
 const browser = await chromium.launch({ headless: true });
 const desktop = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 await desktop.goto(url, { waitUntil: 'networkidle' });
+const terminalTheme = await desktop.evaluate(() => {
+  const body = getComputedStyle(document.body);
+  const panel = getComputedStyle(document.querySelector('.game-card'));
+  const button = getComputedStyle(document.querySelector('.primary-action'));
+  const badge = document.querySelector('.hero__badge')?.textContent || '';
+  return {
+    fontFamily: body.fontFamily,
+    color: body.color,
+    backgroundColor: body.backgroundColor,
+    panelRadius: panel.borderRadius,
+    panelBorderColor: panel.borderColor,
+    buttonRadius: button.borderRadius,
+    buttonBackground: button.backgroundColor,
+    badge
+  };
+});
+if (!terminalTheme.fontFamily.toLowerCase().includes('mono') && !terminalTheme.fontFamily.toLowerCase().includes('consolas')) {
+  throw new Error(`Desktop smoke failed: terminal monospace font not applied (${terminalTheme.fontFamily}).`);
+}
+if (terminalTheme.color !== 'rgb(51, 255, 0)' || terminalTheme.backgroundColor !== 'rgb(10, 10, 10)') {
+  throw new Error('Desktop smoke failed: terminal green-on-black colors not applied.');
+}
+if (terminalTheme.panelRadius !== '0px' || terminalTheme.buttonRadius !== '0px') {
+  throw new Error('Desktop smoke failed: terminal zero-radius style not applied.');
+}
+if (!terminalTheme.badge.includes('~$')) throw new Error('Desktop smoke failed: ASCII terminal logo missing.');
 const menuButtonBox = await desktop.locator('#function-menu-button').boundingBox();
-if (!menuButtonBox || menuButtonBox.x < 1120 || menuButtonBox.y > 30) {
+if (!menuButtonBox || Math.abs((menuButtonBox.x + menuButtonBox.width) - 1266) > 3 || menuButtonBox.y > 30) {
   throw new Error('Desktop smoke failed: function menu button is not fixed at the top-right.');
 }
 const menuHiddenBefore = await desktop.locator('#function-menu-panel').evaluate((el) => el.hidden);
@@ -101,7 +127,7 @@ if (!selectedMapText.includes('廢棄後山') || !selectedMapText.includes('特�
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
 await mobile.goto(url, { waitUntil: 'networkidle' });
 const mobileMenuButtonBox = await mobile.locator('#function-menu-button').boundingBox();
-if (!mobileMenuButtonBox || mobileMenuButtonBox.x < 330 || mobileMenuButtonBox.y > 16) {
+if (!mobileMenuButtonBox || Math.abs((mobileMenuButtonBox.x + mobileMenuButtonBox.width) - 382) > 3 || mobileMenuButtonBox.y > 16) {
   throw new Error('Mobile smoke failed: function menu button is not fixed at the top-right.');
 }
 await mobile.click('#function-menu-button');
