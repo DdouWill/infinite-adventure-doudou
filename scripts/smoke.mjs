@@ -151,15 +151,27 @@ if (!battleSpriteSrcs.some((src) => src?.includes('/assets/original/chara/')) ||
 }
 const battleTurnIconCount = await desktop.locator('#battle-page .battle-turn .turn-icon').count();
 if (battleTurnIconCount < 2) throw new Error('Desktop smoke failed: battle turns should show player/monster terminal icons.');
-const battleToneColors = await desktop.evaluate(() => {
+const battleProgressTones = await desktop.evaluate(() => {
   const tone = (selector) => getComputedStyle(document.querySelector(selector)).getPropertyValue('--tone-color').trim().toLowerCase();
+  const border = (selector) => getComputedStyle(document.querySelector(selector)).borderColor;
+  const color = (selector) => getComputedStyle(document.querySelector(selector)).color;
   return {
-    player: tone('.battle-turn--player'),
-    monster: tone('.battle-turn--monster')
+    playerHp: tone('#battle-player-hp'),
+    playerMp: tone('#battle-player-mp'),
+    enemyHp: tone('#battle-monster-hp'),
+    turnBorder: border('.battle-turn--player'),
+    playerName: color('.battle-actor--player strong'),
+    monsterName: color('.battle-actor--monster strong')
   };
 });
-if (battleToneColors.player !== '#58c7ff' || battleToneColors.monster !== '#ff5f73') {
-  throw new Error(`Desktop smoke failed: battle turn colors missing ${JSON.stringify(battleToneColors)}.`);
+if (battleProgressTones.playerHp !== '#ff5f73' || battleProgressTones.playerMp !== '#58c7ff' || battleProgressTones.enemyHp !== '#ff5f73') {
+  throw new Error(`Desktop smoke failed: battle progress colors missing ${JSON.stringify(battleProgressTones)}.`);
+}
+if (battleProgressTones.turnBorder !== 'rgb(255, 255, 255)') {
+  throw new Error(`Desktop smoke failed: battle turn frame should stay monochrome ${JSON.stringify(battleProgressTones)}.`);
+}
+if (battleProgressTones.playerName !== 'rgb(245, 245, 245)' || battleProgressTones.monsterName !== 'rgb(245, 245, 245)') {
+  throw new Error(`Desktop smoke failed: battle names should stay monochrome ${JSON.stringify(battleProgressTones)}.`);
 }
 const battleTurnAnimation = await desktop.locator('#battle-page .battle-turn').first().evaluate((el) => getComputedStyle(el).animationName);
 if (!battleTurnAnimation.includes('terminal-line-in')) throw new Error(`Desktop smoke failed: battle turn line-in animation missing (${battleTurnAnimation}).`);
@@ -182,19 +194,23 @@ const statusToneColors = await desktop.evaluate(() => {
     const node = document.querySelector(selector);
     return node ? getComputedStyle(node).getPropertyValue('--tone-color').trim().toLowerCase() : '';
   };
+  const border = (selector) => getComputedStyle(document.querySelector(selector)).borderColor;
   return {
     hp: tone('.resource-row--hp'),
     mp: tone('.resource-row--mp'),
     exp: tone('.resource-row--exp'),
-    readiness: tone('.readiness-pill')
+    attack: tone('.stat-chip--attack'),
+    resourceFrame: border('.resource-row--hp'),
+    statFrame: border('.stat-chip--attack'),
+    readinessFrame: border('.readiness-pill')
   };
 });
-const expectedToneColors = { hp: '#ff5f73', mp: '#58c7ff', exp: '#ffd166' };
+const expectedToneColors = { hp: '#ff5f73', mp: '#58c7ff', exp: '#ffd166', attack: '#ff9f6e' };
 for (const [key, expected] of Object.entries(expectedToneColors)) {
   if (statusToneColors[key] !== expected) throw new Error(`Desktop smoke failed: ${key} color token mismatch ${statusToneColors[key]} !== ${expected}.`);
 }
-if (!['#7ee787', '#ffd166', '#ff5f73'].includes(statusToneColors.readiness)) {
-  throw new Error(`Desktop smoke failed: readiness color token missing (${statusToneColors.readiness}).`);
+for (const key of ['resourceFrame', 'statFrame', 'readinessFrame']) {
+  if (statusToneColors[key] !== 'rgb(255, 255, 255)') throw new Error(`Desktop smoke failed: ${key} should stay monochrome ${JSON.stringify(statusToneColors)}.`);
 }
 const hpText = await desktop.locator('.vital-card .resource-row--hp .resource-card__header strong').innerText();
 if (!/\d+\/\d+/.test(hpText)) throw new Error('Desktop smoke failed: HP meter value missing.');
@@ -206,6 +222,8 @@ const hudIconCount = await desktop.locator('.stat-grid .ui-icon').count();
 if (hudIconCount < 9) throw new Error(`Desktop smoke failed: status HUD icons missing (${hudIconCount}).`);
 const recordIconCount = await desktop.locator('#battle-log .record-line .ui-icon').count();
 if (recordIconCount < 1) throw new Error('Desktop smoke failed: battle log record icons missing.');
+const recordFrameColor = await desktop.locator('#battle-log .record-line').first().evaluate((el) => getComputedStyle(el).borderLeftColor);
+if (recordFrameColor !== 'rgb(255, 255, 255)') throw new Error(`Desktop smoke failed: battle log frame should stay monochrome (${recordFrameColor}).`);
 const desktopAreas = await desktop.locator('.stat-grid').evaluate((el) => getComputedStyle(el).gridTemplateAreas);
 if (!desktopAreas.includes('vitals') || !desktopAreas.includes('info')) {
   throw new Error('Desktop smoke failed: HP/MP + character info grid areas missing.');

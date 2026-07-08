@@ -3027,36 +3027,16 @@ textarea:focus-visible {
   --tone-color: var(--tone-danger);
 }
 
-.resource-row .resource-card__header,
 .resource-row .resource-card__header strong,
 .resource-row .ascii-meter,
-.resource-row .ui-icon,
-.stat-chip strong,
-.stat-chip .ui-icon {
+.stat-chip strong {
   color: var(--tone-color);
-}
-
-.resource-row .ui-icon,
-.stat-chip .ui-icon,
-.item-card__icon,
-.quest-card__icon,
-.milestone-card__icon {
-  border-color: var(--tone-color);
-}
-
-.resource-row,
-.stat-chip,
-.item-card,
-.quest-card,
-.milestone-card {
-  border-color: var(--tone-color);
 }
 
 .resource-row .resource-meter,
 .battle-meter {
   color: var(--tone-color);
   accent-color: var(--tone-color);
-  border-color: var(--tone-color);
 }
 
 .resource-row .resource-meter::-webkit-progress-value,
@@ -3091,18 +3071,6 @@ textarea:focus-visible {
   --tone-color: var(--tone-danger);
 }
 
-.readiness-pill,
-.readiness-card,
-.guide-card {
-  border-color: var(--tone-color);
-}
-
-.readiness-pill,
-.readiness-card > span,
-.readiness-card .ui-icon {
-  color: var(--tone-color);
-}
-
 .battle-turn--player {
   --tone-color: var(--tone-mp);
 }
@@ -3115,18 +3083,17 @@ textarea:focus-visible {
   --tone-color: var(--tone-exp);
 }
 
-.battle-turn {
-  border-color: var(--tone-color);
-  border-left-width: 4px;
+.battle-turn--player,
+.battle-turn--monster,
+.battle-turn--system {
+  border-color: var(--border);
 }
 
-.battle-turn .turn-icon,
-.battle-turn > span:not(.ui-icon) {
-  color: var(--tone-color);
-  border-color: var(--tone-color);
+.battle-turn .turn-icon {
+  color: var(--primary);
+  border-color: var(--border);
 }
 
-.battle-actor--player strong,
 #battle-player-hp-text {
   color: var(--tone-hp);
 }
@@ -3135,7 +3102,6 @@ textarea:focus-visible {
   color: var(--tone-mp);
 }
 
-.battle-actor--monster strong,
 #battle-monster-hp-text {
   color: var(--tone-danger);
 }
@@ -3146,23 +3112,6 @@ textarea:focus-visible {
 .stat-chip--speed { --tone-color: var(--tone-speed); }
 .stat-chip--mastery { --tone-color: var(--tone-mastery); }
 
-.item-card--consumable { --tone-color: var(--tone-safe); }
-.item-card--weapon { --tone-color: var(--tone-attack); }
-.item-card--armor { --tone-color: var(--tone-defense); }
-.item-card--trinket { --tone-color: var(--tone-speed); }
-
-.item-card strong,
-.quest-card strong,
-.milestone-card.is-complete:not(.is-claimed) h3,
-.milestone-card.is-complete:not(.is-claimed) .milestone-card__icon {
-  color: var(--tone-color);
-}
-
-.milestone-card.is-complete:not(.is-claimed) {
-  --tone-color: var(--tone-safe);
-  box-shadow: inset 3px 0 0 var(--tone-color) !important;
-}
-
-.quest-card--main {
-  --tone-color: var(--tone-exp);
+.battle-log .record-line {
+  border-left-color: var(--border);
 }
