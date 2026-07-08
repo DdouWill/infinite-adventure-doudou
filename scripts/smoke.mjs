@@ -39,9 +39,16 @@ const lineageText = await desktop.locator('#lineage-panel').innerText();
 if (!lineageText.includes('老頭版') || !lineageText.includes('BadGameShow')) {
   throw new Error('Desktop smoke failed: lineage panel missing old-version references.');
 }
-const mapCategories = await desktop.locator('.map-card__category').evaluateAll((nodes) => nodes.map((node) => node.textContent));
+const mapOptionCount = await desktop.locator('#map-select option').count();
+if (mapOptionCount !== 5) throw new Error('Desktop smoke failed: map dropdown should contain 5 maps.');
+const mapGroupLabels = await desktop.locator('#map-select optgroup').evaluateAll((nodes) => nodes.map((node) => node.label));
 for (const expected of ['一般地圖', '試煉地圖', '特殊地圖', '封閉專區']) {
-  if (!mapCategories.includes(expected)) throw new Error(`Desktop smoke failed: missing map category ${expected}.`);
+  if (!mapGroupLabels.includes(expected)) throw new Error(`Desktop smoke failed: missing map optgroup ${expected}.`);
+}
+await desktop.selectOption('#map-select', 'ruins');
+const selectedMapText = await desktop.locator('.selected-map-card').innerText();
+if (!selectedMapText.includes('廢棄後山') || !selectedMapText.includes('特殊地圖')) {
+  throw new Error('Desktop smoke failed: selected map summary did not update from dropdown.');
 }
 
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
@@ -58,5 +65,10 @@ const mobileVitalBars = await mobile.locator('.vital-card .resource-meter').coun
 if (mobileVitalBars !== 2) throw new Error('Mobile smoke failed: HP/MP vital block not rendered.');
 const mobileInfoVisible = await mobile.locator('.character-info-card').isVisible();
 if (!mobileInfoVisible) throw new Error('Mobile smoke failed: character info block not visible.');
+const mobileMapSelectVisible = await mobile.locator('#map-select').isVisible();
+if (!mobileMapSelectVisible) throw new Error('Mobile smoke failed: map dropdown not visible.');
+await mobile.selectOption('#map-select', 'sealed_gate');
+const mobileSelectedMapText = await mobile.locator('.selected-map-card').innerText();
+if (!mobileSelectedMapText.includes('封印之門')) throw new Error('Mobile smoke failed: map dropdown summary did not update.');
 await browser.close();
 console.log('Smoke test passed.');

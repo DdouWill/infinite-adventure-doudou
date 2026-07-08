@@ -204,24 +204,51 @@ function compactEquipmentSummary(player) {
 }
 
 function renderMaps() {
-  nodes.mapList.innerHTML = maps.map((map) => {
-    const active = map.id === selectedMapId ? ' is-selected' : '';
-    return `
-      <button class="map-card${active}" type="button" data-map-id="${map.id}">
-        <span class="map-card__category">${escapeHtml(map.category || '戰鬥地圖')}</span>
-        <span class="map-card__level">Lv.${map.level}｜${escapeHtml(map.stage || '冒險')}</span>
-        <strong>${escapeHtml(map.name)}</strong>
-        <small>${escapeHtml(map.description)}</small>
-        <span class="map-card__meta">入場 ${map.cost} 金幣｜EXP ${map.reward.exp}｜熟練 ${map.reward.mastery}</span>
-        <em>${escapeHtml(map.routeHint || '依照目前 HP / MP 決定是否出擊。')}</em>
-      </button>
-    `;
-  }).join('');
-  $$('.map-card').forEach((button) => {
-    button.addEventListener('click', () => {
-      selectedMapId = button.dataset.mapId;
-      renderMaps();
-    });
+  const selectedMap = maps.find((map) => map.id === selectedMapId) || maps[0];
+  selectedMapId = selectedMap.id;
+  const categories = maps.reduce((groups, map) => {
+    const category = map.category || '戰鬥地圖';
+    groups[category] = groups[category] || [];
+    groups[category].push(map);
+    return groups;
+  }, {});
+  const optionGroups = Object.entries(categories).map(([category, categoryMaps]) => `
+    <optgroup label="${escapeHtml(category)}">
+      ${categoryMaps.map((map) => `
+        <option value="${escapeHtml(map.id)}" ${map.id === selectedMapId ? 'selected' : ''}>
+          Lv.${map.level}｜${escapeHtml(map.name)}｜${escapeHtml(map.stage || '冒險')}
+        </option>
+      `).join('')}
+    </optgroup>
+  `).join('');
+
+  nodes.mapList.innerHTML = `
+    <label class="map-select-field" for="map-select">
+      <span>選擇戰鬥地圖</span>
+      <select id="map-select" class="map-select" aria-label="選擇戰鬥地圖">
+        ${optionGroups}
+      </select>
+      <small>以原版下拉選單方式切換一般 / 試煉 / 特殊 / 封閉地圖。</small>
+    </label>
+    <article class="selected-map-card" aria-live="polite">
+      <div class="selected-map-card__header">
+        <span class="map-card__category">${escapeHtml(selectedMap.category || '戰鬥地圖')}</span>
+        <span class="map-card__level">Lv.${selectedMap.level}｜${escapeHtml(selectedMap.stage || '冒險')}</span>
+      </div>
+      <strong>${escapeHtml(selectedMap.name)}</strong>
+      <p>${escapeHtml(selectedMap.description)}</p>
+      <dl class="selected-map-card__stats">
+        <div><dt>入場</dt><dd>${selectedMap.cost} 金幣</dd></div>
+        <div><dt>EXP</dt><dd>${selectedMap.reward.exp}</dd></div>
+        <div><dt>熟練</dt><dd>${selectedMap.reward.mastery}</dd></div>
+      </dl>
+      <em>${escapeHtml(selectedMap.routeHint || '依照目前 HP / MP 決定是否出擊。')}</em>
+    </article>
+  `;
+
+  $('#map-select')?.addEventListener('change', (event) => {
+    selectedMapId = event.target.value;
+    renderMaps();
   });
 }
 
