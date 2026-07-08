@@ -72,6 +72,7 @@ const nodes = {
   loginId: $('#login-id'),
   loginPass: $('#login-pass'),
   registerToggleButton: $('#register-toggle-button'),
+  registerModal: $('#register-modal'),
   registerPanel: $('#register-panel'),
   registerMessage: $('#register-message'),
   localRegisterForm: $('#local-register-form'),
@@ -139,7 +140,10 @@ document.addEventListener('click', (event) => {
 });
 
 document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') setFunctionMenuOpen(false);
+  if (event.key === 'Escape') {
+    if (!nodes.registerModal.hidden) closeRegisterModal();
+    setFunctionMenuOpen(false);
+  }
 });
 
 nodes.loginForm.addEventListener('submit', (event) => {
@@ -160,9 +164,11 @@ nodes.loginForm.addEventListener('reset', () => {
 });
 
 nodes.registerToggleButton.addEventListener('click', () => {
-  nodes.registerPanel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  nodes.registerId.focus();
-  nodes.registerMessage.textContent = '可自行建立本機帳號，或輸入 Google 帳號資訊建立本機 session。';
+  openRegisterModal();
+});
+
+$$('[data-register-close]').forEach((button) => {
+  button.addEventListener('click', () => closeRegisterModal());
 });
 
 nodes.localRegisterForm.addEventListener('submit', (event) => {
@@ -971,7 +977,23 @@ function loadPlayer() {
   }
 }
 
+function openRegisterModal() {
+  nodes.registerModal.hidden = false;
+  nodes.registerModal.classList.remove('is-hidden');
+  nodes.registerToggleButton.setAttribute('aria-expanded', 'true');
+  nodes.registerMessage.textContent = '可自行設定帳密，或使用 Google 帳號資訊建立本機 session。';
+  nodes.registerId.focus();
+}
+
+function closeRegisterModal() {
+  nodes.registerModal.hidden = true;
+  nodes.registerModal.classList.add('is-hidden');
+  nodes.registerToggleButton.setAttribute('aria-expanded', 'false');
+  nodes.registerToggleButton.focus();
+}
+
 function completeLoginSession(session, heroName) {
+  if (!nodes.registerModal.hidden) closeRegisterModal();
   loginSession = { ...session, loginAt: new Date().toISOString() };
   saveLoginSession();
   prefillHeroName(heroName || session.displayName || session.account);

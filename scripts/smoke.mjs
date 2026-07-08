@@ -21,8 +21,14 @@ async function assertTerminalLoginGate(page, label) {
   const createVisible = await page.locator('#create-view').isVisible();
   if (createVisible) throw new Error(`${label} smoke failed: character creation should not be visible before login.`);
   const loginText = await page.locator('#login-view').innerText();
-  for (const expected of ['AUTH_GATE', '帳號', '密碼', '登入遊戲', '帳號註冊', '自行建立', 'Google 帳號資訊', '系統公告', '伺服器狀態']) {
+  for (const expected of ['AUTH_GATE', '帳號', '密碼', '登入遊戲', '帳號註冊', '系統公告', '伺服器狀態']) {
     if (!loginText.includes(expected)) throw new Error(`${label} smoke failed: terminal login block missing ${expected}.`);
+  }
+  const registerModalHidden = await page.locator('#register-modal').evaluate((el) => el.hidden && el.classList.contains('is-hidden'));
+  if (!registerModalHidden) throw new Error(`${label} smoke failed: registration should be hidden in a modal before clicking register.`);
+  const registerModalCopy = await page.locator('#register-modal').textContent();
+  for (const expected of ['自行建立', 'Google 帳號資訊']) {
+    if (!registerModalCopy.includes(expected)) throw new Error(`${label} smoke failed: registration modal missing ${expected}.`);
   }
   const forbiddenText = ['BadGameShow', '註冊帳號', '原版', '注意事項'];
   for (const forbidden of forbiddenText) {
@@ -55,8 +61,30 @@ async function loginThroughGate(page, account, password) {
   if (!createViewVisible) throw new Error('Login smoke failed: character creation should be visible after login when no save exists.');
 }
 
-async function registerLocalThroughGate(page, account, password) {
+async function openRegisterModal(page, label) {
   await page.click('#register-toggle-button');
+  await page.waitForFunction(() => !document.querySelector('#register-modal')?.hidden);
+  const modalState = await page.locator('#register-modal').evaluate((el) => {
+    const style = getComputedStyle(el);
+    const dialogBox = el.querySelector('.terminal-modal__dialog')?.getBoundingClientRect();
+    return { position: style.position, hidden: el.hidden, dialogTop: dialogBox?.top ?? null };
+  });
+  if (modalState.hidden || modalState.position !== 'fixed' || modalState.dialogTop === null) {
+    throw new Error(`${label} smoke failed: register modal should float over the login page ${JSON.stringify(modalState)}.`);
+  }
+  const expanded = await page.locator('#register-toggle-button').getAttribute('aria-expanded');
+  if (expanded !== 'true') throw new Error(`${label} smoke failed: register button aria-expanded not true after opening modal.`);
+}
+
+async function closeRegisterModal(page, label) {
+  await page.click('#register-modal-close');
+  await page.waitForFunction(() => document.querySelector('#register-modal')?.hidden);
+  const expanded = await page.locator('#register-toggle-button').getAttribute('aria-expanded');
+  if (expanded !== 'false') throw new Error(`${label} smoke failed: register button aria-expanded not false after closing modal.`);
+}
+
+async function registerLocalThroughGate(page, account, password) {
+  await openRegisterModal(page, 'Local register');
   await page.fill('#register-id', account);
   await page.fill('#register-pass', password);
   await page.fill('#register-pass-confirm', password);
@@ -71,7 +99,7 @@ async function registerLocalThroughGate(page, account, password) {
 }
 
 async function registerGoogleInfoThroughGate(page, email, displayName) {
-  await page.click('#register-toggle-button');
+  await openRegisterModal(page, 'Google info register');
   await page.fill('#google-email', email);
   await page.fill('#google-name', displayName);
   await page.click('#google-register-submit');
@@ -99,6 +127,9 @@ const desktop = await browser.newPage({ viewport: { width: 1280, height: 900 } }
 await desktop.goto(url, { waitUntil: 'networkidle' });
 await assertTerminalLoginGate(desktop, 'Desktop');
 await desktop.screenshot({ path: `${screenshotsDir}/desktop-login.png`, fullPage: true });
+await openRegisterModal(desktop, 'Desktop register screenshot');
+await desktop.screenshot({ path: `${screenshotsDir}/desktop-register-modal.png` });
+await closeRegisterModal(desktop, 'Desktop register screenshot');
 await loginThroughGate(desktop, 'test01', 'pass01');
 const terminalTheme = await desktop.evaluate(() => {
   const body = getComputedStyle(document.body);
@@ -367,6 +398,9 @@ const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, is
 await mobile.goto(url, { waitUntil: 'networkidle' });
 await assertTerminalLoginGate(mobile, 'Mobile');
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-login.png`, fullPage: true });
+await openRegisterModal(mobile, 'Mobile register screenshot');
+await mobile.screenshot({ path: `${screenshotsDir}/mobile-register-modal.png` });
+await closeRegisterModal(mobile, 'Mobile register screenshot');
 await loginThroughGate(mobile, 'mobi01', 'pass01');
 const mobileMenuButtonBox = await mobile.locator('#function-menu-button').boundingBox();
 if (!mobileMenuButtonBox || Math.abs((mobileMenuButtonBox.x + mobileMenuButtonBox.width) - 382) > 3 || mobileMenuButtonBox.y > 16) {

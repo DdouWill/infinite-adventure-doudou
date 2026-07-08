@@ -3257,6 +3257,51 @@ textarea:focus-visible {
   background: #000;
 }
 
+.terminal-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 4vw, 34px);
+}
+
+.terminal-modal.is-hidden,
+.terminal-modal[hidden] {
+  display: none;
+}
+
+.terminal-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 4px),
+    rgba(0, 0, 0, 0.78);
+  cursor: pointer;
+}
+
+.terminal-modal__dialog {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 760px);
+  max-height: min(88vh, 780px);
+  overflow: auto;
+  box-shadow: 0 0 0 1px #000, 0 0 24px rgba(245, 245, 245, 0.18);
+}
+
+.terminal-modal__title {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.terminal-modal__close {
+  min-height: 30px;
+  margin-left: 8px;
+  padding: 4px 8px;
+}
+
 .terminal-register {
   display: grid;
   gap: 10px;
@@ -3438,5 +3483,29 @@ textarea:focus-visible {
 
   .terminal-login__keyart {
     max-height: 230px;
+  }
+
+  .terminal-modal {
+    align-items: start;
+    padding: 8px;
+  }
+
+  .terminal-modal__dialog {
+    width: 100%;
+    max-height: calc(100vh - 16px);
+  }
+
+  .terminal-modal__title {
+    flex-wrap: wrap;
+  }
+
+  .terminal-modal__title em {
+    order: 3;
+    width: 100%;
+    margin-left: calc(1.7rem + 8px);
+  }
+
+  .terminal-modal__close {
+    margin-left: auto;
   }
 }

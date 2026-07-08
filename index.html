@@ -40,47 +40,50 @@
             <div class="terminal-login__actions">
               <button id="login-submit" class="terminal-button terminal-button--primary" type="submit">登入遊戲</button>
               <button class="terminal-button" type="reset">清除重寫</button>
-              <button id="register-toggle-button" class="terminal-button" type="button">帳號註冊</button>
+              <button id="register-toggle-button" class="terminal-button" type="button" aria-controls="register-modal" aria-expanded="false">帳號註冊</button>
             </div>
             <p id="login-message" class="login-message" role="status" aria-live="polite"></p>
           </form>
 
-          <section id="register-panel" class="terminal-register" aria-label="帳號註冊">
-            <div class="terminal-panel-title"><span>+</span><strong>帳號註冊</strong><em>LOCAL / GOOGLE INFO</em></div>
-            <div class="terminal-register__grid">
-              <form id="local-register-form" class="terminal-register__form" autocomplete="on">
-                <h2>自行建立</h2>
-                <label>
-                  <span>新帳號</span>
-                  <input id="register-id" name="register-id" type="text" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="newhero" autocomplete="username" required>
-                </label>
-                <label>
-                  <span>新密碼</span>
-                  <input id="register-pass" name="register-pass" type="password" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="********" autocomplete="new-password" required>
-                </label>
-                <label>
-                  <span>確認密碼</span>
-                  <input id="register-pass-confirm" name="register-pass-confirm" type="password" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="********" autocomplete="new-password" required>
-                </label>
-                <button id="register-submit" class="terminal-button terminal-button--primary" type="submit">建立本機帳號</button>
-              </form>
+          <div id="register-modal" class="terminal-modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="register-modal-title" hidden>
+            <button class="terminal-modal__backdrop" type="button" data-register-close aria-label="關閉帳號註冊視窗"></button>
+            <section id="register-panel" class="terminal-register terminal-modal__dialog" aria-label="帳號註冊">
+              <div class="terminal-panel-title terminal-modal__title"><span>+</span><strong id="register-modal-title">帳號註冊</strong><em>LOCAL / GOOGLE INFO</em><button id="register-modal-close" class="terminal-button terminal-modal__close" type="button" data-register-close>關閉</button></div>
+              <div class="terminal-register__grid">
+                <form id="local-register-form" class="terminal-register__form" autocomplete="on">
+                  <h2>自行建立</h2>
+                  <label>
+                    <span>新帳號</span>
+                    <input id="register-id" name="register-id" type="text" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="newhero" autocomplete="username" required>
+                  </label>
+                  <label>
+                    <span>新密碼</span>
+                    <input id="register-pass" name="register-pass" type="password" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="********" autocomplete="new-password" required>
+                  </label>
+                  <label>
+                    <span>確認密碼</span>
+                    <input id="register-pass-confirm" name="register-pass-confirm" type="password" minlength="4" maxlength="8" pattern="[A-Za-z0-9_]{4,8}" placeholder="********" autocomplete="new-password" required>
+                  </label>
+                  <button id="register-submit" class="terminal-button terminal-button--primary" type="submit">建立本機帳號</button>
+                </form>
 
-              <form id="google-register-form" class="terminal-register__form" autocomplete="on">
-                <h2>Google 帳號資訊</h2>
-                <label>
-                  <span>Google Email</span>
-                  <input id="google-email" name="google-email" type="email" placeholder="name@gmail.com" autocomplete="email" required>
-                </label>
-                <label>
-                  <span>顯示名稱</span>
-                  <input id="google-name" name="google-name" type="text" maxlength="12" placeholder="冒險者名稱" autocomplete="name">
-                </label>
-                <small>靜態 demo 不執行 Google OAuth；只接受你輸入的 Google 帳號資訊來建立本機登入 session。</small>
-                <button id="google-register-submit" class="terminal-button terminal-button--primary" type="submit">使用 Google 資訊進入</button>
-              </form>
-            </div>
-            <p id="register-message" class="login-message" role="status" aria-live="polite"></p>
-          </section>
+                <form id="google-register-form" class="terminal-register__form" autocomplete="on">
+                  <h2>Google 帳號資訊</h2>
+                  <label>
+                    <span>Google Email</span>
+                    <input id="google-email" name="google-email" type="email" placeholder="name@gmail.com" autocomplete="email" required>
+                  </label>
+                  <label>
+                    <span>顯示名稱</span>
+                    <input id="google-name" name="google-name" type="text" maxlength="12" placeholder="冒險者名稱" autocomplete="name">
+                  </label>
+                  <small>靜態 demo 不執行 Google OAuth；只接受你輸入的 Google 帳號資訊來建立本機登入 session。</small>
+                  <button id="google-register-submit" class="terminal-button terminal-button--primary" type="submit">使用 Google 資訊進入</button>
+                </form>
+              </div>
+              <p id="register-message" class="login-message" role="status" aria-live="polite"></p>
+            </section>
+          </div>
         </main>
 
         <aside class="terminal-login__side" aria-label="登入側欄資訊">
