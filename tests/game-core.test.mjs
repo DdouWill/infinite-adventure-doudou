@@ -2,18 +2,22 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   buyItem,
+  bestiaryEntries,
+  claimMilestone,
   claimQuestReward,
   createBattleEncounter,
   createPlayer,
   equipItem,
+  maps,
+  milestonesFor,
   parsePlayer,
+  performBattle,
   portraitForMonster,
   portraitForPlayer,
-  shopItems,
-  maps,
-  performBattle,
+  progressionGuide,
   restAtInn,
   serializePlayer,
+  shopItems,
   totalStats,
   useItem
 } from '../assets/game-core.js';
@@ -29,6 +33,9 @@ test('createPlayer validates name and initializes core stats', () => {
   assert.equal(player.level, 1);
   assert.equal(player.hp, player.maxHp);
   assert.equal(player.inventory.includes('novice_badge'), true);
+  assert.deepEqual(player.milestonesClaimed, []);
+  assert.deepEqual(player.bestiary, {});
+  assert.deepEqual(player.mapRuns, {});
 });
 
 test('portrait helpers resolve local character and monster sprites', () => {
@@ -60,6 +67,55 @@ test('performBattle can win, grants rewards, and advances grassland quest', () =
   assert.equal(result.player.quest.progress, 1);
   assert.ok(result.player.exp > player.exp);
   assert.ok(result.player.gold > 0);
+});
+
+test('performBattle records map runs and bestiary on wins', () => {
+  const player = createPlayer({ name: '圖鑑勇者', element: '火', archetype: 'blade' });
+  const result = performBattle(player, 'meadow', rngSequence([0, 0, 0, 0.2, 0.99]));
+  assert.equal(result.result, 'win');
+  assert.equal(result.player.mapRuns.meadow, 1);
+  const entries = bestiaryEntries(result.player);
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].name, '草原鼠');
+  assert.equal(entries[0].count, 1);
+});
+
+test('milestones can be claimed once and grant simple rewards', () => {
+  let player = createPlayer({ name: '目標勇者', element: '光', archetype: 'blade' });
+  player.battles = 1;
+  const firstBattle = milestonesFor(player).find((milestone) => milestone.id === 'first_battle');
+  assert.equal(firstBattle.complete, true);
+  assert.equal(firstBattle.claimed, false);
+  player = claimMilestone(player, 'first_battle');
+  assert.equal(player.milestonesClaimed.includes('first_battle'), true);
+  assert.equal(player.inventory.includes('herb'), true);
+  const goldAfterClaim = player.gold;
+  player = claimMilestone(player, 'first_battle');
+  assert.equal(player.gold, goldAfterClaim);
+});
+
+test('progressionGuide gives next action and map readiness without extra complexity', () => {
+  const player = createPlayer({ name: '指南勇者', element: '風', archetype: 'ranger' });
+  const guide = progressionGuide(player, 'meadow');
+  assert.equal(guide.suggestedMapId, 'meadow');
+  assert.equal(guide.readiness.tone, 'safe');
+  assert.ok(guide.nextAction.includes('草原討伐'));
+  player.hp = 10;
+  assert.equal(progressionGuide(player, 'upper_tower_gate').readiness.tone, 'danger');
+  assert.ok(progressionGuide(player, 'meadow').nextAction.includes('HP / MP'));
+});
+
+test('parsePlayer migrates old saves with progression defaults', () => {
+  const parsed = parsePlayer(JSON.stringify({
+    name: '舊存檔',
+    element: '星',
+    level: 1,
+    inventory: ['novice_badge']
+  }));
+  assert.deepEqual(parsed.milestonesClaimed, []);
+  assert.deepEqual(parsed.bestiary, {});
+  assert.deepEqual(parsed.mapRuns, {});
+  assert.equal(parsed.equipment.weapon, null);
 });
 
 test('createBattleEncounter builds turn-by-turn page data with probabilistic skills', () => {

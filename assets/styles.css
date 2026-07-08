@@ -2651,6 +2651,230 @@ textarea:focus-visible {
   font-size: 0.72rem;
 }
 
+.guide-card,
+.milestone-board,
+.collection-card,
+.milestone-card {
+  border: 1px solid var(--border);
+  background: #0a0a0a;
+}
+
+.guide-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(180px, 0.55fr);
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px;
+}
+
+.guide-card__main {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.guide-card p,
+.collection-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.route-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.route-step,
+.readiness-pill,
+.readiness-card > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.route-step,
+.readiness-pill {
+  padding: 3px 7px;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.route-step.is-done,
+.readiness-pill--safe {
+  color: var(--primary);
+  border-style: solid;
+}
+
+.readiness-pill--warning,
+.readiness-pill--danger {
+  border-style: double;
+}
+
+.readiness-card {
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px;
+  border-left: 1px solid var(--border);
+}
+
+.readiness-card > span {
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.readiness-card small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.compact-button {
+  min-height: 32px;
+  padding: 5px 8px;
+  font-size: 0.76rem;
+}
+
+.quest-board {
+  display: grid;
+  gap: 12px;
+}
+
+.milestone-board,
+.collection-card {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.milestone-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.milestone-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 10px;
+}
+
+.milestone-card__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border);
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.milestone-card h3,
+.milestone-card p,
+.milestone-card small {
+  margin: 0;
+}
+
+.milestone-card h3 {
+  color: var(--primary);
+  font-size: 0.92rem;
+}
+
+.milestone-card p,
+.milestone-card small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.milestone-card.is-complete:not(.is-claimed) {
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.milestone-card.is-claimed {
+  opacity: 0.72;
+}
+
+.collection-board {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.collection-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.collection-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.collection-list li small {
+  grid-column: 2 / -1;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.collection-list strong {
+  color: var(--primary);
+}
+
+.collection-list--maps li {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.guide-card,
+.milestone-card,
+.collection-card {
+  position: relative;
+  overflow: hidden;
+  transition: background-position 0.28s steps(7, end), border-color 0.16s steps(2, end);
+  background-image: linear-gradient(90deg, transparent 0 42%, rgba(245, 245, 245, 0.14) 50%, transparent 58%);
+  background-size: 240% 100%;
+  background-position: 120% 0;
+}
+
+.guide-card:hover,
+.milestone-card:hover,
+.collection-card:hover {
+  background-position: -20% 0;
+}
+
+@media (max-width: 760px) {
+  .guide-card,
+  .collection-board,
+  .milestone-list {
+    grid-template-columns: 1fr;
+  }
+
+  .readiness-card {
+    border-left: 0;
+    border-top: 1px dashed var(--border);
+    padding-top: 10px;
+  }
+
+  .milestone-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .milestone-card .compact-button {
+    grid-column: 1 / -1;
+  }
+}
+
 @keyframes terminal-line-in {
   from {
     opacity: 0;

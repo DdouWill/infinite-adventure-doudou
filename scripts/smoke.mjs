@@ -114,6 +114,12 @@ await desktop.selectOption('#hero-archetype', 'blade');
 await desktop.click('button:has-text("建立角色")');
 const navIconCount = await desktop.locator('.tab-button .ui-icon').count();
 if (navIconCount !== 6) throw new Error(`Desktop smoke failed: tab nav should have 6 command icons, got ${navIconCount}.`);
+const guideTextBeforeBattle = await desktop.locator('#adventure-guide').innerText();
+if (!guideTextBeforeBattle.includes('冒險指南') || !guideTextBeforeBattle.includes('草原討伐')) {
+  throw new Error('Desktop smoke failed: adventure guide should show beginner next action.');
+}
+const routeStepCount = await desktop.locator('#adventure-guide .route-step').count();
+if (routeStepCount !== 5) throw new Error(`Desktop smoke failed: adventure guide should show 5 route steps, got ${routeStepCount}.`);
 const commandEffect = await desktop.locator('#battle-button').evaluate((el) => {
   const style = getComputedStyle(el);
   return { backgroundImage: style.backgroundImage, transitionDuration: style.transitionDuration };
@@ -180,8 +186,23 @@ const selectedMapText = await desktop.locator('.selected-map-card').innerText();
 if (!selectedMapText.includes('廢棄後山') || !selectedMapText.includes('常駐開放')) {
   throw new Error('Desktop smoke failed: selected map summary did not update from dropdown.');
 }
+if (!selectedMapText.includes('高風險') && !selectedMapText.includes('可挑戰') && !selectedMapText.includes('金幣不足')) {
+  throw new Error('Desktop smoke failed: selected map should include readiness guidance.');
+}
 const selectedMapIconVisible = await desktop.locator('.selected-map-card .map-card__category .ui-icon').isVisible();
 if (!selectedMapIconVisible) throw new Error('Desktop smoke failed: selected map category icon missing.');
+await desktop.click('.tab-button[data-view="quest"]');
+const questText = await desktop.locator('#quest-board').innerText();
+for (const expected of ['冒險目標', '第一次出擊', '討伐圖鑑', '地圖紀錄', '草原']) {
+  if (!questText.includes(expected)) throw new Error(`Desktop smoke failed: quest progression board missing ${expected}.`);
+}
+const milestoneCount = await desktop.locator('#quest-board .milestone-card').count();
+if (milestoneCount !== 6) throw new Error(`Desktop smoke failed: should render 6 milestone cards, got ${milestoneCount}.`);
+const collectionCardCount = await desktop.locator('#quest-board .collection-card').count();
+if (collectionCardCount !== 2) throw new Error(`Desktop smoke failed: should render bestiary and map collection cards, got ${collectionCardCount}.`);
+await desktop.click('[data-claim-milestone="first_battle"]');
+const claimedMilestoneText = await desktop.locator('[data-claim-milestone="first_battle"]').innerText();
+if (!claimedMilestoneText.includes('已領取')) throw new Error('Desktop smoke failed: first battle milestone should be claimable and become claimed.');
 await desktop.click('.tab-button[data-view="inventory"]');
 const itemIconCount = await desktop.locator('.item-card .item-card__icon').count();
 if (itemIconCount < 3) throw new Error(`Desktop smoke failed: inventory/shop item icons missing (${itemIconCount}).`);
@@ -213,6 +234,10 @@ await mobile.fill('#hero-name', '手機豆豆');
 await mobile.selectOption('#hero-element', '水');
 await mobile.selectOption('#hero-archetype', 'sage');
 await mobile.click('button:has-text("建立角色")');
+const mobileGuideVisible = await mobile.locator('#adventure-guide').isVisible();
+if (!mobileGuideVisible) throw new Error('Mobile smoke failed: adventure guide not visible after create.');
+const mobileRouteStepCount = await mobile.locator('#adventure-guide .route-step').count();
+if (mobileRouteStepCount !== 5) throw new Error(`Mobile smoke failed: route steps missing (${mobileRouteStepCount}).`);
 await mobile.click('#battle-button');
 await mobile.waitForSelector('#battle-page:not(.is-hidden)');
 const mobileBattleHash = await mobile.evaluate(() => window.location.hash);

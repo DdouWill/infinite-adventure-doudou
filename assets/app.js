@@ -1,5 +1,7 @@
 import {
+  bestiaryEntries,
   buyItem,
+  claimMilestone,
   claimQuestReward,
   countries,
   createBattleEncounter,
@@ -7,9 +9,11 @@ import {
   equipItem,
   getItem,
   maps,
+  milestonesFor,
   parsePlayer,
   portraitForMonster,
   portraitForPlayer,
+  progressionGuide,
   rankingsFor,
   restAtInn,
   serializePlayer,
@@ -59,6 +63,7 @@ const nodes = {
   createForm: $('#create-form'),
   playerTitle: $('#player-title'),
   statGrid: $('#stat-grid'),
+  adventureGuide: $('#adventure-guide'),
   mapList: $('#map-list'),
   battleButton: $('#battle-button'),
   restButton: $('#rest-button'),
@@ -363,6 +368,7 @@ function render() {
   nodes.gameView.classList.remove('is-hidden');
   nodes.playerTitle.textContent = `${state.name}｜Lv.${state.level} ${state.element}・${state.job}`;
   renderStats();
+  renderAdventureGuide();
   renderMaps();
   renderBattleLog();
   renderCharacter();
@@ -459,8 +465,42 @@ function compactEquipmentSummary(player) {
     .join(' / ');
 }
 
+function renderAdventureGuide() {
+  const guide = progressionGuide(state, selectedMapId);
+  nodes.adventureGuide.innerHTML = `
+    <article class="guide-card guide-card--${escapeHtml(guide.readiness.tone)}">
+      <div class="guide-card__main">
+        <div class="compact-block-title">
+          ${iconMarkup('>')}
+          <span>冒險指南</span>
+          <strong>Stage ${guide.stage}</strong>
+        </div>
+        <p>${escapeHtml(guide.nextAction)}</p>
+        <div class="route-steps" aria-label="新手路線進度">
+          ${guide.route.map((step) => `
+            <span class="route-step ${step.done ? 'is-done' : ''}">${iconMarkup(step.done ? '✓' : '·')}<span>${escapeHtml(step.label)}</span></span>
+          `).join('')}
+        </div>
+      </div>
+      <div class="readiness-card" data-tone="${escapeHtml(guide.readiness.tone)}">
+        <span>${iconMarkup(readinessIcon(guide.readiness.tone))}${escapeHtml(guide.readiness.label)}</span>
+        <small>${escapeHtml(guide.readiness.detail)}</small>
+        ${guide.suggestedMapId !== selectedMapId
+          ? `<button class="ghost-button compact-button" type="button" data-suggest-map="${escapeHtml(guide.suggestedMapId)}">前往 ${escapeHtml(guide.suggestedMapName)}</button>`
+          : ''}
+      </div>
+    </article>
+  `;
+  $('[data-suggest-map]')?.addEventListener('click', (event) => {
+    selectedMapId = event.currentTarget.dataset.suggestMap;
+    renderAdventureGuide();
+    renderMaps();
+  });
+}
+
 function renderMaps() {
   const selectedMap = maps.find((map) => map.id === selectedMapId) || maps[0];
+  const guide = progressionGuide(state, selectedMap.id);
   selectedMapId = selectedMap.id;
   const categories = maps.reduce((groups, map) => {
     const category = map.category || '戰鬥地圖';
@@ -489,6 +529,7 @@ function renderMaps() {
     <article class="selected-map-card" aria-live="polite">
       <div class="selected-map-card__header">
         <span class="map-card__category">${iconMarkup(mapCategoryIcon(selectedMap.category))}${escapeHtml(selectedMap.category || '戰鬥地圖')}</span>
+        <span class="readiness-pill readiness-pill--${escapeHtml(guide.readiness.tone)}">${iconMarkup(readinessIcon(guide.readiness.tone))}${escapeHtml(guide.readiness.label)}</span>
         <span class="map-card__level">Lv.${selectedMap.level}｜${escapeHtml(selectedMap.stage || '冒險')}</span>
       </div>
       <strong>${escapeHtml(selectedMap.name)}</strong>
@@ -498,12 +539,13 @@ function renderMaps() {
         <div><dt>${iconMarkup('▲')}EXP</dt><dd>${selectedMap.reward.exp}</dd></div>
         <div><dt>${iconMarkup('✦')}熟練</dt><dd>${selectedMap.reward.mastery}</dd></div>
       </dl>
-      <em>${escapeHtml(selectedMap.routeHint || '依照目前 HP / MP 決定是否出擊。')}</em>
+      <em>${escapeHtml(guide.readiness.detail)}｜${escapeHtml(selectedMap.routeHint || '依照目前 HP / MP 決定是否出擊。')}</em>
     </article>
   `;
 
   $('#map-select')?.addEventListener('change', (event) => {
     selectedMapId = event.target.value;
+    renderAdventureGuide();
     renderMaps();
   });
 }
@@ -608,22 +650,102 @@ function itemSummary(item) {
 
 function renderQuest() {
   const quest = state.quest;
+  const questReady = !quest.completed && quest.progress >= quest.target;
+  const milestoneRows = milestonesFor(state);
+  const bestiaryRows = bestiaryEntries(state).slice(0, 8);
+  const mapRunRows = Object.entries(state.mapRuns || {})
+    .map(([mapId, count]) => ({ map: maps.find((map) => map.id === mapId), count }))
+    .filter((entry) => entry.map)
+    .sort((a, b) => b.count - a.count || a.map.level - b.map.level)
+    .slice(0, 8);
+
   nodes.questBoard.innerHTML = `
-    <article class="quest-card">
+    <article class="quest-card quest-card--main">
       <span class="quest-card__icon" aria-hidden="true">?</span>
       <div>
         <h3>${escapeHtml(quest.title)}</h3>
-        <p>在草原擊倒 ${quest.target} 隻怪物。</p>
+        <p>在草原擊倒 ${quest.target} 隻怪物，完成後會解鎖更清楚的新手節奏。</p>
         <progress max="${quest.target}" value="${quest.progress}"></progress>
         <small>${quest.completed ? '已完成' : `${quest.progress}/${quest.target}`}</small>
       </div>
-      <button id="claim-quest" class="primary-action" type="button" ${quest.completed ? 'disabled' : ''}>領取獎勵</button>
+      <button id="claim-quest" class="primary-action" type="button" ${questReady ? '' : 'disabled'}>${quest.completed ? '已完成' : questReady ? '領取獎勵' : '未完成'}</button>
     </article>
+
+    <section class="milestone-board" aria-label="冒險目標">
+      <div class="compact-block-title">
+        ${iconMarkup('✓')}
+        <span>冒險目標</span>
+        <strong>${milestoneRows.filter((milestone) => milestone.claimed).length}/${milestoneRows.length}</strong>
+      </div>
+      <div class="milestone-list">
+        ${milestoneRows.map((milestone) => `
+          <article class="milestone-card ${milestone.complete ? 'is-complete' : ''} ${milestone.claimed ? 'is-claimed' : ''}">
+            <span class="milestone-card__icon" aria-hidden="true">${escapeHtml(milestone.icon)}</span>
+            <div>
+              <h3>${escapeHtml(milestone.title)}</h3>
+              <p>${escapeHtml(milestone.description)}</p>
+              <small>獎勵：${escapeHtml(milestone.rewardText)}</small>
+            </div>
+            <button class="ghost-button compact-button" type="button" data-claim-milestone="${escapeHtml(milestone.id)}" ${!milestone.complete || milestone.claimed ? 'disabled' : ''}>
+              ${milestone.claimed ? '已領取' : milestone.complete ? '領取' : '未完成'}
+            </button>
+          </article>
+        `).join('')}
+      </div>
+    </section>
+
+    <section class="collection-board" aria-label="探索紀錄">
+      <article class="collection-card">
+        <div class="compact-block-title">
+          ${iconMarkup('▦')}
+          <span>討伐圖鑑</span>
+          <strong>${Object.keys(state.bestiary || {}).length} 種</strong>
+        </div>
+        ${bestiaryRows.length ? `
+          <ul class="collection-list">
+            ${bestiaryRows.map((entry) => `
+              <li>
+                <img class="avatar-image" src="${escapeHtml(entry.portrait || portraitForMonster(entry.name))}" alt="${escapeHtml(entry.name)} 圖像" width="28" height="28">
+                <span>${escapeHtml(entry.name)}</span>
+                <strong>${entry.count} 勝</strong>
+                <small>${escapeHtml(entry.firstMap || entry.lastMap || '未知地圖')}</small>
+              </li>
+            `).join('')}
+          </ul>
+        ` : '<p>尚未記錄魔物。先從草原開始討伐吧。</p>'}
+      </article>
+      <article class="collection-card">
+        <div class="compact-block-title">
+          ${iconMarkup('⌖')}
+          <span>地圖紀錄</span>
+          <strong>${Object.keys(state.mapRuns || {}).length} 張</strong>
+        </div>
+        ${mapRunRows.length ? `
+          <ul class="collection-list collection-list--maps">
+            ${mapRunRows.map(({ map, count }) => `
+              <li>
+                ${iconMarkup(mapCategoryIcon(map.category))}
+                <span>${escapeHtml(map.name)}</span>
+                <strong>${count} 次</strong>
+                <small>Lv.${map.level}｜${escapeHtml(map.stage || map.category)}</small>
+              </li>
+            `).join('')}
+          </ul>
+        ` : '<p>尚未探索地圖。每次出擊都會自動記錄。</p>'}
+      </article>
+    </section>
   `;
   $('#claim-quest').addEventListener('click', () => {
     state = claimQuestReward(state);
     savePlayer();
     render();
+  });
+  $$('[data-claim-milestone]').forEach((button) => {
+    button.addEventListener('click', () => {
+      state = claimMilestone(state, button.dataset.claimMilestone);
+      savePlayer();
+      render();
+    });
   });
 }
 
@@ -722,6 +844,10 @@ function rankingPortrait(row) {
 
 function resourceIcon(tone) {
   return { hp: '♥', mp: '✦', exp: '▲' }[tone] || '·';
+}
+
+function readinessIcon(tone) {
+  return { safe: '✓', warning: '!', danger: '×' }[tone] || '?';
 }
 
 function mapCategoryIcon(category = '') {

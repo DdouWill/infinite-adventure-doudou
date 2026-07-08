@@ -98,6 +98,57 @@ export const shopItems = [
   consumable('hope_fruit', '希望果實', 900, 'gold', 250, '原版道具：有機率進入星空下的夜；豆豆版轉為稀有冒險資金。')
 ];
 
+export const milestones = [
+  {
+    id: 'first_battle',
+    icon: '⚔',
+    title: '第一次出擊',
+    description: '完成任意 1 場戰鬥，熟悉回合演出。',
+    reward: { gold: 80, item: 'herb' },
+    condition: (player) => player.battles >= 1
+  },
+  {
+    id: 'grassland_patrol',
+    icon: '✓',
+    title: '草原巡邏完成',
+    description: '在草原任務累積 3 次討伐。',
+    reward: { gold: 120, exp: 45 },
+    condition: (player) => player.quest?.completed || player.quest?.progress >= player.quest?.target
+  },
+  {
+    id: 'first_equipment',
+    icon: '†',
+    title: '裝備上手',
+    description: '裝備任意武器或防具，開始形成角色方向。',
+    reward: { mastery: 80, item: 'basic_potion' },
+    condition: (player) => Boolean(player.equipment?.weapon || player.equipment?.armor)
+  },
+  {
+    id: 'training_ready',
+    icon: '▲',
+    title: '修行者準備',
+    description: '角色達到 Lv.3，準備挑戰沼地與修行者之塔。',
+    reward: { gold: 180, item: 'mastery_book' },
+    condition: (player) => player.level >= 3
+  },
+  {
+    id: 'map_explorer',
+    icon: '⌖',
+    title: '地圖探勘者',
+    description: '挑戰 3 種不同地圖。',
+    reward: { exp: 80, mastery: 120 },
+    condition: (player) => Object.keys(player.mapRuns || {}).length >= 3
+  },
+  {
+    id: 'bestiary_keeper',
+    icon: '▦',
+    title: '討伐紀錄員',
+    description: '圖鑑記錄 5 種不同魔物。',
+    reward: { gold: 260, item: 'sword_book' },
+    condition: (player) => Object.keys(player.bestiary || {}).length >= 5
+  }
+];
+
 export const countries = [
   { name: '豆豆王國', element: '光', ruler: '小豆王', people: 42, gold: 124800, territory: 5 },
   { name: '夜芽同盟', element: '闇', ruler: '黑豆參謀', people: 31, gold: 98300, territory: 4 },
@@ -220,6 +271,9 @@ export function createPlayer({ name, element, archetype }) {
     inventory: ['novice_badge'],
     equipment: { weapon: null, armor: null, trinket: null },
     quest: { id: 'first_hunt', title: '草原討伐', target: 3, progress: 0, completed: false },
+    milestonesClaimed: [],
+    bestiary: {},
+    mapRuns: {},
     log: ['歡迎來到豆豆冒險公會。先去草原試試身手吧！'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
@@ -284,6 +338,7 @@ export function createBattleEncounter(player, mapId, rng = Math.random) {
 
   next.gold -= map.cost;
   next.battles += 1;
+  next.mapRuns[map.id] = (next.mapRuns[map.id] || 0) + 1;
   turns.push({
     side: 'system',
     round: 0,
@@ -320,6 +375,7 @@ export function createBattleEncounter(player, mapId, rng = Math.random) {
     next.gold += goldGain;
     next.mastery += masteryGain;
     next.wins += 1;
+    recordMonsterDefeat(next, monsterName, map);
     next.quest = updateQuest(next.quest, map.id);
     monster.hp = 0;
     messages.push(`你在 ${map.name} 擊倒了「${monsterName}」，獲得 ${expGain} EXP、${goldGain} 金幣、${masteryGain} 熟練。`);
@@ -564,6 +620,82 @@ export function claimQuestReward(player) {
   return next;
 }
 
+export function milestonesFor(player) {
+  const safe = clonePlayer(player);
+  const claimed = new Set(safe.milestonesClaimed || []);
+  return milestones.map((milestone) => {
+    const complete = Boolean(milestone.condition(safe));
+    const isClaimed = claimed.has(milestone.id);
+    return {
+      id: milestone.id,
+      icon: milestone.icon,
+      title: milestone.title,
+      description: milestone.description,
+      complete,
+      claimed: isClaimed,
+      rewardText: rewardText(milestone.reward)
+    };
+  });
+}
+
+export function claimMilestone(player, milestoneId) {
+  const next = clonePlayer(player);
+  const milestone = milestones.find((item) => item.id === milestoneId);
+  if (!milestone) throw new Error('找不到冒險目標。');
+  if (next.milestonesClaimed.includes(milestone.id)) return next;
+  if (!milestone.condition(next)) {
+    next.log = mergeLog(next.log, [`冒險目標尚未完成：${milestone.title}`]);
+    return next;
+  }
+  applyReward(next, milestone.reward);
+  next.milestonesClaimed.push(milestone.id);
+  const levelMessages = applyLevelUps(next);
+  next.updatedAt = new Date().toISOString();
+  next.log = mergeLog(next.log, [`領取冒險目標「${milestone.title}」：${rewardText(milestone.reward)}。`, ...levelMessages]);
+  return next;
+}
+
+export function bestiaryEntries(player) {
+  const safe = clonePlayer(player);
+  return Object.values(safe.bestiary)
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'zh-Hant'));
+}
+
+export function progressionGuide(player, mapId = 'meadow') {
+  const safe = clonePlayer(player);
+  const selectedMap = chooseMap(mapId);
+  const hpRatio = safe.hp / Math.max(1, safe.maxHp);
+  const mpRatio = safe.mp / Math.max(1, safe.maxMp);
+  const hasWeapon = Boolean(safe.equipment?.weapon);
+  const claimable = milestonesFor(safe).find((milestone) => milestone.complete && !milestone.claimed);
+  const suggestedMap = recommendedMap(safe);
+  const readiness = mapReadiness(safe, selectedMap);
+  const route = [
+    { label: '出擊 1 場', done: safe.battles >= 1 },
+    { label: '完成草原討伐', done: Boolean(safe.quest?.completed) },
+    { label: '裝備武器', done: hasWeapon },
+    { label: 'Lv.3 修行', done: safe.level >= 3 },
+    { label: '探索 3 地圖', done: Object.keys(safe.mapRuns || {}).length >= 3 }
+  ];
+
+  let nextAction = `推薦前往「${suggestedMap.name}」穩定累積 EXP / 金幣。`;
+  if (hpRatio < 0.35 || mpRatio < 0.18) nextAction = 'HP / MP 偏低，先旅店休息或使用藥草，避免新手挫折。';
+  else if (claimable) nextAction = `可到任務頁領取冒險目標「${claimable.title}」。`;
+  else if (!safe.quest?.completed) nextAction = `先完成「${safe.quest?.title || '草原討伐'}」，這是最短的新手路線。`;
+  else if (!hasWeapon && safe.gold >= 80) nextAction = '建議到背包頁購買並裝備「短劍」，提升戰鬥穩定度。';
+  else if (selectedMap.cost > safe.gold) nextAction = `目前金幣不足，先回「${suggestedMap.name}」補資金。`;
+  else if (selectedMap.level > safe.level + 4) nextAction = `「${selectedMap.name}」偏難，先挑戰 Lv.${suggestedMap.level} 的「${suggestedMap.name}」。`;
+
+  return {
+    stage: route.filter((step) => step.done).length + 1,
+    nextAction,
+    suggestedMapId: suggestedMap.id,
+    suggestedMapName: suggestedMap.name,
+    readiness,
+    route
+  };
+}
+
 export function rankingsFor(player) {
   const playerRow = player ? [{
     name: player.name,
@@ -591,10 +723,75 @@ export function parsePlayer(json) {
   const data = JSON.parse(json);
   if (!data || typeof data !== 'object') throw new Error('存檔格式錯誤。');
   if (!data.name || !data.element || !Number.isFinite(data.level)) throw new Error('存檔缺少必要角色資料。');
-  if (!Array.isArray(data.inventory)) data.inventory = [];
-  if (!data.equipment) data.equipment = { weapon: null, armor: null, trinket: null };
-  if (!Array.isArray(data.log)) data.log = [];
-  return data;
+  return normalizePlayer(data);
+}
+
+function normalizePlayer(player) {
+  if (!Array.isArray(player.inventory)) player.inventory = [];
+  player.equipment = {
+    weapon: player.equipment?.weapon || null,
+    armor: player.equipment?.armor || null,
+    trinket: player.equipment?.trinket || null
+  };
+  if (!player.quest) player.quest = { id: 'first_hunt', title: '草原討伐', target: 3, progress: 0, completed: false };
+  if (!Array.isArray(player.log)) player.log = [];
+  if (!Array.isArray(player.milestonesClaimed)) player.milestonesClaimed = [];
+  if (!player.bestiary || typeof player.bestiary !== 'object' || Array.isArray(player.bestiary)) player.bestiary = {};
+  if (!player.mapRuns || typeof player.mapRuns !== 'object' || Array.isArray(player.mapRuns)) player.mapRuns = {};
+  return player;
+}
+
+function recordMonsterDefeat(player, monsterName, map) {
+  const existing = player.bestiary[monsterName] || { name: monsterName, count: 0, firstMap: map.name, lastMap: map.name, portrait: portraitForMonster(monsterName) };
+  player.bestiary[monsterName] = {
+    ...existing,
+    count: (Number(existing.count) || 0) + 1,
+    lastMap: map.name,
+    lastMapId: map.id,
+    portrait: portraitForMonster(monsterName)
+  };
+}
+
+function applyReward(player, reward) {
+  if (reward.gold) player.gold += reward.gold;
+  if (reward.exp) player.exp += reward.exp;
+  if (reward.mastery) player.mastery += reward.mastery;
+  if (reward.item) player.inventory.push(reward.item);
+}
+
+function rewardText(reward) {
+  return [
+    reward.gold ? `${reward.gold} 金幣` : '',
+    reward.exp ? `${reward.exp} EXP` : '',
+    reward.mastery ? `${reward.mastery} 熟練` : '',
+    reward.item ? `道具「${getItem(reward.item)?.name || reward.item}」` : ''
+  ].filter(Boolean).join('、') || '紀錄完成';
+}
+
+function recommendedMap(player) {
+  const affordable = maps.filter((map) => map.cost <= player.gold && map.level <= player.level + 2);
+  if (!player.quest?.completed) return chooseMap('meadow');
+  if (player.level < 3) return chooseMap('treasure_cave');
+  if (player.level < 5) return chooseMap('training_tower');
+  return affordable.sort((a, b) => b.level - a.level)[0] || chooseMap('meadow');
+}
+
+function mapReadiness(player, map) {
+  const hpRatio = player.hp / Math.max(1, player.maxHp);
+  const mpRatio = player.mp / Math.max(1, player.maxMp);
+  if (map.cost > player.gold) {
+    return { tone: 'danger', label: '金幣不足', detail: `需要 ${map.cost} 金幣，目前 ${player.gold}。` };
+  }
+  if (hpRatio < 0.35 || mpRatio < 0.18) {
+    return { tone: 'warning', label: '建議整備', detail: 'HP / MP 偏低，先休息或用藥更穩。' };
+  }
+  if (map.level > player.level + 4) {
+    return { tone: 'danger', label: '高風險', detail: `地圖 Lv.${map.level} 高於目前 Lv.${player.level}，容易被打退。` };
+  }
+  if (map.level > player.level + 2) {
+    return { tone: 'warning', label: '可挑戰', detail: '等級略高，建議先裝備武器或備藥。' };
+  }
+  return { tone: 'safe', label: '適合挑戰', detail: '目前狀態適合出擊，能穩定累積資源。' };
 }
 
 function updateQuest(quest, mapId) {
@@ -641,7 +838,7 @@ function mergeLog(oldLog, messages) {
 }
 
 function clonePlayer(player) {
-  return JSON.parse(JSON.stringify(player));
+  return normalizePlayer(JSON.parse(JSON.stringify(player)));
 }
 
 function clamp(value, min, max) {
