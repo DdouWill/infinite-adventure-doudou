@@ -43,8 +43,28 @@ const nodes = {
   importButton: $('#import-button'),
   resetButton: $('#reset-button'),
   saveData: $('#save-data'),
-  onlineCount: $('#online-count')
+  onlineCount: $('#online-count'),
+  functionMenu: $('#function-menu'),
+  functionMenuButton: $('#function-menu-button'),
+  functionMenuPanel: $('#function-menu-panel')
 };
+
+nodes.functionMenuButton.addEventListener('click', () => {
+  const isOpen = nodes.functionMenuButton.getAttribute('aria-expanded') === 'true';
+  setFunctionMenuOpen(!isOpen);
+});
+
+nodes.functionMenuPanel.addEventListener('click', (event) => {
+  if (event.target.closest('a')) setFunctionMenuOpen(false);
+});
+
+document.addEventListener('click', (event) => {
+  if (!nodes.functionMenu.contains(event.target)) setFunctionMenuOpen(false);
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') setFunctionMenuOpen(false);
+});
 
 nodes.createForm.addEventListener('submit', (event) => {
   event.preventDefault();
@@ -108,6 +128,12 @@ $$('.tab-button').forEach((button) => {
     renderPanels();
   });
 });
+
+function setFunctionMenuOpen(isOpen) {
+  nodes.functionMenu.classList.toggle('is-open', isOpen);
+  nodes.functionMenuButton.setAttribute('aria-expanded', String(isOpen));
+  nodes.functionMenuPanel.hidden = !isOpen;
+}
 
 function render() {
   nodes.onlineCount.textContent = String(18 + new Date().getMinutes() % 9);

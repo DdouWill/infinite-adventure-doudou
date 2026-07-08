@@ -10,20 +10,36 @@
 <body>
   <a class="skip-link" href="#main">跳到主要內容</a>
   <div class="app-shell classic-shell">
-    <nav class="top-links" aria-label="主選單">
-      <a href="#main">[首頁]</a>
-      <a href="#help-panel">[遊戲說明]</a>
-      <a href="#guide-panel">[新手指南]</a>
-      <a href="#map-guide-panel">[戰鬥地圖]</a>
-      <a href="#player-list-panel">[玩家列表]</a>
-      <a href="#legend-panel">[傳說的英雄]</a>
-      <a href="#ranking-panel">[各項排行]</a>
-      <a href="#world-panel">[世界情勢]</a>
-      <a href="#town-panel">[都市情報]</a>
-      <a href="#icon-panel">[圖像一覧]</a>
-      <a href="#news-log">[紀錄]</a>
-      <a href="#equip-panel">[裝備清單]</a>
-    </nav>
+    <div class="function-menu" id="function-menu">
+      <button id="function-menu-button" class="function-menu__button" type="button" aria-controls="function-menu-panel" aria-expanded="false">
+        <span class="function-menu__label">情報 / 解說</span>
+        <span class="function-menu__icon" aria-hidden="true">☰</span>
+      </button>
+      <nav id="function-menu-panel" class="function-menu__panel" aria-label="情報與解說功能選單" hidden>
+        <div class="function-menu__group">
+          <h2>情報</h2>
+          <a href="#main">首頁</a>
+          <a href="#player-list-panel">目前線上人員</a>
+          <a href="#system-news">系統公告</a>
+          <a href="#news-log">最新情報</a>
+          <a href="#battle-records">戰鬥紀錄</a>
+          <a href="#ranking-panel">各項排行</a>
+          <a href="#legend-panel">傳說的英雄</a>
+          <a href="#world-panel">世界情勢</a>
+          <a href="#town-panel">都市情報</a>
+        </div>
+        <div class="function-menu__group">
+          <h2>解說</h2>
+          <a href="#help-panel">遊戲說明</a>
+          <a href="#guide-panel">新手指南</a>
+          <a href="#map-guide-panel">戰鬥地圖</a>
+          <a href="#mechanics-panel">資料 / 研究索引</a>
+          <a href="#equip-panel">裝備清單</a>
+          <a href="#icon-panel">圖像一覧</a>
+          <a href="#lineage-panel">版本系譜</a>
+        </div>
+      </nav>
+    </div>
 
     <header class="hero classic-hero">
       <div class="hero__badge">ISEKAI GUILD</div>

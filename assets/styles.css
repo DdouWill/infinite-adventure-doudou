@@ -29,7 +29,7 @@ body {
   position: relative;
   margin: 0;
   min-height: 100vh;
-  padding-bottom: 46px;
+  padding-bottom: 0;
   color: var(--text);
   background:
     radial-gradient(circle at 78% 8%, rgba(255, 239, 184, 0.85) 0 2.1rem, rgba(255, 239, 184, 0.15) 2.35rem, transparent 7rem),
@@ -94,34 +94,110 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   padding: 18px 0 36px;
 }
 
-.top-links {
+.function-menu {
   position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 50;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.75rem;
+  top: 14px;
+  right: 14px;
+  z-index: 80;
+  display: grid;
+  justify-items: end;
+}
+
+.function-menu__button {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin: 0;
-  padding: 8px 10px;
-  border: 0;
-  border-top: 1px solid rgba(246, 201, 109, 0.34);
-  border-radius: 0;
-  background: rgba(0, 0, 0, 0.92);
-  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.36);
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 246, 223, 0.58);
+  border-radius: 999px;
+  color: #2b1705;
+  background: linear-gradient(135deg, #fff0b0 0%, var(--gold) 52%, var(--amber) 100%);
+  font-weight: 900;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.56),
+    0 12px 30px rgba(0, 0, 0, 0.36),
+    0 0 24px rgba(246, 201, 109, 0.16);
 }
 
-.top-links a {
+.function-menu__button:hover,
+.function-menu.is-open .function-menu__button {
+  border-color: rgba(140, 239, 255, 0.74);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.56),
+    0 12px 30px rgba(0, 0, 0, 0.36),
+    0 0 28px rgba(140, 239, 255, 0.22);
+}
+
+.function-menu__label {
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+}
+
+.function-menu__icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.function-menu__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(360px, calc(100vw - 22px));
+  max-height: min(70vh, 560px);
+  overflow: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(246, 201, 109, 0.42);
+  border-radius: 16px;
+  background:
+    radial-gradient(circle at top right, rgba(140, 239, 255, 0.14), transparent 9rem),
+    linear-gradient(180deg, rgba(255, 246, 223, 0.1), rgba(255, 246, 223, 0.035)),
+    rgba(12, 8, 18, 0.96);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.48), var(--inner-glow);
+  backdrop-filter: blur(18px);
+}
+
+.function-menu__panel[hidden] { display: none; }
+
+.function-menu__group {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.function-menu__group h2 {
+  margin: 0 0 3px;
+  padding: 5px 8px;
+  border: 1px solid rgba(246, 201, 109, 0.2);
+  border-radius: 9px;
+  color: var(--mana);
+  background: rgba(255, 246, 223, 0.055);
+  font-size: 0.86rem;
+  letter-spacing: 0.08em;
+}
+
+.function-menu__group a {
+  display: block;
+  padding: 7px 8px;
+  border: 1px solid rgba(246, 201, 109, 0.14);
+  border-radius: 9px;
   color: var(--gold);
-  font-size: 0.95rem;
+  background: rgba(255, 246, 223, 0.045);
+  font-size: 0.84rem;
+  line-height: 1.25;
   text-decoration: none;
-  text-shadow: 0 0 10px rgba(246, 201, 109, 0.24);
 }
 
-.top-links a:hover { color: var(--mana); }
+.function-menu__group a:hover,
+.function-menu__group a:focus-visible {
+  color: #2b1705;
+  background: linear-gradient(135deg, #fff0b0, var(--gold));
+}
 
 .hero {
   position: relative;
@@ -1166,14 +1242,10 @@ th {
 @media (max-width: 900px) {
   body { padding-bottom: 0; }
   .app-shell { width: min(100% - 18px, 720px); padding-top: 10px; }
-  .top-links {
-    position: static;
-    justify-content: flex-start;
-    margin-bottom: 10px;
-    border: 1px solid rgba(246, 201, 109, 0.28);
-    border-radius: 10px;
-    background: rgba(0, 0, 0, 0.68);
-    box-shadow: var(--inner-glow);
+  .function-menu { top: 8px; right: 8px; }
+  .function-menu__panel {
+    width: min(340px, calc(100vw - 16px));
+    max-height: min(76vh, 560px);
   }
   .hero,
   .classic-grid,
@@ -1217,6 +1289,16 @@ th {
 }
 
 @media (max-width: 520px) {
+  .function-menu__button {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px 11px;
+  }
+  .function-menu__label { display: none; }
+  .function-menu__panel {
+    grid-template-columns: 1fr;
+    width: min(320px, calc(100vw - 16px));
+  }
   .hero__status,
   .map-list,
   .battle-actions,
