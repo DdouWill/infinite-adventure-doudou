@@ -144,7 +144,7 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  width: min(360px, calc(100vw - 22px));
+  width: min(460px, calc(100vw - 22px));
   max-height: min(70vh, 560px);
   overflow: auto;
   display: grid;
@@ -181,7 +181,8 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   letter-spacing: 0.08em;
 }
 
-.function-menu__group a {
+.function-menu__group a,
+.function-menu__item summary {
   display: block;
   padding: 7px 8px;
   border: 1px solid rgba(246, 201, 109, 0.14);
@@ -193,8 +194,71 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   text-decoration: none;
 }
 
+.function-menu__item {
+  border-radius: 10px;
+  background: rgba(255, 246, 223, 0.025);
+}
+
+.function-menu__item summary {
+  position: relative;
+  padding-right: 28px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.function-menu__item summary::-webkit-details-marker { display: none; }
+
+.function-menu__item summary::after {
+  content: "+";
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  color: var(--mana);
+  transform: translateY(-50%);
+}
+
+.function-menu__item[open] summary::after { content: "−"; }
+
+.function-menu__detail {
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid rgba(246, 201, 109, 0.14);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  color: var(--muted);
+  background: rgba(9, 7, 16, 0.38);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.function-menu__detail p,
+.function-menu__detail ol { margin: 0; }
+
+.menu-rank-list,
+.menu-route-list {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.menu-rank-list li,
+.menu-route-list li {
+  display: grid;
+  gap: 2px;
+  padding-bottom: 6px;
+  border-bottom: 1px dotted rgba(246, 201, 109, 0.18);
+}
+
+.menu-rank-list strong,
+.menu-route-list strong,
+.function-menu__detail strong { color: var(--gold); }
+
 .function-menu__group a:hover,
-.function-menu__group a:focus-visible {
+.function-menu__group a:focus-visible,
+.function-menu__item summary:hover,
+.function-menu__item summary:focus-visible {
   color: #2b1705;
   background: linear-gradient(135deg, #fff0b0, var(--gold));
 }
@@ -202,7 +266,7 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .hero {
   position: relative;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 18px;
   align-items: center;
   margin-bottom: 14px;

@@ -136,7 +136,7 @@ function setFunctionMenuOpen(isOpen) {
 }
 
 function render() {
-  nodes.onlineCount.textContent = String(18 + new Date().getMinutes() % 9);
+  if (nodes.onlineCount) nodes.onlineCount.textContent = String(18 + new Date().getMinutes() % 9);
   if (!state) {
     nodes.createView.classList.remove('is-hidden');
     nodes.gameView.classList.add('is-hidden');

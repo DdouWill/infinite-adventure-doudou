@@ -20,12 +20,25 @@ const expanded = await desktop.locator('#function-menu-button').getAttribute('ar
 if (expanded !== 'true') throw new Error('Desktop smoke failed: function menu aria-expanded not true after click.');
 const menuText = await desktop.locator('#function-menu-panel').innerText();
 if (!menuText.includes('情報') || !menuText.includes('解說') || !menuText.includes('最新情報') || !menuText.includes('遊戲說明')) {
-  throw new Error('Desktop smoke failed: function menu does not contain info/explanation links.');
+  throw new Error('Desktop smoke failed: function menu does not contain info/explanation items.');
+}
+await desktop.locator('#guide-panel summary').click();
+const openedGuideText = await desktop.locator('#guide-panel').innerText();
+if (!openedGuideText.includes('修行者高塔')) {
+  throw new Error('Desktop smoke failed: guide content should live inside the function menu.');
 }
 await desktop.screenshot({ path: `${screenshotsDir}/desktop-menu-open.png`, fullPage: true });
 await desktop.keyboard.press('Escape');
 const menuHiddenAfterEscape = await desktop.locator('#function-menu-panel').evaluate((el) => el.hidden);
 if (!menuHiddenAfterEscape) throw new Error('Desktop smoke failed: function menu did not close on Escape.');
+const mainInfoBlocks = await desktop.locator('.classic-main-column > #player-list-panel, .classic-main-column > #system-news, .classic-main-column > #news-log, .classic-main-column > #battle-records, .classic-main-column > .classic-info-grid').count();
+if (mainInfoBlocks !== 0) throw new Error('Desktop smoke failed: info/explanation blocks should not render in the main screen.');
+const sideInfoBlocks = await desktop.locator('.classic-side-column > .side-box').count();
+if (sideInfoBlocks !== 0) throw new Error('Desktop smoke failed: sidebar info/explanation boxes should be removed from the main screen.');
+const footerBlocks = await desktop.locator('.classic-footer').count();
+if (footerBlocks !== 0) throw new Error('Desktop smoke failed: footer info block should be moved out of the main screen.');
+const heroStatusBlocks = await desktop.locator('.hero__status').count();
+if (heroStatusBlocks !== 0) throw new Error('Desktop smoke failed: hero info cards should be moved into the function menu.');
 await desktop.fill('#hero-name', '豆豆測試員');
 await desktop.selectOption('#hero-element', '光');
 await desktop.selectOption('#hero-archetype', 'blade');
@@ -48,14 +61,6 @@ const desktopAreas = await desktop.locator('.stat-grid').evaluate((el) => getCom
 if (!desktopAreas.includes('vitals') || !desktopAreas.includes('info')) {
   throw new Error('Desktop smoke failed: HP/MP + character info grid areas missing.');
 }
-const guideText = await desktop.locator('#guide-panel').innerText();
-if (!guideText.includes('小白版新手指南同步') || !guideText.includes('修行者高塔')) {
-  throw new Error('Desktop smoke failed: Xiaobai guide sync panel missing.');
-}
-const lineageText = await desktop.locator('#lineage-panel').innerText();
-if (!lineageText.includes('老頭版') || !lineageText.includes('BadGameShow')) {
-  throw new Error('Desktop smoke failed: lineage panel missing old-version references.');
-}
 const mapOptionCount = await desktop.locator('#map-select option').count();
 if (mapOptionCount !== 5) throw new Error('Desktop smoke failed: map dropdown should contain 5 maps.');
 const mapGroupLabels = await desktop.locator('#map-select optgroup').evaluateAll((nodes) => nodes.map((node) => node.label));
@@ -77,10 +82,13 @@ if (!mobileMenuButtonBox || mobileMenuButtonBox.x < 330 || mobileMenuButtonBox.y
 await mobile.click('#function-menu-button');
 const mobileMenuVisible = await mobile.locator('#function-menu-panel').isVisible();
 if (!mobileMenuVisible) throw new Error('Mobile smoke failed: function menu panel not visible after click.');
+await mobile.locator('#guide-panel summary').click();
+const mobileGuideText = await mobile.locator('#guide-panel').innerText();
+if (!mobileGuideText.includes('修行者高塔')) throw new Error('Mobile smoke failed: function menu guide content missing.');
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-menu-open.png`, fullPage: true });
-await mobile.locator('#function-menu-panel a[href="#guide-panel"]').click();
+await mobile.locator('#function-menu-panel a[href="#main"]').click();
 const mobileMenuClosedAfterLink = await mobile.locator('#function-menu-panel').evaluate((el) => el.hidden);
-if (!mobileMenuClosedAfterLink) throw new Error('Mobile smoke failed: function menu did not close after link click.');
+if (!mobileMenuClosedAfterLink) throw new Error('Mobile smoke failed: function menu did not close after home link click.');
 await mobile.fill('#hero-name', '手機豆豆');
 await mobile.selectOption('#hero-element', '水');
 await mobile.selectOption('#hero-archetype', 'sage');
