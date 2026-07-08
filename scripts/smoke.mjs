@@ -35,8 +35,8 @@ const terminalTheme = await desktop.evaluate(() => {
 if (!terminalTheme.fontFamily.toLowerCase().includes('mono') && !terminalTheme.fontFamily.toLowerCase().includes('consolas')) {
   throw new Error(`Desktop smoke failed: terminal monospace font not applied (${terminalTheme.fontFamily}).`);
 }
-if (terminalTheme.color !== 'rgb(51, 255, 0)' || terminalTheme.backgroundColor !== 'rgb(10, 10, 10)') {
-  throw new Error('Desktop smoke failed: terminal green-on-black colors not applied.');
+if (terminalTheme.color !== 'rgb(245, 245, 245)' || terminalTheme.backgroundColor !== 'rgb(10, 10, 10)') {
+  throw new Error('Desktop smoke failed: black/white terminal colors not applied.');
 }
 if (terminalTheme.panelRadius !== '0px' || terminalTheme.buttonRadius !== '0px') {
   throw new Error('Desktop smoke failed: terminal zero-radius style not applied.');
