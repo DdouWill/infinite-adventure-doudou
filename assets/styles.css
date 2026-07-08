@@ -2149,3 +2149,149 @@ select optgroup {
   color: var(--primary);
   background: #0a0a0a;
 }
+
+
+/* Reference sync: BadGameShow-style dense public modules inside the function menu. */
+.function-menu__panel {
+  width: min(860px, calc(100vw - 22px));
+}
+
+.reference-note {
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  padding: 6px 8px;
+  margin: 0;
+}
+
+.dense-table-wrap,
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+}
+
+.classic-ranking-table {
+  width: 100%;
+  min-width: 640px;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+  line-height: 1.28;
+}
+
+.classic-ranking-table th,
+.classic-ranking-table td {
+  padding: 4px 5px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.avatar-chip {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  color: var(--primary);
+  background:
+    repeating-linear-gradient(135deg, transparent 0 4px, rgba(245, 245, 245, 0.07) 4px 5px),
+    #0a0a0a;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.monthly-rank-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.monthly-rank-grid section {
+  border: 1px dashed var(--border);
+  padding: 6px;
+  background: #0a0a0a;
+}
+
+.monthly-rank-grid h3 {
+  margin: 0 0 4px;
+  color: var(--primary);
+  font-size: 0.78rem;
+}
+
+.monthly-rank-grid p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(42px, 1fr));
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  max-height: 360px;
+  overflow: auto;
+}
+
+.icon-grid__cell {
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  color: var(--primary);
+  background: #0a0a0a;
+  text-align: center;
+}
+
+.icon-grid__cell em {
+  font-style: normal;
+  color: var(--muted);
+  font-size: 0.62rem;
+}
+
+.icon-grid__cell strong {
+  color: var(--primary);
+  font-size: 0.98rem;
+}
+
+.public-index-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.public-index-grid span {
+  display: block;
+  border: 1px dashed var(--border);
+  padding: 4px 6px;
+  color: var(--primary);
+}
+
+.lineage-card h3 {
+  margin: 0 0 6px;
+  text-align: center;
+  color: var(--primary);
+}
+
+.lineage-card dl {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.lineage-card dl div {
+  display: grid;
+  grid-template-columns: 4.5em 1fr;
+  gap: 8px;
+  border-bottom: 1px dashed var(--border);
+  padding-bottom: 4px;
+}
+
+.lineage-card dt { color: var(--muted); }
+.lineage-card dd { margin: 0; color: var(--primary); }
+
+@media (max-width: 900px) {
+  .function-menu__panel { width: min(420px, calc(100vw - 16px)); }
+  .monthly-rank-grid { grid-template-columns: 1fr; }
+  .icon-grid { grid-template-columns: repeat(5, minmax(42px, 1fr)); }
+  .classic-ranking-table { min-width: 620px; }
+}

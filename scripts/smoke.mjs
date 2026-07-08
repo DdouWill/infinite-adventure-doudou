@@ -60,6 +60,19 @@ const openedGuideText = await desktop.locator('#guide-panel').innerText();
 if (!openedGuideText.includes('修行者高塔')) {
   throw new Error('Desktop smoke failed: guide content should live inside the function menu.');
 }
+await desktop.locator('#ranking-panel summary').click();
+const rankingText = await desktop.locator('#ranking-panel').innerText();
+for (const expected of ['頭像', 'HP', 'MP', '戰數', '打寶之王']) {
+  if (!rankingText.includes(expected)) throw new Error(`Desktop smoke failed: reference ranking table missing ${expected}.`);
+}
+await desktop.locator('#icon-panel summary').click();
+const iconCellCount = await desktop.locator('#icon-panel .icon-grid__cell').count();
+if (iconCellCount !== 70) throw new Error(`Desktop smoke failed: icon grid should contain 70 cells, got ${iconCellCount}.`);
+await desktop.locator('#lineage-panel summary').click();
+const lineageText = (await desktop.locator('#lineage-panel').innerText()).toLowerCase();
+if (!lineageText.includes('badgameshow') || !lineageText.includes('farland history')) {
+  throw new Error('Desktop smoke failed: lineage/reference block missing source context.');
+}
 await desktop.screenshot({ path: `${screenshotsDir}/desktop-menu-open.png`, fullPage: true });
 await desktop.keyboard.press('Escape');
 const menuHiddenAfterEscape = await desktop.locator('#function-menu-panel').evaluate((el) => el.hidden);
@@ -123,7 +136,12 @@ const selectedMapText = await desktop.locator('.selected-map-card').innerText();
 if (!selectedMapText.includes('廢棄後山') || !selectedMapText.includes('特殊地圖')) {
   throw new Error('Desktop smoke failed: selected map summary did not update from dropdown.');
 }
-
+await desktop.click('.tab-button[data-view="world"]');
+const worldRankingText = await desktop.locator('#world-view .classic-ranking-table').innerText();
+for (const expected of ['頭像', 'HP', 'MP', '職業', '戰數']) {
+  if (!worldRankingText.includes(expected)) throw new Error(`Desktop smoke failed: world ranking table missing ${expected}.`);
+}
+await desktop.click('.tab-button[data-view="battle"]');
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
 await mobile.goto(url, { waitUntil: 'networkidle' });
 const mobileMenuButtonBox = await mobile.locator('#function-menu-button').boundingBox();

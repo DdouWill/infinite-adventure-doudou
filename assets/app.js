@@ -539,11 +539,14 @@ function renderWorld() {
   `).join('');
   const rankingRows = rankingsFor(state).map((row) => `
     <tr>
-      <td>${row.rank}</td>
+      <td>${row.rank === 1 ? '★1位' : `${row.rank}位`}</td>
+      <td><span class="avatar-chip">${escapeHtml(avatarGlyph(row))}</span></td>
       <td>${escapeHtml(row.name)}</td>
       <td>${escapeHtml(row.element)}</td>
-      <td>${row.level}</td>
-      <td>${row.wins}</td>
+      <td>${row.hp}/${row.maxHp}</td>
+      <td>${row.mp}/${row.maxMp}</td>
+      <td>${escapeHtml(row.job)}</td>
+      <td>${row.battles}戰${row.wins}勝</td>
     </tr>
   `).join('');
   nodes.worldView.innerHTML = `
@@ -556,8 +559,8 @@ function renderWorld() {
     </div>
     <div class="table-wrap">
       <h3>傳說排行</h3>
-      <table>
-        <thead><tr><th>名次</th><th>名稱</th><th>屬性</th><th>等級</th><th>勝場</th></tr></thead>
+      <table class="classic-ranking-table">
+        <thead><tr><th>順位</th><th>頭像</th><th>名稱</th><th>屬性</th><th>HP</th><th>MP</th><th>職業</th><th>戰數</th></tr></thead>
         <tbody>${rankingRows}</tbody>
       </table>
     </div>
@@ -585,6 +588,19 @@ function loadPlayer() {
   } catch {
     return null;
   }
+}
+
+function avatarGlyph(row) {
+  if (row.name === state?.name) return '自';
+  return {
+    '光': '光',
+    '闇': '闇',
+    '風': '風',
+    '火': '火',
+    '水': '水',
+    '雷': '雷',
+    '星': '星'
+  }[row.element] || '豆';
 }
 
 function slotLabel(slot) {

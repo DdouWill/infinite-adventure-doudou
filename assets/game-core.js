@@ -78,10 +78,10 @@ export const countries = [
 ];
 
 export const npcRankings = [
-  { name: '小豆王', level: 12, wins: 388, element: '光' },
-  { name: '黑豆參謀', level: 10, wins: 301, element: '闇' },
-  { name: '旅人晴空', level: 9, wins: 244, element: '風' },
-  { name: '紅豆騎士', level: 7, wins: 188, element: '火' }
+  { name: '小豆王', level: 12, wins: 388, battles: 401, element: '光', hp: 1880, maxHp: 1880, mp: 920, maxMp: 920, job: '賢者' },
+  { name: '黑豆參謀', level: 10, wins: 301, battles: 326, element: '闇', hp: 1640, maxHp: 1640, mp: 610, maxMp: 610, job: '影術士' },
+  { name: '旅人晴空', level: 9, wins: 244, battles: 260, element: '風', hp: 1320, maxHp: 1320, mp: 520, maxMp: 520, job: '草原巡守' },
+  { name: '紅豆騎士', level: 7, wins: 188, battles: 205, element: '火', hp: 1180, maxHp: 1180, mp: 360, maxMp: 360, job: '豆豆劍士' }
 ];
 
 export function createPlayer({ name, element, archetype }) {
@@ -405,7 +405,18 @@ export function claimQuestReward(player) {
 }
 
 export function rankingsFor(player) {
-  const playerRow = player ? [{ name: player.name, level: player.level, wins: player.wins, element: player.element }] : [];
+  const playerRow = player ? [{
+    name: player.name,
+    level: player.level,
+    wins: player.wins,
+    battles: player.battles,
+    element: player.element,
+    hp: player.hp,
+    maxHp: player.maxHp,
+    mp: player.mp,
+    maxMp: player.maxMp,
+    job: player.job
+  }] : [];
   return [...playerRow, ...npcRankings]
     .sort((a, b) => b.level - a.level || b.wins - a.wins)
     .map((row, index) => ({ ...row, rank: index + 1 }));
