@@ -27,9 +27,13 @@ async function assertTerminalLoginGate(page, label) {
   const registerModalHidden = await page.locator('#register-modal').evaluate((el) => el.hidden && el.classList.contains('is-hidden'));
   if (!registerModalHidden) throw new Error(`${label} smoke failed: registration should be hidden in a modal before clicking register.`);
   const registerModalCopy = await page.locator('#register-modal').textContent();
-  for (const expected of ['自行建立', 'Google 帳號資訊']) {
+  for (const expected of ['自行建立', 'Google 帳號授權']) {
     if (!registerModalCopy.includes(expected)) throw new Error(`${label} smoke failed: registration modal missing ${expected}.`);
   }
+  const manualGoogleInputCount = await page.locator('#google-email, #google-name').count();
+  if (manualGoogleInputCount !== 0) throw new Error(`${label} smoke failed: Google auth must not require manually typed account fields.`);
+  const googleButtonText = await page.locator('#google-oauth-button').innerText();
+  if (!googleButtonText.includes('Google 授權')) throw new Error(`${label} smoke failed: Google OAuth button missing.`);
   const forbiddenText = ['BadGameShow', '註冊帳號', '原版', '注意事項'];
   for (const forbidden of forbiddenText) {
     if (loginText.includes(forbidden)) throw new Error(`${label} smoke failed: copied/original login text leaked (${forbidden}).`);
@@ -98,18 +102,42 @@ async function registerLocalThroughGate(page, account, password) {
   if (heroName !== account) throw new Error(`Register smoke failed: local registration did not prefill hero name (${heroName}).`);
 }
 
-async function registerGoogleInfoThroughGate(page, email, displayName) {
-  await openRegisterModal(page, 'Google info register');
-  await page.fill('#google-email', email);
-  await page.fill('#google-name', displayName);
-  await page.click('#google-register-submit');
+async function authorizeGoogleThroughGate(page, email, displayName) {
+  await page.evaluate(() => {
+    document.querySelector('meta[name="google-oauth-client-id"]').content = 'smoke-google-client-id';
+    window.google = {
+      accounts: {
+        oauth2: {
+          initTokenClient(options) {
+            window.__googleOAuthOptions = options;
+            return {
+              requestAccessToken() {
+                options.callback({ access_token: 'smoke-access-token', scope: options.scope });
+              }
+            };
+          }
+        }
+      }
+    };
+    window.fetch = async (url, options) => {
+      window.__googleUserInfoRequest = { url: String(url), auth: options?.headers?.Authorization || '' };
+      return {
+        ok: true,
+        json: async () => ({ email: 'adventurer@gmail.com', name: '星門旅人', picture: 'https://example.test/avatar.png' })
+      };
+    };
+  });
+  await openRegisterModal(page, 'Google OAuth register');
+  await page.click('#google-oauth-button');
   await page.waitForFunction(() => document.querySelector('#login-view')?.classList.contains('is-hidden'));
   const session = await page.evaluate(() => JSON.parse(localStorage.getItem('infinite-adventure-doudou-login-v1')));
-  if (session.source !== 'google-info' || session.account !== email || session.displayName !== displayName) {
-    throw new Error(`Register smoke failed: Google info session mismatch ${JSON.stringify(session)}.`);
+  if (session.source !== 'google-oauth' || session.account !== email || session.displayName !== displayName) {
+    throw new Error(`Register smoke failed: Google OAuth session mismatch ${JSON.stringify(session)}.`);
   }
+  const userInfoRequest = await page.evaluate(() => window.__googleUserInfoRequest);
+  if (!userInfoRequest?.auth?.includes('smoke-access-token')) throw new Error(`Register smoke failed: Google OAuth userinfo request missing bearer token ${JSON.stringify(userInfoRequest)}.`);
   const heroName = await page.locator('#hero-name').inputValue();
-  if (heroName !== displayName) throw new Error(`Register smoke failed: Google info did not prefill hero name (${heroName}).`);
+  if (heroName !== displayName) throw new Error(`Register smoke failed: Google OAuth did not prefill hero name (${heroName}).`);
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -120,8 +148,8 @@ await registerLocalThroughGate(localRegisterProbe, 'newhero', 'pass02');
 await localRegisterProbe.close();
 const googleRegisterProbe = await browser.newPage({ viewport: { width: 1024, height: 900 } });
 await googleRegisterProbe.goto(url, { waitUntil: 'networkidle' });
-await assertTerminalLoginGate(googleRegisterProbe, 'Google info register');
-await registerGoogleInfoThroughGate(googleRegisterProbe, 'adventurer@gmail.com', '星門旅人');
+await assertTerminalLoginGate(googleRegisterProbe, 'Google OAuth register');
+await authorizeGoogleThroughGate(googleRegisterProbe, 'adventurer@gmail.com', '星門旅人');
 await googleRegisterProbe.close();
 const desktop = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 await desktop.goto(url, { waitUntil: 'networkidle' });

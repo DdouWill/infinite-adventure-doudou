@@ -4,8 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="無限冒險：終端異界：純 HTML/CSS/JS 文字 RPG demo，可部署到 Cloudflare Pages。">
+  <meta name="google-oauth-client-id" content="">
   <title>無限冒險：終端異界</title>
   <link rel="stylesheet" href="./assets/styles.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳到主要內容</a>
@@ -48,7 +50,7 @@
           <div id="register-modal" class="terminal-modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="register-modal-title" hidden>
             <button class="terminal-modal__backdrop" type="button" data-register-close aria-label="關閉帳號註冊視窗"></button>
             <section id="register-panel" class="terminal-register terminal-modal__dialog" aria-label="帳號註冊">
-              <div class="terminal-panel-title terminal-modal__title"><span>+</span><strong id="register-modal-title">帳號註冊</strong><em>LOCAL / GOOGLE INFO</em><button id="register-modal-close" class="terminal-button terminal-modal__close" type="button" data-register-close>關閉</button></div>
+              <div class="terminal-panel-title terminal-modal__title"><span>+</span><strong id="register-modal-title">帳號註冊</strong><em>LOCAL / GOOGLE OAUTH</em><button id="register-modal-close" class="terminal-button terminal-modal__close" type="button" data-register-close>關閉</button></div>
               <div class="terminal-register__grid">
                 <form id="local-register-form" class="terminal-register__form" autocomplete="on">
                   <h2>自行建立</h2>
@@ -67,19 +69,13 @@
                   <button id="register-submit" class="terminal-button terminal-button--primary" type="submit">建立本機帳號</button>
                 </form>
 
-                <form id="google-register-form" class="terminal-register__form" autocomplete="on">
-                  <h2>Google 帳號資訊</h2>
-                  <label>
-                    <span>Google Email</span>
-                    <input id="google-email" name="google-email" type="email" placeholder="name@gmail.com" autocomplete="email" required>
-                  </label>
-                  <label>
-                    <span>顯示名稱</span>
-                    <input id="google-name" name="google-name" type="text" maxlength="12" placeholder="冒險者名稱" autocomplete="name">
-                  </label>
-                  <small>靜態 demo 不執行 Google OAuth；只接受你輸入的 Google 帳號資訊來建立本機登入 session。</small>
-                  <button id="google-register-submit" class="terminal-button terminal-button--primary" type="submit">使用 Google 資訊進入</button>
-                </form>
+                <section id="google-register-panel" class="terminal-register__form terminal-google-auth" aria-label="Google 帳號授權">
+                  <h2>Google 帳號授權</h2>
+                  <p>按下按鍵後會開啟 Google 授權視窗，選擇帳號並允許讀取基本 profile / email。</p>
+                  <button id="google-oauth-button" class="terminal-button terminal-button--primary terminal-google-auth__button" type="button">使用 Google 授權</button>
+                  <small>需要設定 Google OAuth Client ID；正式驗證仍建議由後端確認 Google token。</small>
+                  <p id="google-oauth-status" class="terminal-google-auth__status" role="status" aria-live="polite"></p>
+                </section>
               </div>
               <p id="register-message" class="login-message" role="status" aria-live="polite"></p>
             </section>

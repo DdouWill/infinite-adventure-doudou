@@ -30,6 +30,8 @@ const STORAGE_KEY = 'infinite-adventure-doudou-save-v1';
 const LOGIN_KEY = 'infinite-adventure-doudou-login-v1';
 const LOGIN_TOKEN_PATTERN = /^[A-Za-z0-9_]{4,8}$/;
 const GOOGLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const GOOGLE_OAUTH_SCOPE = 'openid email profile';
+const GOOGLE_USERINFO_ENDPOINT = 'https://openidconnect.googleapis.com/v1/userinfo';
 let loginSession = loadLoginSession();
 let state = loadPlayer();
 let selectedMapId = 'meadow';
@@ -76,10 +78,9 @@ const nodes = {
   registerPanel: $('#register-panel'),
   registerMessage: $('#register-message'),
   localRegisterForm: $('#local-register-form'),
-  googleRegisterForm: $('#google-register-form'),
+  googleOauthButton: $('#google-oauth-button'),
+  googleOauthStatus: $('#google-oauth-status'),
   registerId: $('#register-id'),
-  googleEmail: $('#google-email'),
-  googleName: $('#google-name'),
   createView: $('#create-view'),
   gameView: $('#game-view'),
   createForm: $('#create-form'),
@@ -189,18 +190,8 @@ nodes.localRegisterForm.addEventListener('submit', (event) => {
   completeLoginSession({ account, source: 'local-register' }, account);
 });
 
-nodes.googleRegisterForm.addEventListener('submit', (event) => {
-  event.preventDefault();
-  const form = new FormData(nodes.googleRegisterForm);
-  const email = String(form.get('google-email') || '').trim();
-  const displayName = String(form.get('google-name') || '').trim();
-  if (!GOOGLE_EMAIL_PATTERN.test(email)) {
-    nodes.registerMessage.textContent = '請輸入有效的 Google Email。';
-    return;
-  }
-  const heroName = deriveGoogleHeroName(displayName, email);
-  nodes.registerMessage.textContent = 'Google 帳號資訊已接受，正在建立本機 session...';
-  completeLoginSession({ account: email, displayName: heroName, source: 'google-info' }, heroName);
+nodes.googleOauthButton.addEventListener('click', () => {
+  startGoogleAuthorization();
 });
 
 $$('[data-login-focus]').forEach((button) => {
@@ -981,7 +972,7 @@ function openRegisterModal() {
   nodes.registerModal.hidden = false;
   nodes.registerModal.classList.remove('is-hidden');
   nodes.registerToggleButton.setAttribute('aria-expanded', 'true');
-  nodes.registerMessage.textContent = '可自行設定帳密，或使用 Google 帳號資訊建立本機 session。';
+  nodes.registerMessage.textContent = '可自行設定帳密，或透過 Google OAuth 授權建立本機 session。';
   nodes.registerId.focus();
 }
 
@@ -990,6 +981,75 @@ function closeRegisterModal() {
   nodes.registerModal.classList.add('is-hidden');
   nodes.registerToggleButton.setAttribute('aria-expanded', 'false');
   nodes.registerToggleButton.focus();
+}
+
+function startGoogleAuthorization() {
+  const clientId = getGoogleClientId();
+  if (!clientId) {
+    setGoogleOauthStatus('尚未設定 Google OAuth Client ID，無法開啟 Google 授權。');
+    return;
+  }
+  if (!window.google?.accounts?.oauth2?.initTokenClient) {
+    setGoogleOauthStatus('Google 授權 SDK 尚未載入完成，請稍後再試。');
+    return;
+  }
+  setGoogleOauthStatus('正在開啟 Google 授權視窗...');
+  const tokenClient = window.google.accounts.oauth2.initTokenClient({
+    client_id: clientId,
+    scope: GOOGLE_OAUTH_SCOPE,
+    prompt: 'select_account',
+    callback: handleGoogleAuthorizationResponse
+  });
+  tokenClient.requestAccessToken({ prompt: 'select_account' });
+}
+
+async function handleGoogleAuthorizationResponse(response) {
+  if (response?.error) {
+    setGoogleOauthStatus(`Google 授權失敗：${response.error}`);
+    return;
+  }
+  if (!response?.access_token) {
+    setGoogleOauthStatus('Google 授權沒有回傳 access token。');
+    return;
+  }
+  try {
+    setGoogleOauthStatus('Google 已授權，正在讀取帳號資料...');
+    const profile = await fetchGoogleProfile(response.access_token);
+    const heroName = deriveGoogleHeroName(profile.name, profile.email);
+    nodes.registerMessage.textContent = 'Google 授權完成，正在進入遊戲介面...';
+    completeLoginSession({
+      account: profile.email,
+      displayName: heroName,
+      picture: profile.picture || '',
+      source: 'google-oauth',
+      authProvider: 'google'
+    }, heroName);
+  } catch (error) {
+    setGoogleOauthStatus(`Google 授權資料讀取失敗：${error.message}`);
+  }
+}
+
+async function fetchGoogleProfile(accessToken) {
+  const response = await fetch(GOOGLE_USERINFO_ENDPOINT, {
+    headers: { Authorization: `Bearer ${accessToken}` }
+  });
+  if (!response.ok) throw new Error(`userinfo ${response.status}`);
+  const profile = await response.json();
+  const email = String(profile.email || '').trim();
+  if (!GOOGLE_EMAIL_PATTERN.test(email)) throw new Error('Google 帳號沒有可用 Email');
+  return {
+    email,
+    name: String(profile.name || profile.given_name || email.split('@')[0] || '').trim(),
+    picture: String(profile.picture || '')
+  };
+}
+
+function getGoogleClientId() {
+  return document.querySelector('meta[name="google-oauth-client-id"]')?.content.trim() || '';
+}
+
+function setGoogleOauthStatus(message) {
+  nodes.googleOauthStatus.textContent = message;
 }
 
 function completeLoginSession(session, heroName) {
@@ -1026,7 +1086,7 @@ function loadLoginSession() {
     const session = raw ? JSON.parse(raw) : null;
     const account = String(session?.account || '');
     if (!account) return null;
-    if (session.source === 'google-info') return GOOGLE_EMAIL_PATTERN.test(account) ? session : null;
+    if (session.source === 'google-oauth') return GOOGLE_EMAIL_PATTERN.test(account) ? session : null;
     return LOGIN_TOKEN_PATTERN.test(account) ? session : null;
   } catch {
     return null;
