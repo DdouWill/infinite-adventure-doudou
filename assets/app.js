@@ -27,6 +27,29 @@ let battleTimers = [];
 let activeBattleFinalPlayer = null;
 let activeBattleFinished = false;
 
+const uiIcons = {
+  views: { battle: '⚔', character: '◎', inventory: '▣', quest: '?', world: '◇', save: '⇩' },
+  menu: {
+    'player-list-panel': '人',
+    'system-news': '!',
+    'news-log': '◇',
+    'battle-records': '⚔',
+    'ranking-panel': '#',
+    'legend-panel': '★',
+    'world-panel': '◎',
+    'town-panel': '⌂',
+    'public-index-panel': '::',
+    'help-panel': '?',
+    'guide-panel': '→',
+    'map-guide-panel': '⌖',
+    'mechanics-panel': '✦',
+    'equip-panel': '†',
+    'item-panel': '+',
+    'icon-panel': '▦',
+    'lineage-panel': '⟲'
+  }
+};
+
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
 
@@ -72,6 +95,8 @@ const nodes = {
   battleReturnButton: $('#battle-return-button'),
   battleReturnHint: $('#battle-return-hint')
 };
+
+decorateStaticUiIcons();
 
 nodes.functionMenuButton.addEventListener('click', () => {
   const isOpen = nodes.functionMenuButton.getAttribute('aria-expanded') === 'true';
@@ -155,6 +180,32 @@ $$('.tab-button').forEach((button) => {
   });
 });
 
+function decorateStaticUiIcons() {
+  $$('.tab-button').forEach((button) => {
+    if (button.querySelector('.ui-icon')) return;
+    const view = button.dataset.view;
+    const label = button.textContent.trim();
+    button.innerHTML = `${iconMarkup(uiIcons.views[view] || '>')}<span>${escapeHtml(label)}</span>`;
+  });
+
+  $$('.function-menu__item').forEach((item) => {
+    const summary = item.querySelector('summary');
+    if (!summary || summary.querySelector('.ui-icon')) return;
+    const label = summary.textContent.trim();
+    summary.innerHTML = `${iconMarkup(uiIcons.menu[item.id] || '>')}<span>${escapeHtml(label)}</span>`;
+  });
+
+  const homeLink = $('.function-menu__home');
+  if (homeLink && !homeLink.querySelector('.ui-icon')) {
+    const label = homeLink.textContent.trim();
+    homeLink.innerHTML = `${iconMarkup('⌂')}<span>${escapeHtml(label)}</span>`;
+  }
+}
+
+function iconMarkup(icon, extraClass = '') {
+  return `<span class="ui-icon${extraClass ? ` ${extraClass}` : ''}" aria-hidden="true">${escapeHtml(icon)}</span>`;
+}
+
 function setFunctionMenuOpen(isOpen) {
   nodes.functionMenu.classList.toggle('is-open', isOpen);
   nodes.functionMenuButton.setAttribute('aria-expanded', String(isOpen));
@@ -217,9 +268,23 @@ function revealBattleTurns(encounter) {
 function appendBattleTurn(turn) {
   const line = document.createElement('p');
   line.className = `battle-turn battle-turn--${turn.side}`;
-  line.textContent = turn.text;
+  line.innerHTML = `${iconMarkup(battleTurnIcon(turn.side), 'turn-icon')}<span>${escapeHtml(turn.text)}</span>`;
   nodes.battleTurnFeed.append(line);
+  pulseBattleActor(turn.side);
   nodes.battleTurnFeed.scrollTop = nodes.battleTurnFeed.scrollHeight;
+}
+
+function pulseBattleActor(side) {
+  const actor = side === 'monster'
+    ? document.querySelector('.battle-actor--player')
+    : side === 'player'
+      ? document.querySelector('.battle-actor--monster')
+      : null;
+  if (!actor) return;
+  actor.classList.remove('is-hit-flash');
+  void actor.offsetWidth;
+  actor.classList.add('is-hit-flash');
+  window.setTimeout(() => actor.classList.remove('is-hit-flash'), 360);
 }
 
 function finishBattlePage(encounter) {
@@ -318,13 +383,14 @@ function renderStats() {
   const equipped = compactEquipmentSummary(state);
   const portrait = portraitForPlayer(state);
   const statRows = [
-    ['金幣', state.gold],
-    ['攻擊', stats.attack],
-    ['防禦', stats.defense],
-    ['速度', stats.speed],
-    ['熟練', state.mastery]
-  ].map(([label, value]) => `
+    ['金幣', state.gold, '$'],
+    ['攻擊', stats.attack, '†'],
+    ['防禦', stats.defense, '▣'],
+    ['速度', stats.speed, '»'],
+    ['熟練', state.mastery, '✦']
+  ].map(([label, value, icon]) => `
     <div class="stat-chip">
+      ${iconMarkup(icon)}
       <span>${escapeHtml(label)}</span>
       <strong>${escapeHtml(String(value))}</strong>
     </div>
@@ -333,6 +399,7 @@ function renderStats() {
   nodes.statGrid.innerHTML = `
     <article class="stat-card vital-card" aria-label="HP 與 MP">
       <div class="compact-block-title">
+        ${iconMarkup('♥')}
         <span>生命 / 魔力</span>
         <strong>HP・MP</strong>
       </div>
@@ -341,6 +408,7 @@ function renderStats() {
     <article class="stat-card character-info-card" aria-label="其餘角色資訊">
       <div class="character-info__header">
         <img class="character-portrait" src="${escapeHtml(portrait)}" alt="${escapeHtml(state.name)} 圖像" width="64" height="64">
+        ${iconMarkup('◎')}
         <span>角色情報</span>
         <strong>${escapeHtml(state.element)}・${escapeHtml(state.job)}｜Lv.${state.level}</strong>
       </div>
@@ -364,6 +432,7 @@ function resourceRow({ label, current, max, tone, caption }) {
   return `
     <div class="resource-row resource-row--${tone}">
       <div class="resource-card__header">
+        ${iconMarkup(resourceIcon(tone))}
         <span>${escapeHtml(label)}</span>
         <strong>${safeCurrent}/${safeMax}</strong>
       </div>
@@ -411,7 +480,7 @@ function renderMaps() {
 
   nodes.mapList.innerHTML = `
     <label class="map-select-field" for="map-select">
-      <span>選擇戰鬥地圖</span>
+      <span class="map-select-field__label">${iconMarkup('⌖')}<span>選擇戰鬥地圖</span></span>
       <select id="map-select" class="map-select" aria-label="選擇戰鬥地圖">
         ${optionGroups}
       </select>
@@ -419,15 +488,15 @@ function renderMaps() {
     </label>
     <article class="selected-map-card" aria-live="polite">
       <div class="selected-map-card__header">
-        <span class="map-card__category">${escapeHtml(selectedMap.category || '戰鬥地圖')}</span>
+        <span class="map-card__category">${iconMarkup(mapCategoryIcon(selectedMap.category))}${escapeHtml(selectedMap.category || '戰鬥地圖')}</span>
         <span class="map-card__level">Lv.${selectedMap.level}｜${escapeHtml(selectedMap.stage || '冒險')}</span>
       </div>
       <strong>${escapeHtml(selectedMap.name)}</strong>
       <p>${escapeHtml(selectedMap.description)}</p>
       <dl class="selected-map-card__stats">
-        <div><dt>入場</dt><dd>${selectedMap.cost} 金幣</dd></div>
-        <div><dt>EXP</dt><dd>${selectedMap.reward.exp}</dd></div>
-        <div><dt>熟練</dt><dd>${selectedMap.reward.mastery}</dd></div>
+        <div><dt>${iconMarkup('$')}入場</dt><dd>${selectedMap.cost} 金幣</dd></div>
+        <div><dt>${iconMarkup('▲')}EXP</dt><dd>${selectedMap.reward.exp}</dd></div>
+        <div><dt>${iconMarkup('✦')}熟練</dt><dd>${selectedMap.reward.mastery}</dd></div>
       </dl>
       <em>${escapeHtml(selectedMap.routeHint || '依照目前 HP / MP 決定是否出擊。')}</em>
     </article>
@@ -441,15 +510,15 @@ function renderMaps() {
 
 function renderBattleLog() {
   nodes.battleLog.innerHTML = (state.log || [])
-    .map((line) => `<p>${escapeHtml(line)}</p>`)
-    .join('') || '<p>尚無戰鬥紀錄。</p>';
+    .map((line) => `<p class="record-line">${iconMarkup(battleLogIcon(line))}<span>${escapeHtml(line)}</span></p>`)
+    .join('') || `<p class="record-line">${iconMarkup('…')}<span>尚無戰鬥紀錄。</span></p>`;
 }
 
 function renderCharacter() {
   const equipped = Object.entries(state.equipment)
     .map(([slot, itemId]) => {
       const item = itemId ? getItem(itemId) : null;
-      return `<li><span>${slotLabel(slot)}</span><strong>${item ? escapeHtml(item.name) : '未裝備'}</strong></li>`;
+      return `<li>${iconMarkup(slotIcon(slot))}<span>${slotLabel(slot)}</span><strong>${item ? escapeHtml(item.name) : '未裝備'}</strong></li>`;
     })
     .join('');
 
@@ -461,9 +530,9 @@ function renderCharacter() {
         <p>${escapeHtml(state.element)}屬性｜${escapeHtml(state.job)}｜Lv.${state.level}</p>
       </div>
       <ul class="clean-list">
-        <li><span>勝敗</span><strong>${state.wins} 勝 / ${state.losses} 敗</strong></li>
-        <li><span>總戰數</span><strong>${state.battles}</strong></li>
-        <li><span>熟練度</span><strong>${state.mastery}</strong></li>
+        <li>${iconMarkup('✓')}<span>勝敗</span><strong>${state.wins} 勝 / ${state.losses} 敗</strong></li>
+        <li>${iconMarkup('#')}<span>總戰數</span><strong>${state.battles}</strong></li>
+        <li>${iconMarkup('✦')}<span>熟練度</span><strong>${state.mastery}</strong></li>
       </ul>
     </div>
     <div class="character-card">
@@ -483,7 +552,8 @@ function renderInventory() {
     const item = getItem(itemId);
     if (!item) return '';
     return `
-      <article class="item-card">
+      <article class="item-card item-card--${escapeHtml(item.type)}">
+        <span class="item-card__icon" aria-hidden="true">${escapeHtml(itemIcon(item))}</span>
         <div>
           <strong>${escapeHtml(item.name)} × ${count}</strong>
           <p>${escapeHtml(item.description)}</p>
@@ -497,7 +567,8 @@ function renderInventory() {
   }).join('') || '<p>背包是空的。</p>';
 
   nodes.shopList.innerHTML = shopItems.map((item) => `
-    <article class="item-card">
+    <article class="item-card item-card--${escapeHtml(item.type)}">
+      <span class="item-card__icon" aria-hidden="true">${escapeHtml(itemIcon(item))}</span>
       <div>
         <strong>${escapeHtml(item.name)}</strong>
         <p>${escapeHtml(item.description)}</p>
@@ -539,6 +610,7 @@ function renderQuest() {
   const quest = state.quest;
   nodes.questBoard.innerHTML = `
     <article class="quest-card">
+      <span class="quest-card__icon" aria-hidden="true">?</span>
       <div>
         <h3>${escapeHtml(quest.title)}</h3>
         <p>在草原擊倒 ${quest.target} 隻怪物。</p>
@@ -580,14 +652,14 @@ function renderWorld() {
   `).join('');
   nodes.worldView.innerHTML = `
     <div class="table-wrap">
-      <h3>勢力表</h3>
+      <h3>${iconMarkup('◇')}勢力表</h3>
       <table>
         <thead><tr><th>國名</th><th>屬性</th><th>領主</th><th>人數</th><th>資金</th><th>領土</th></tr></thead>
         <tbody>${countryRows}</tbody>
       </table>
     </div>
     <div class="table-wrap">
-      <h3>傳說排行</h3>
+      <h3>${iconMarkup('★')}傳說排行</h3>
       <table class="classic-ranking-table">
         <thead><tr><th>順位</th><th>頭像</th><th>名稱</th><th>屬性</th><th>HP</th><th>MP</th><th>職業</th><th>戰數</th></tr></thead>
         <tbody>${rankingRows}</tbody>
@@ -608,7 +680,7 @@ function renderReferenceTable(selector, headings, rows, mapRow) {
   const node = $(selector);
   if (!node) return;
   node.innerHTML = `
-    <p class="reference-catalog-count">共 ${rows.length} 筆</p>
+    <p class="reference-catalog-count">${iconMarkup('#')}共 ${rows.length} 筆</p>
     <div class="dense-table-wrap reference-catalog-scroll">
       <table>
         <thead><tr>${headings.map((heading) => `<th>${escapeHtml(heading)}</th>`).join('')}</tr></thead>
@@ -646,6 +718,45 @@ function loadPlayer() {
 function rankingPortrait(row) {
   if (row.name === state?.name) return portraitForPlayer(state);
   return row.portrait || portraitForPlayer(row);
+}
+
+function resourceIcon(tone) {
+  return { hp: '♥', mp: '✦', exp: '▲' }[tone] || '·';
+}
+
+function mapCategoryIcon(category = '') {
+  if (category.includes('消耗')) return '$';
+  if (category.includes('稀有')) return '?';
+  if (category.includes('戰數')) return '#';
+  if (category.includes('世界')) return '◇';
+  return '⌖';
+}
+
+function slotIcon(slot) {
+  return { weapon: '†', armor: '▣', trinket: '◇' }[slot] || '·';
+}
+
+function itemIcon(item) {
+  if (item.type === 'consumable') {
+    if (item.effect === 'heal') return '+';
+    if (item.effect === 'restoreMp') return '✦';
+    if (item.effect === 'mastery') return '▲';
+    return '*';
+  }
+  return slotIcon(item.type);
+}
+
+function battleLogIcon(line = '') {
+  if (line.includes('升級')) return '▲';
+  if (line.includes('獲得')) return '$';
+  if (line.includes('無法')) return '!';
+  if (line.includes('戰敗')) return '×';
+  if (line.includes('擊倒')) return '✓';
+  return '>';
+}
+
+function battleTurnIcon(side) {
+  return { player: '>', monster: '<', system: '*' }[side] || '·';
 }
 
 function slotLabel(slot) {

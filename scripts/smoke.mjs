@@ -55,6 +55,15 @@ const menuText = await desktop.locator('#function-menu-panel').innerText();
 if (!menuText.includes('情報') || !menuText.includes('解說') || !menuText.includes('最新情報') || !menuText.includes('遊戲說明')) {
   throw new Error('Desktop smoke failed: function menu does not contain info/explanation items.');
 }
+const menuIconCount = await desktop.locator('#function-menu-panel .function-menu__item summary .ui-icon').count();
+if (menuIconCount < 16) throw new Error(`Desktop smoke failed: function menu icon layer incomplete (${menuIconCount}).`);
+const menuIconStyle = await desktop.locator('#function-menu-panel .function-menu__item summary .ui-icon').first().evaluate((el) => {
+  const style = getComputedStyle(el);
+  return { display: style.display, borderTopWidth: style.borderTopWidth, color: style.color };
+});
+if (menuIconStyle.display !== 'grid' || menuIconStyle.borderTopWidth !== '1px') {
+  throw new Error(`Desktop smoke failed: terminal menu icon style missing ${JSON.stringify(menuIconStyle)}.`);
+}
 await desktop.locator('#guide-panel summary').click();
 const openedGuideText = await desktop.locator('#guide-panel').innerText();
 if (!openedGuideText.includes('修行者之塔')) {
@@ -103,6 +112,15 @@ await desktop.fill('#hero-name', '豆豆測試員');
 await desktop.selectOption('#hero-element', '光');
 await desktop.selectOption('#hero-archetype', 'blade');
 await desktop.click('button:has-text("建立角色")');
+const navIconCount = await desktop.locator('.tab-button .ui-icon').count();
+if (navIconCount !== 6) throw new Error(`Desktop smoke failed: tab nav should have 6 command icons, got ${navIconCount}.`);
+const commandEffect = await desktop.locator('#battle-button').evaluate((el) => {
+  const style = getComputedStyle(el);
+  return { backgroundImage: style.backgroundImage, transitionDuration: style.transitionDuration };
+});
+if (!commandEffect.backgroundImage.includes('linear-gradient') || commandEffect.transitionDuration === '0s') {
+  throw new Error(`Desktop smoke failed: command micro-effect style missing ${JSON.stringify(commandEffect)}.`);
+}
 await desktop.click('#battle-button');
 await desktop.waitForSelector('#battle-page:not(.is-hidden)');
 const battleHash = await desktop.evaluate(() => window.location.hash);
@@ -119,6 +137,10 @@ if (!battlePageText.includes('施放') && !battlePageText.includes('使出')) {
 }
 const battleSpriteCount = await desktop.locator('#battle-page .battle-portrait').count();
 if (battleSpriteCount !== 2) throw new Error('Desktop smoke failed: battle page should show player and monster sprites.');
+const battleTurnIconCount = await desktop.locator('#battle-page .battle-turn .turn-icon').count();
+if (battleTurnIconCount < 2) throw new Error('Desktop smoke failed: battle turns should show player/monster terminal icons.');
+const battleTurnAnimation = await desktop.locator('#battle-page .battle-turn').first().evaluate((el) => getComputedStyle(el).animationName);
+if (!battleTurnAnimation.includes('terminal-line-in')) throw new Error(`Desktop smoke failed: battle turn line-in animation missing (${battleTurnAnimation}).`);
 await desktop.screenshot({ path: `${screenshotsDir}/desktop-battle-page.png` });
 await desktop.click('#battle-return-button');
 await desktop.waitForFunction(() => document.querySelector('#battle-page')?.classList.contains('is-hidden'));
@@ -139,6 +161,10 @@ const infoText = await desktop.locator('.character-info-card').innerText();
 if (!infoText.includes('戰績') || !infoText.includes('裝備') || !infoText.includes('金幣')) {
   throw new Error('Desktop smoke failed: character info block not rendered.');
 }
+const hudIconCount = await desktop.locator('.stat-grid .ui-icon').count();
+if (hudIconCount < 9) throw new Error(`Desktop smoke failed: status HUD icons missing (${hudIconCount}).`);
+const recordIconCount = await desktop.locator('#battle-log .record-line .ui-icon').count();
+if (recordIconCount < 1) throw new Error('Desktop smoke failed: battle log record icons missing.');
 const desktopAreas = await desktop.locator('.stat-grid').evaluate((el) => getComputedStyle(el).gridTemplateAreas);
 if (!desktopAreas.includes('vitals') || !desktopAreas.includes('info')) {
   throw new Error('Desktop smoke failed: HP/MP + character info grid areas missing.');
@@ -154,6 +180,11 @@ const selectedMapText = await desktop.locator('.selected-map-card').innerText();
 if (!selectedMapText.includes('廢棄後山') || !selectedMapText.includes('常駐開放')) {
   throw new Error('Desktop smoke failed: selected map summary did not update from dropdown.');
 }
+const selectedMapIconVisible = await desktop.locator('.selected-map-card .map-card__category .ui-icon').isVisible();
+if (!selectedMapIconVisible) throw new Error('Desktop smoke failed: selected map category icon missing.');
+await desktop.click('.tab-button[data-view="inventory"]');
+const itemIconCount = await desktop.locator('.item-card .item-card__icon').count();
+if (itemIconCount < 3) throw new Error(`Desktop smoke failed: inventory/shop item icons missing (${itemIconCount}).`);
 await desktop.click('.tab-button[data-view="world"]');
 const worldRankingText = await desktop.locator('#world-view .classic-ranking-table').innerText();
 for (const expected of ['頭像', 'HP', 'MP', '職業', '戰數']) {
@@ -169,6 +200,8 @@ if (!mobileMenuButtonBox || Math.abs((mobileMenuButtonBox.x + mobileMenuButtonBo
 await mobile.click('#function-menu-button');
 const mobileMenuVisible = await mobile.locator('#function-menu-panel').isVisible();
 if (!mobileMenuVisible) throw new Error('Mobile smoke failed: function menu panel not visible after click.');
+const mobileMenuIconCount = await mobile.locator('#function-menu-panel .ui-icon').count();
+if (mobileMenuIconCount < 16) throw new Error(`Mobile smoke failed: function menu icons missing (${mobileMenuIconCount}).`);
 await mobile.locator('#guide-panel summary').click();
 const mobileGuideText = await mobile.locator('#guide-panel').innerText();
 if (!mobileGuideText.includes('修行者之塔')) throw new Error('Mobile smoke failed: function menu guide content missing.');

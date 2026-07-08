@@ -2420,3 +2420,300 @@ select optgroup {
     height: 72px;
   }
 }
+
+
+/* Terminal UX icon / micro-effect layer: monochrome symbols, low-motion feedback. */
+.ui-icon,
+.item-card__icon,
+.quest-card__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.65em;
+  min-width: 1.65em;
+  height: 1.65em;
+  border: 1px solid var(--border);
+  color: var(--primary);
+  background:
+    repeating-linear-gradient(135deg, transparent 0 4px, rgba(245, 245, 245, 0.08) 4px 5px),
+    #0a0a0a;
+  font-size: 0.76em;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+}
+
+.function-menu__home,
+.function-menu__item summary,
+.tab-button,
+.compact-block-title,
+.resource-card__header,
+.map-select-field__label,
+.selected-map-card__header,
+.reference-catalog-count,
+.record-line,
+.battle-turn,
+.table-wrap h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.function-menu__item summary span:last-child,
+.function-menu__home span:last-child,
+.tab-button span:last-child,
+.record-line span:last-child,
+.battle-turn span:last-child,
+.map-select-field__label span:last-child {
+  min-width: 0;
+}
+
+.tab-button .ui-icon,
+.function-menu__item summary .ui-icon,
+.function-menu__home .ui-icon {
+  font-size: 0.74rem;
+}
+
+.stat-chip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  column-gap: 0.45rem;
+}
+
+.stat-chip .ui-icon {
+  grid-row: span 2;
+  align-self: start;
+}
+
+.stat-chip strong {
+  grid-column: 2;
+}
+
+.character-info__header {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  justify-content: start;
+  align-items: center;
+}
+
+.character-info__header .character-portrait {
+  grid-row: 1 / span 2;
+}
+
+.character-info__header .ui-icon {
+  grid-column: 2;
+}
+
+.character-info__header > span:not(.ui-icon),
+.character-info__header strong {
+  grid-column: 3;
+}
+
+.clean-list li,
+.selected-map-card__stats dt,
+.character-info__meta dt {
+  align-items: center;
+}
+
+.clean-list li .ui-icon,
+.selected-map-card__stats .ui-icon {
+  font-size: 0.72rem;
+}
+
+.item-card,
+.quest-card {
+  align-items: flex-start;
+}
+
+.item-card__icon,
+.quest-card__icon {
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  margin-top: 0.1rem;
+  font-size: 0.9rem;
+}
+
+.item-card > div,
+.quest-card > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.map-card__category .ui-icon {
+  margin-right: 0.35em;
+  color: #0a0a0a;
+  border-color: #0a0a0a;
+  background: transparent;
+}
+
+.primary-action,
+.ghost-button,
+.danger-button,
+.classic-action,
+.tab-button,
+.item-card,
+.quest-card,
+.character-card,
+.selected-map-card,
+.resource-row,
+.battle-turn {
+  position: relative;
+  overflow: hidden;
+  transition:
+    background-position 0.28s steps(7, end),
+    border-color 0.16s steps(2, end),
+    transform 0.12s ease;
+  background-image: linear-gradient(90deg, transparent 0 42%, rgba(245, 245, 245, 0.18) 50%, transparent 58%);
+  background-size: 240% 100%;
+  background-position: 120% 0;
+}
+
+.primary-action:hover,
+.ghost-button:hover,
+.danger-button:hover,
+.classic-action:hover,
+.tab-button:hover,
+.item-card:hover,
+.quest-card:hover,
+.character-card:hover,
+.selected-map-card:hover,
+.resource-row:hover,
+.battle-turn:hover {
+  background-position: -20% 0;
+}
+
+.primary-action:active,
+.ghost-button:active,
+.danger-button:active,
+.classic-action:active,
+.tab-button:active,
+.item-card button:active {
+  transform: translate(1px, 1px);
+}
+
+.primary-action:focus-visible,
+.ghost-button:focus-visible,
+.danger-button:focus-visible,
+.classic-action:focus-visible,
+.tab-button:focus-visible,
+.map-select:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.battle-turn {
+  animation: terminal-line-in 0.22s steps(4, end);
+}
+
+.battle-turn .turn-icon {
+  align-self: flex-start;
+}
+
+.battle-turn--player .turn-icon {
+  border-style: solid;
+}
+
+.battle-turn--monster .turn-icon {
+  border-style: dashed;
+}
+
+.battle-turn--system .turn-icon {
+  border-style: double;
+}
+
+.battle-actor.is-hit-flash .battle-portrait,
+.battle-page.is-hit-flash .battle-page__frame {
+  animation: actor-hit-flash 0.34s steps(3, end);
+}
+
+.battle-actor.is-hit-flash::after {
+  content: "HIT";
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  padding: 2px 5px;
+  border: 1px solid var(--border);
+  color: #0a0a0a;
+  background: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+
+.battle-actor {
+  position: relative;
+}
+
+.record-line .ui-icon {
+  font-size: 0.72rem;
+}
+
+@keyframes terminal-line-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes actor-hit-flash {
+  0%, 100% {
+    filter: none;
+    transform: translateX(0);
+  }
+  35% {
+    filter: invert(1);
+    transform: translateX(-2px);
+  }
+  70% {
+    filter: invert(1);
+    transform: translateX(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .character-info__header {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .character-info__header .character-portrait {
+    grid-row: auto;
+  }
+
+  .character-info__header .ui-icon {
+    grid-column: 1;
+  }
+
+  .character-info__header > span:not(.ui-icon),
+  .character-info__header strong {
+    grid-column: 2;
+  }
+
+  .stat-chip-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .item-card__icon,
+  .quest-card__icon {
+    width: 1.75rem;
+    min-width: 1.75rem;
+    height: 1.75rem;
+  }
+}
