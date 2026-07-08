@@ -297,6 +297,40 @@
         </section>
       </aside>
     </main>
+
+    <section id="battle-page" class="battle-page is-hidden" aria-label="回合戰鬥畫面" aria-live="polite">
+      <div class="battle-page__frame">
+        <header class="battle-page__header">
+          <div>
+            <p class="eyebrow">Battle Page</p>
+            <h2 id="battle-page-title">戰鬥開始</h2>
+          </div>
+          <span id="battle-page-status" class="battle-page__status">回合演出中</span>
+        </header>
+        <div class="battle-page__arena">
+          <article class="battle-actor battle-actor--player">
+            <span>冒險者</span>
+            <strong id="battle-player-name">豆豆勇者</strong>
+            <progress id="battle-player-hp" class="battle-meter battle-meter--hp" max="100" value="100"></progress>
+            <small id="battle-player-hp-text">HP 100/100</small>
+            <progress id="battle-player-mp" class="battle-meter battle-meter--mp" max="100" value="100"></progress>
+            <small id="battle-player-mp-text">MP 100/100</small>
+          </article>
+          <div class="battle-versus" aria-hidden="true">VS</div>
+          <article class="battle-actor battle-actor--monster">
+            <span id="battle-map-name">戰鬥地圖</span>
+            <strong id="battle-monster-name">魔物</strong>
+            <progress id="battle-monster-hp" class="battle-meter battle-meter--enemy" max="100" value="100"></progress>
+            <small id="battle-monster-hp-text">HP 100/100</small>
+          </article>
+        </div>
+        <div id="battle-turn-feed" class="battle-turn-feed" aria-label="回合攻擊紀錄"></div>
+        <div class="battle-page__actions">
+          <button id="battle-return-button" class="primary-action" type="button" disabled>戰鬥進行中...</button>
+          <span id="battle-return-hint">回合結束後即可返回主畫面。</span>
+        </div>
+      </div>
+    </section>
   </div>
   <script type="module" src="./assets/app.js"></script>
 </body>

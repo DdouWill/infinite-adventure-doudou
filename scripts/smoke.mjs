@@ -3,8 +3,15 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
-const url = process.env.SMOKE_URL || 'http://127.0.0.1:4173';
+const url = withBattleDelay(process.env.SMOKE_URL || 'http://127.0.0.1:4173');
 const screenshotsDir = process.env.SMOKE_SCREENSHOTS || 'screenshots';
+
+function withBattleDelay(rawUrl) {
+  const nextUrl = new URL(rawUrl);
+  if (!nextUrl.searchParams.has('battleDelayMs')) nextUrl.searchParams.set('battleDelayMs', '35');
+  if (!nextUrl.searchParams.has('battleSeed')) nextUrl.searchParams.set('battleSeed', 'turn-skill-showcase');
+  return nextUrl.toString();
+}
 
 const browser = await chromium.launch({ headless: true });
 const desktop = await browser.newPage({ viewport: { width: 1280, height: 900 } });
@@ -44,6 +51,24 @@ await desktop.selectOption('#hero-element', '光');
 await desktop.selectOption('#hero-archetype', 'blade');
 await desktop.click('button:has-text("建立角色")');
 await desktop.click('#battle-button');
+await desktop.waitForSelector('#battle-page:not(.is-hidden)');
+const battleHash = await desktop.evaluate(() => window.location.hash);
+if (battleHash !== '#battle-page') throw new Error('Desktop smoke failed: battle action should jump to the battle page hash.');
+await desktop.waitForSelector('.battle-turn--player');
+await desktop.waitForSelector('.battle-turn--monster');
+await desktop.waitForFunction(() => !document.querySelector('#battle-return-button')?.disabled);
+const battlePageText = await desktop.locator('#battle-page').innerText();
+if (!battlePageText.includes('第 1 回合') || !battlePageText.includes('返回主頁面')) {
+  throw new Error('Desktop smoke failed: turn-by-turn battle page did not finish correctly.');
+}
+if (!battlePageText.includes('施放') && !battlePageText.includes('使出')) {
+  throw new Error('Desktop smoke failed: probabilistic skills were not shown in the battle page.');
+}
+await desktop.screenshot({ path: `${screenshotsDir}/desktop-battle-page.png` });
+await desktop.click('#battle-return-button');
+await desktop.waitForFunction(() => document.querySelector('#battle-page')?.classList.contains('is-hidden'));
+const returnHash = await desktop.evaluate(() => window.location.hash);
+if (returnHash !== '#main') throw new Error('Desktop smoke failed: return button should jump back to main hash.');
 await desktop.screenshot({ path: `${screenshotsDir}/desktop.png`, fullPage: true });
 const title = await desktop.locator('#player-title').innerText();
 if (!title.includes('豆豆測試員')) throw new Error('Desktop smoke failed: player title not rendered.');
@@ -94,6 +119,16 @@ await mobile.selectOption('#hero-element', '水');
 await mobile.selectOption('#hero-archetype', 'sage');
 await mobile.click('button:has-text("建立角色")');
 await mobile.click('#battle-button');
+await mobile.waitForSelector('#battle-page:not(.is-hidden)');
+const mobileBattleHash = await mobile.evaluate(() => window.location.hash);
+if (mobileBattleHash !== '#battle-page') throw new Error('Mobile smoke failed: battle action should jump to battle page hash.');
+await mobile.waitForSelector('.battle-turn--player');
+await mobile.waitForFunction(() => !document.querySelector('#battle-return-button')?.disabled);
+await mobile.screenshot({ path: `${screenshotsDir}/mobile-battle-page.png` });
+await mobile.click('#battle-return-button');
+await mobile.waitForFunction(() => document.querySelector('#battle-page')?.classList.contains('is-hidden'));
+const mobileReturnHash = await mobile.evaluate(() => window.location.hash);
+if (mobileReturnHash !== '#main') throw new Error('Mobile smoke failed: return button should jump back to main hash.');
 await mobile.screenshot({ path: `${screenshotsDir}/mobile.png`, fullPage: true });
 const navVisible = await mobile.locator('.tab-nav').isVisible();
 if (!navVisible) throw new Error('Mobile smoke failed: tab nav not visible.');

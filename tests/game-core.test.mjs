@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   buyItem,
   claimQuestReward,
+  createBattleEncounter,
   createPlayer,
   equipItem,
   parsePlayer,
@@ -33,6 +34,22 @@ test('performBattle can win, grants rewards, and advances grassland quest', () =
   assert.equal(result.player.quest.progress, 1);
   assert.ok(result.player.exp > player.exp);
   assert.ok(result.player.gold > 0);
+});
+
+test('createBattleEncounter builds turn-by-turn page data with probabilistic skills', () => {
+  const player = createPlayer({ name: '演出勇者', element: '雷', archetype: 'blade' });
+  player.attack = 22;
+  player.maxHp = 220;
+  player.hp = 220;
+  player.maxMp = 80;
+  player.mp = 80;
+  player.gold = 999;
+  const encounter = createBattleEncounter(player, 'meadow', rngSequence([0, 0.1, 0.9, 0.1, 0.1, 0.1, 0.2, 0.1]));
+  assert.ok(encounter.scene.turns.some((turn) => turn.side === 'player'));
+  assert.ok(encounter.scene.turns.some((turn) => turn.side === 'monster'));
+  assert.ok(encounter.scene.turns.some((turn) => ['豆豆連斬', '星芒爆裂', '微光護盾', '野性猛撲', '濁霧衝擊', '硬殼防禦'].includes(turn.skill)));
+  assert.ok(encounter.scene.turns.some((turn) => turn.text.includes('戰鬥結束')));
+  assert.equal(encounter.player.battles, player.battles + 1);
 });
 
 test('performBattle blocks maps when gold is insufficient before charging cost', () => {

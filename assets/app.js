@@ -2,12 +2,12 @@ import {
   buyItem,
   claimQuestReward,
   countries,
+  createBattleEncounter,
   createPlayer,
   equipItem,
   getItem,
   maps,
   parsePlayer,
-  performBattle,
   rankingsFor,
   restAtInn,
   serializePlayer,
@@ -19,6 +19,9 @@ const STORAGE_KEY = 'infinite-adventure-doudou-save-v1';
 let state = loadPlayer();
 let selectedMapId = 'meadow';
 let currentView = 'battle';
+let battleTimers = [];
+let activeBattleFinalPlayer = null;
+let activeBattleFinished = false;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => Array.from(document.querySelectorAll(selector));
@@ -46,7 +49,22 @@ const nodes = {
   onlineCount: $('#online-count'),
   functionMenu: $('#function-menu'),
   functionMenuButton: $('#function-menu-button'),
-  functionMenuPanel: $('#function-menu-panel')
+  functionMenuPanel: $('#function-menu-panel'),
+  battlePage: $('#battle-page'),
+  battlePageTitle: $('#battle-page-title'),
+  battlePageStatus: $('#battle-page-status'),
+  battlePlayerName: $('#battle-player-name'),
+  battlePlayerHp: $('#battle-player-hp'),
+  battlePlayerHpText: $('#battle-player-hp-text'),
+  battlePlayerMp: $('#battle-player-mp'),
+  battlePlayerMpText: $('#battle-player-mp-text'),
+  battleMapName: $('#battle-map-name'),
+  battleMonsterName: $('#battle-monster-name'),
+  battleMonsterHp: $('#battle-monster-hp'),
+  battleMonsterHpText: $('#battle-monster-hp-text'),
+  battleTurnFeed: $('#battle-turn-feed'),
+  battleReturnButton: $('#battle-return-button'),
+  battleReturnHint: $('#battle-return-hint')
 };
 
 nodes.functionMenuButton.addEventListener('click', () => {
@@ -80,10 +98,12 @@ nodes.createForm.addEventListener('submit', (event) => {
 
 nodes.battleButton.addEventListener('click', () => {
   if (!state) return;
-  const battle = performBattle(state, selectedMapId);
-  state = battle.player;
-  savePlayer();
-  render();
+  startBattlePage();
+});
+
+nodes.battleReturnButton.addEventListener('click', () => {
+  if (!activeBattleFinished) return;
+  closeBattlePage();
 });
 
 nodes.restButton.addEventListener('click', () => {
@@ -133,6 +153,128 @@ function setFunctionMenuOpen(isOpen) {
   nodes.functionMenu.classList.toggle('is-open', isOpen);
   nodes.functionMenuButton.setAttribute('aria-expanded', String(isOpen));
   nodes.functionMenuPanel.hidden = !isOpen;
+}
+
+function startBattlePage() {
+  clearBattleTimers();
+  const encounter = createBattleEncounter(state, selectedMapId, battleRng());
+  activeBattleFinalPlayer = encounter.player;
+  activeBattleFinished = false;
+  setFunctionMenuOpen(false);
+  if (window.location.hash !== '#battle-page') window.history.pushState(null, '', '#battle-page');
+  renderBattlePage(encounter);
+  revealBattleTurns(encounter);
+}
+
+function renderBattlePage(encounter) {
+  const scene = encounter.scene;
+  nodes.battlePage.classList.remove('is-hidden');
+  document.body.classList.add('battle-page-active');
+  nodes.battlePageTitle.textContent = `${scene.map.name}｜${scene.monster.name}`;
+  nodes.battlePageStatus.textContent = '回合演出中';
+  nodes.battlePlayerName.textContent = state.name;
+  nodes.battleMapName.textContent = `${scene.map.category}｜Lv.${scene.map.level}`;
+  nodes.battleMonsterName.textContent = scene.monster.name;
+  nodes.battleTurnFeed.innerHTML = '';
+  nodes.battleReturnButton.disabled = true;
+  nodes.battleReturnButton.textContent = '戰鬥進行中...';
+  nodes.battleReturnHint.textContent = '回合攻擊正在進行，結束後即可返回主畫面。';
+  updateBattleMeters(scene.playerStart, scene.monsterStart);
+  nodes.battlePage.focus?.();
+}
+
+function revealBattleTurns(encounter) {
+  const turns = encounter.scene.turns;
+  const delay = battleTurnDelayMs();
+  turns.forEach((turn, index) => {
+    const timer = window.setTimeout(() => {
+      appendBattleTurn(turn);
+      updateBattleMeters({
+        hp: turn.playerHp,
+        maxHp: encounter.scene.playerStart.maxHp,
+        mp: turn.playerMp,
+        maxMp: encounter.scene.playerStart.maxMp
+      }, {
+        hp: turn.monsterHp,
+        maxHp: encounter.scene.monsterStart.maxHp
+      });
+      if (index === turns.length - 1) finishBattlePage(encounter);
+    }, delay * (index + 1));
+    battleTimers.push(timer);
+  });
+}
+
+function appendBattleTurn(turn) {
+  const line = document.createElement('p');
+  line.className = `battle-turn battle-turn--${turn.side}`;
+  line.textContent = turn.text;
+  nodes.battleTurnFeed.append(line);
+  nodes.battleTurnFeed.scrollTop = nodes.battleTurnFeed.scrollHeight;
+}
+
+function finishBattlePage(encounter) {
+  activeBattleFinished = true;
+  state = activeBattleFinalPlayer;
+  activeBattleFinalPlayer = null;
+  savePlayer();
+  render();
+  nodes.battlePage.classList.remove('is-hidden');
+  document.body.classList.add('battle-page-active');
+  updateBattleMeters(encounter.scene.playerEnd, encounter.scene.monsterEnd);
+  nodes.battlePageStatus.textContent = encounter.result === 'win' ? '戰鬥勝利' : encounter.result === 'blocked' ? '無法出擊' : '戰鬥結束';
+  nodes.battleReturnButton.disabled = false;
+  nodes.battleReturnButton.textContent = '返回主頁面';
+  nodes.battleReturnHint.textContent = '戰鬥已結束，可以返回主畫面。';
+}
+
+function closeBattlePage() {
+  clearBattleTimers();
+  activeBattleFinalPlayer = null;
+  activeBattleFinished = false;
+  nodes.battlePage.classList.add('is-hidden');
+  document.body.classList.remove('battle-page-active');
+  if (window.location.hash === '#battle-page') window.history.pushState(null, '', '#main');
+  document.querySelector('#game-panel')?.scrollIntoView({ block: 'start' });
+}
+
+function updateBattleMeters(playerMeter, monsterMeter) {
+  setProgress(nodes.battlePlayerHp, nodes.battlePlayerHpText, 'HP', playerMeter.hp, playerMeter.maxHp);
+  setProgress(nodes.battlePlayerMp, nodes.battlePlayerMpText, 'MP', playerMeter.mp, playerMeter.maxMp);
+  setProgress(nodes.battleMonsterHp, nodes.battleMonsterHpText, 'HP', monsterMeter.hp, monsterMeter.maxHp);
+}
+
+function setProgress(progress, label, prefix, current, max) {
+  const safeMax = Math.max(1, Number(max) || 1);
+  const safeCurrent = Math.min(safeMax, Math.max(0, Number(current) || 0));
+  progress.max = safeMax;
+  progress.value = safeCurrent;
+  label.textContent = `${prefix} ${safeCurrent}/${safeMax}`;
+}
+
+function clearBattleTimers() {
+  battleTimers.forEach((timer) => window.clearTimeout(timer));
+  battleTimers = [];
+}
+
+function battleRng() {
+  const seedText = new URLSearchParams(window.location.search).get('battleSeed');
+  if (!seedText) return Math.random;
+  let seed = 2166136261;
+  for (const char of seedText) {
+    seed ^= char.charCodeAt(0);
+    seed = Math.imul(seed, 16777619);
+  }
+  return () => {
+    seed = Math.imul(seed ^ (seed >>> 15), 2246822507);
+    seed = Math.imul(seed ^ (seed >>> 13), 3266489909);
+    seed ^= seed >>> 16;
+    return (seed >>> 0) / 4294967296;
+  };
+}
+
+function battleTurnDelayMs() {
+  const value = Number(new URLSearchParams(window.location.search).get('battleDelayMs'));
+  return Number.isFinite(value) && value >= 0 ? value : 620;
 }
 
 function render() {

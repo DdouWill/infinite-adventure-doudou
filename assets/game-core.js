@@ -154,30 +154,61 @@ export function chooseMap(mapId) {
   return maps.find((map) => map.id === mapId) || maps[0];
 }
 
-export function performBattle(player, mapId, rng = Math.random) {
+export function createBattleEncounter(player, mapId, rng = Math.random) {
   const map = chooseMap(mapId);
   const next = clonePlayer(player);
+  const messages = [];
+  const turns = [];
   const stats = totalStats(next);
   const monsterName = map.monsters[Math.floor(rng() * map.monsters.length)] || map.monsters[0];
-  const monsterPower = map.level * 12 + 10;
-  const variance = 0.82 + rng() * 0.36;
-  const playerPower = stats.attack * 1.55 + stats.defense * 0.85 + stats.speed * 0.45 + next.level * 8;
-  const winChance = clamp(0.2 + (playerPower - monsterPower) / 120, 0.18, 0.92);
-  const didWin = rng() <= winChance;
-  const damageBase = Math.max(4, Math.round((monsterPower * variance) - stats.defense * 0.75));
-  const damage = didWin ? Math.max(2, Math.round(damageBase * 0.55)) : Math.max(8, Math.round(damageBase * 1.15));
+  const monster = createMonster(map, monsterName, rng);
+  const playerStart = { hp: next.hp, maxHp: next.maxHp, mp: next.mp, maxMp: next.maxMp };
+  const monsterStart = { hp: monster.hp, maxHp: monster.maxHp };
 
-  next.battles += 1;
-  next.hp = Math.max(0, next.hp - damage);
-
-  const messages = [];
   if (next.gold < map.cost) {
     messages.push(`金幣不足，無法前往 ${map.name}。`);
+    turns.push({
+      side: 'system',
+      round: 0,
+      text: `公會櫃台擋下了出擊：前往 ${map.name} 需要 ${map.cost} 金幣。`,
+      playerHp: next.hp,
+      playerMp: next.mp,
+      monsterHp: monster.hp
+    });
     next.updatedAt = new Date().toISOString();
     next.log = mergeLog(next.log, messages);
-    return { player: next, result: 'blocked', messages };
+    return buildBattleEncounter({ next, map, monsterName, monster, playerStart, monsterStart, turns, messages, result: 'blocked' });
   }
+
   next.gold -= map.cost;
+  next.battles += 1;
+  turns.push({
+    side: 'system',
+    round: 0,
+    text: `${next.name} 進入「${map.name}」，遭遇「${monsterName}」！`,
+    playerHp: next.hp,
+    playerMp: next.mp,
+    monsterHp: monster.hp
+  });
+
+  let guardRate = 0;
+  for (let round = 1; round <= 8 && next.hp > 0 && monster.hp > 0; round += 1) {
+    turns.push({ side: 'system', round, text: `第 ${round} 回合`, playerHp: next.hp, playerMp: next.mp, monsterHp: monster.hp });
+    const playerFirst = stats.speed + rng() * 10 >= monster.speed + rng() * 10;
+    if (playerFirst) {
+      guardRate = takePlayerTurn({ next, monster, map, stats, turns, round, rng, guardRate });
+      if (monster.hp > 0) guardRate = takeMonsterTurn({ next, monster, map, stats, turns, round, rng, guardRate });
+    } else {
+      guardRate = takeMonsterTurn({ next, monster, map, stats, turns, round, rng, guardRate });
+      if (next.hp > 0) guardRate = takePlayerTurn({ next, monster, map, stats, turns, round, rng, guardRate });
+    }
+  }
+
+  const playerRatio = next.hp / next.maxHp;
+  const monsterRatio = monster.hp / monster.maxHp;
+  const didWin = monster.hp <= 0 || (next.hp > 0 && monsterRatio <= playerRatio * 0.72);
+  next.hp = Math.max(0, next.hp);
+  next.mp = Math.max(0, next.mp);
 
   if (didWin && next.hp > 0) {
     const expGain = Math.round(map.reward.exp * (0.85 + rng() * 0.4));
@@ -188,26 +219,132 @@ export function performBattle(player, mapId, rng = Math.random) {
     next.mastery += masteryGain;
     next.wins += 1;
     next.quest = updateQuest(next.quest, map.id);
+    monster.hp = 0;
     messages.push(`你在 ${map.name} 擊倒了「${monsterName}」，獲得 ${expGain} EXP、${goldGain} 金幣、${masteryGain} 熟練。`);
+    turns.push({ side: 'system', round: 9, text: `戰鬥結束！${next.name} 擊倒了「${monsterName}」。`, playerHp: next.hp, playerMp: next.mp, monsterHp: monster.hp });
 
     if (rng() < itemDropChance(map.level)) {
       const drop = randomDrop(map.level, rng);
       next.inventory.push(drop.id);
       messages.push(`打寶成功：獲得「${drop.name}」。`);
+      turns.push({ side: 'system', round: 9, text: `打寶成功：獲得「${drop.name}」。`, playerHp: next.hp, playerMp: next.mp, monsterHp: monster.hp });
     }
 
     const levelMessages = applyLevelUps(next);
     messages.push(...levelMessages);
+    levelMessages.forEach((text) => turns.push({ side: 'system', round: 9, text, playerHp: next.hp, playerMp: next.mp, monsterHp: monster.hp }));
   } else {
     const lostGold = Math.floor(next.gold * 0.15);
     next.gold -= lostGold;
     next.losses += 1;
     messages.push(`你被「${monsterName}」打退，損失 ${lostGold} 金幣。回旅店整理一下吧。`);
+    turns.push({ side: 'system', round: 9, text: `戰鬥結束……${next.name} 被「${monsterName}」打退。`, playerHp: next.hp, playerMp: next.mp, monsterHp: monster.hp });
   }
 
   next.updatedAt = new Date().toISOString();
   next.log = mergeLog(next.log, messages);
-  return { player: next, result: didWin ? 'win' : 'loss', messages };
+  return buildBattleEncounter({ next, map, monsterName, monster, playerStart, monsterStart, turns, messages, result: didWin && next.hp > 0 ? 'win' : 'loss' });
+}
+
+export function performBattle(player, mapId, rng = Math.random) {
+  const encounter = createBattleEncounter(player, mapId, rng);
+  return { player: encounter.player, result: encounter.result, messages: encounter.messages };
+}
+
+function buildBattleEncounter({ next, map, monsterName, monster, playerStart, monsterStart, turns, messages, result }) {
+  return {
+    player: next,
+    result,
+    messages,
+    scene: {
+      map: { id: map.id, name: map.name, category: map.category, level: map.level },
+      monster: { name: monsterName, maxHp: monster.maxHp },
+      playerStart,
+      monsterStart,
+      playerEnd: { hp: next.hp, maxHp: next.maxHp, mp: next.mp, maxMp: next.maxMp },
+      monsterEnd: { hp: Math.max(0, monster.hp), maxHp: monster.maxHp },
+      turns
+    }
+  };
+}
+
+function createMonster(map, name, rng) {
+  const maxHp = Math.round(52 + map.level * 30 + rng() * (18 + map.level * 4));
+  return {
+    name,
+    maxHp,
+    hp: maxHp,
+    attack: 12 + map.level * 7,
+    defense: 5 + map.level * 3,
+    speed: 7 + map.level * 2
+  };
+}
+
+const playerBattleSkills = [
+  { name: '豆豆連斬', chance: 0.24, mpCost: 5, multiplier: 1.35, phrase: '揮出連續斬擊' },
+  { name: '星芒爆裂', chance: 0.16, mpCost: 9, multiplier: 1.62, phrase: '聚集星芒轟向敵人' },
+  { name: '微光護盾', chance: 0.14, mpCost: 7, multiplier: 0.82, guard: 0.45, phrase: '張開微光護盾後反擊' }
+];
+
+const monsterBattleSkills = [
+  { name: '野性猛撲', chance: 0.24, multiplier: 1.35, phrase: '猛撲過來' },
+  { name: '濁霧衝擊', chance: 0.16, multiplier: 1.55, phrase: '吐出濁霧衝擊' },
+  { name: '硬殼防禦', chance: 0.12, multiplier: 0.78, phrase: '縮起身體後撞擊' }
+];
+
+function takePlayerTurn({ next, monster, stats, turns, round, rng }) {
+  const skill = chooseSkill(playerBattleSkills, rng, next.mp);
+  const multiplier = skill?.multiplier || 1;
+  const variance = 0.88 + rng() * 0.24;
+  const rawDamage = Math.round((stats.attack * multiplier + next.level * 4) * variance - monster.defense * 0.52);
+  const damage = Math.max(2, rawDamage);
+  if (skill) next.mp = Math.max(0, next.mp - skill.mpCost);
+  monster.hp = Math.max(0, monster.hp - damage);
+  turns.push({
+    side: 'player',
+    round,
+    skill: skill?.name || '普通攻擊',
+    text: skill
+      ? `${next.name} 施放「${skill.name}」，${skill.phrase}，造成 ${damage} 傷害。`
+      : `${next.name} 進行攻擊，造成 ${damage} 傷害。`,
+    playerHp: next.hp,
+    playerMp: next.mp,
+    monsterHp: monster.hp
+  });
+  return skill?.guard || 0;
+}
+
+function takeMonsterTurn({ next, monster, stats, turns, round, rng, guardRate }) {
+  const skill = chooseSkill(monsterBattleSkills, rng);
+  const multiplier = skill?.multiplier || 1;
+  const variance = 0.86 + rng() * 0.28;
+  const rawDamage = Math.round((monster.attack * multiplier + monster.maxHp * 0.035) * variance - stats.defense * 0.68);
+  const guardedDamage = Math.round(Math.max(2, rawDamage) * (1 - guardRate));
+  const damage = Math.max(1, guardedDamage);
+  next.hp = Math.max(0, next.hp - damage);
+  const guardText = guardRate > 0 ? '護盾削弱了攻勢，' : '';
+  turns.push({
+    side: 'monster',
+    round,
+    skill: skill?.name || '普通攻擊',
+    text: skill
+      ? `「${monster.name}」使出「${skill.name}」，${guardText}${skill.phrase}，造成 ${damage} 傷害。`
+      : `「${monster.name}」反擊，${guardText}造成 ${damage} 傷害。`,
+    playerHp: next.hp,
+    playerMp: next.mp,
+    monsterHp: monster.hp
+  });
+  return 0;
+}
+
+function chooseSkill(skills, rng, availableMp = Infinity) {
+  const roll = rng();
+  let threshold = 0;
+  for (const skill of skills) {
+    threshold += skill.chance;
+    if (roll <= threshold && availableMp >= (skill.mpCost || 0)) return skill;
+  }
+  return null;
 }
 
 export function restAtInn(player) {
