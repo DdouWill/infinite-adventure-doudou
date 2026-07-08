@@ -3136,6 +3136,7 @@ textarea:focus-visible {
 }
 
 .terminal-login__header,
+.terminal-login__online,
 .terminal-login__panel {
   border: 1px solid var(--border);
   border-radius: 0;
@@ -3188,6 +3189,39 @@ textarea:focus-visible {
   margin-top: 8px;
   color: var(--muted);
   white-space: normal;
+}
+
+.terminal-login__online {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.terminal-login__online-names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 92px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.terminal-login__online-names li {
+  border: 1px solid var(--border);
+  background: #000;
+  color: var(--text);
+  padding: 4px 8px;
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.terminal-login__online-names li::before {
+  content: '★';
+  margin-right: 4px;
+  color: var(--primary);
 }
 
 .terminal-login__grid {

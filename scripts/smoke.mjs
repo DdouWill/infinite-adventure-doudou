@@ -24,6 +24,19 @@ async function assertTerminalLoginGate(page, label) {
   for (const expected of ['AUTH_GATE', '帳號', '密碼', '登入遊戲', '帳號註冊', '系統公告', '伺服器狀態']) {
     if (!loginText.includes(expected)) throw new Error(`${label} smoke failed: terminal login block missing ${expected}.`);
   }
+  const onlineListText = await page.locator('#login-online-list').innerText();
+  for (const expected of ['目前在線名單', '在線', '晨星勇者', '光紋術士', '星砂貓', '星門守衛', '封印調查員']) {
+    if (!onlineListText.includes(expected)) throw new Error(`${label} smoke failed: login online list missing ${expected}.`);
+  }
+  const onlineListLayout = await page.evaluate(() => {
+    const header = document.querySelector('.terminal-login__header')?.getBoundingClientRect();
+    const online = document.querySelector('#login-online-list')?.getBoundingClientRect();
+    const grid = document.querySelector('.terminal-login__grid')?.getBoundingClientRect();
+    return header && online && grid ? { headerBottom: header.bottom, onlineTop: online.top, onlineBottom: online.bottom, gridTop: grid.top } : null;
+  });
+  if (!onlineListLayout || onlineListLayout.onlineTop < onlineListLayout.headerBottom || onlineListLayout.onlineBottom > onlineListLayout.gridTop) {
+    throw new Error(`${label} smoke failed: login online list should sit between title block and login grid ${JSON.stringify(onlineListLayout)}.`);
+  }
   const registerModalHidden = await page.locator('#register-modal').evaluate((el) => el.hidden && el.classList.contains('is-hidden'));
   if (!registerModalHidden) throw new Error(`${label} smoke failed: registration should be hidden in a modal before clicking register.`);
   const registerModalCopy = await page.locator('#register-modal').textContent();
