@@ -54,6 +54,29 @@ export const maps = [
   makeMap('上塔之門', { id: 'upper_tower_gate', stage: 'BOSS 專屬', level: 18, cost: 360, monsters: ['上塔守門員', '樓層 Boss', '啟動武器-樓層'], reward: { exp: 360, gold: 520, mastery: 180 } })
 ];
 
+const hiddenMapRules = {
+  bright_meadow: (player) => masteryAtLeast(player, 500) || mapWin(player, 'tower'),
+  blue_sky: (player) => masteryAtLeast(player, 3000) || mapWin(player, 'star_maze'),
+  hell: (player) => Number(player?.gold) >= 100000 || Number(player?.wins) >= 100,
+  treasure_cave: (player) => mapWin(player, 'meadow', 2) || mapWin(player, 'forest'),
+  training_tower: (player) => Number(player?.battles) >= 5 || Number(player?.level) >= 3,
+  mystic_lake: (player) => mapWin(player, 'marsh'),
+  gold_palace: (player) => mapWin(player, 'treasure_cave'),
+  dark_snowfield: (player) => mapWin(player, 'tower') || mapWin(player, 'ruined_city'),
+  starlit_night: (player) => hasItem(player, 'hope_fruit') || masteryAtLeast(player, 3000) || mapWin(player, 'blue_sky'),
+  goddess_statue: (player) => mapWin(player, 'gold_palace') || hasItem(player, 'dark_key') || hasItem(player, 'hope_bell'),
+  dragon_tower: (player) => mapWin(player, 'goddess_statue'),
+  legendary_secret: (player) => mapWin(player, 'secret_treasure_maze') || mapWin(player, 'treasure_ship'),
+  full_moon_night: (player) => mapWin(player, 'dark_snowfield') || mapWin(player, 'starlit_night') || Number(player?.bestiary?.['夜狐']?.count) >= 3,
+  adventurer_trial: (player) => Number(player?.battles) >= 10,
+  hero_trial: (player) => Number(player?.battles) >= 30,
+  legend_trial: (player) => Number(player?.battles) >= 60,
+  star_maze: (player) => Number(player?.battles) >= 100,
+  secret_treasure_maze: (player) => Number(player?.battles) >= 150,
+  aincrad: (player) => Number(player?.wins) >= 120 && (mapWin(player, 'dragon_tower') || mapWin(player, 'legendary_secret')),
+  upper_tower_gate: (player) => mapWin(player, 'aincrad', 3)
+};
+
 function catalogWeapon(id, name, price, slot = 'weapon') {
   const weapon = referenceCatalog.weapons.find((item) => item.name === name);
   const power = weapon?.power ?? 10;
@@ -556,13 +579,19 @@ export function careerPowerScore(jobId) {
   return jobById(jobId)?.power || 1;
 }
 
+export function availableMaps(player) {
+  const safe = player ? clonePlayer(player) : null;
+  return maps.filter((map) => mapAvailable(safe, map));
+}
+
 export function chooseMap(mapId) {
   return maps.find((map) => map.id === mapId) || maps[0];
 }
 
 export function createBattleEncounter(player, mapId, rng = Math.random) {
-  const map = chooseMap(mapId);
   const next = clonePlayer(player);
+  const map = chooseMap(mapId);
+  if (!mapAvailable(next, map)) return buildHiddenMapBlock(next);
   const messages = [];
   const turns = [];
   const stats = totalStats(next);
@@ -676,6 +705,34 @@ function buildBattleEncounter({ next, map, monsterName, monster, playerStart, mo
       monsterStart,
       playerEnd: { hp: next.hp, maxHp: next.maxHp, mp: next.mp, maxMp: next.maxMp },
       monsterEnd: { hp: Math.max(0, monster.hp), maxHp: monster.maxHp },
+      turns
+    }
+  };
+}
+
+function buildHiddenMapBlock(next) {
+  const messages = ['尚未發現這個地點。'];
+  const turns = [{
+    side: 'system',
+    round: 0,
+    text: '公會地圖上還沒有這個地點的座標。',
+    playerHp: next.hp,
+    playerMp: next.mp,
+    monsterHp: 0
+  }];
+  next.updatedAt = new Date().toISOString();
+  next.log = mergeLog(next.log, messages);
+  return {
+    player: next,
+    result: 'blocked',
+    messages,
+    scene: {
+      map: { id: 'unknown', name: '未發現地點', category: '未知', level: 0 },
+      monster: { name: '未遭遇', maxHp: 1, portrait: originalMonsters.beast },
+      playerStart: { hp: next.hp, maxHp: next.maxHp, mp: next.mp, maxMp: next.maxMp },
+      monsterStart: { hp: 0, maxHp: 1 },
+      playerEnd: { hp: next.hp, maxHp: next.maxHp, mp: next.mp, maxMp: next.maxMp },
+      monsterEnd: { hp: 0, maxHp: 1 },
       turns
     }
   };
@@ -953,7 +1010,8 @@ export function bestiaryEntries(player) {
 
 export function progressionGuide(player, mapId = 'meadow') {
   const safe = clonePlayer(player);
-  const selectedMap = chooseMap(mapId);
+  const visibleMaps = availableMaps(safe);
+  const selectedMap = visibleMaps.find((map) => map.id === mapId) || visibleMaps[0] || chooseMap('meadow');
   const hpRatio = safe.hp / Math.max(1, safe.maxHp);
   const mpRatio = safe.mp / Math.max(1, safe.maxMp);
   const hasWeapon = Boolean(safe.equipment?.weapon);
@@ -979,6 +1037,8 @@ export function progressionGuide(player, mapId = 'meadow') {
   return {
     stage: route.filter((step) => step.done).length + 1,
     nextAction,
+    selectedMapId: selectedMap.id,
+    selectedMapName: selectedMap.name,
     suggestedMapId: suggestedMap.id,
     suggestedMapName: suggestedMap.name,
     readiness,
@@ -1104,6 +1164,23 @@ function applyJobBonus(player, job) {
   player.speed += bonus.speed || 0;
 }
 
+function mapAvailable(player, map) {
+  const rule = hiddenMapRules[map.id];
+  return !rule || Boolean(rule(player || {}));
+}
+
+function mapWin(player, mapId, count = 1) {
+  return Number(player?.mapWins?.[mapId]) >= count;
+}
+
+function hasItem(player, itemId) {
+  return (player?.inventory || []).includes(itemId) || Object.values(player?.equipment || {}).includes(itemId);
+}
+
+function masteryAtLeast(player, value) {
+  return Number(player?.mastery) >= value;
+}
+
 function jobRequirementMet(player, job) {
   if (job.tier === 'advanced') return regularRebirthReady(player);
   if (job.id === 'boundary_cutter') return boundaryCutterReady(player);
@@ -1211,11 +1288,12 @@ function rewardText(reward) {
 }
 
 function recommendedMap(player) {
-  const affordable = maps.filter((map) => map.cost <= player.gold && map.level <= player.level + 2);
+  const visibleMaps = availableMaps(player);
+  const affordable = visibleMaps.filter((map) => map.cost <= player.gold && map.level <= player.level + 2);
   if (!player.quest?.completed) return chooseMap('meadow');
-  if (player.level < 3) return chooseMap('treasure_cave');
-  if (player.level < 5) return chooseMap('training_tower');
-  return affordable.sort((a, b) => b.level - a.level)[0] || chooseMap('meadow');
+  if (player.level < 3 && visibleMaps.some((map) => map.id === 'treasure_cave')) return chooseMap('treasure_cave');
+  if (player.level < 5 && visibleMaps.some((map) => map.id === 'training_tower')) return chooseMap('training_tower');
+  return affordable.sort((a, b) => b.level - a.level)[0] || visibleMaps[0] || chooseMap('meadow');
 }
 
 function mapReadiness(player, map) {

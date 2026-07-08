@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  availableMaps,
   availableRebirthJobs,
   buyItem,
   bestiaryEntries,
@@ -131,6 +132,54 @@ test('reference catalogs drive original-style maps, weapons, items, and consumab
   assert.equal(used.inventory.includes('mastery_book'), false);
 });
 
+test('availableMaps restores original hidden map visibility without placeholder leaks', () => {
+  const player = createPlayer({ name: '地圖勇者', element: '光', archetype: 'blade' });
+  const initial = availableMaps(player).map((map) => map.id);
+  assert.equal(initial.includes('meadow'), true);
+  assert.equal(initial.includes('forbidden'), true);
+  assert.equal(initial.includes('treasure_cave'), false);
+  assert.equal(initial.includes('training_tower'), false);
+  assert.equal(initial.includes('aincrad'), false);
+  assert.equal(initial.includes('upper_tower_gate'), false);
+
+  player.battles = 5;
+  player.mapWins = { meadow: 2, marsh: 1 };
+  player.mastery = 500;
+  const earlyUnlocked = availableMaps(player).map((map) => map.id);
+  assert.equal(earlyUnlocked.includes('treasure_cave'), true);
+  assert.equal(earlyUnlocked.includes('training_tower'), true);
+  assert.equal(earlyUnlocked.includes('mystic_lake'), true);
+  assert.equal(earlyUnlocked.includes('bright_meadow'), true);
+  assert.equal(earlyUnlocked.includes('hero_trial'), false);
+
+  player.battles = 30;
+  player.mapWins.treasure_cave = 1;
+  const chained = availableMaps(player).map((map) => map.id);
+  assert.equal(chained.includes('gold_palace'), true);
+  assert.equal(chained.includes('adventurer_trial'), true);
+  assert.equal(chained.includes('hero_trial'), true);
+  assert.equal(chained.includes('legend_trial'), false);
+});
+
+test('hidden maps cannot be entered directly before discovery and do not leak names', () => {
+  const player = createPlayer({ name: '封鎖勇者', element: '闇', archetype: 'ranger' });
+  player.gold = 9999;
+  const result = performBattle(player, 'upper_tower_gate', rngSequence([0.1]));
+  assert.equal(result.result, 'blocked');
+  assert.equal(result.player.gold, 9999);
+  assert.equal(result.player.mapRuns.upper_tower_gate, undefined);
+  assert.equal(result.messages.join('\n').includes('上塔之門'), false);
+  assert.equal(result.messages.join('\n').includes('尚未發現'), true);
+});
+
+test('progressionGuide falls back when selected map is still hidden', () => {
+  const player = createPlayer({ name: '指南勇者', element: '風', archetype: 'ranger' });
+  const guide = progressionGuide(player, 'upper_tower_gate');
+  assert.equal(guide.selectedMapId, 'meadow');
+  assert.equal(guide.readiness.tone, 'safe');
+  assert.equal(guide.suggestedMapId, 'meadow');
+});
+
 test('performBattle can win, grants rewards, and advances grassland quest', () => {
   const player = createPlayer({ name: '測試勇者', element: '火', archetype: 'blade' });
   const result = performBattle(player, 'meadow', rngSequence([0, 0, 0, 0.2, 0.99]));
@@ -173,7 +222,6 @@ test('progressionGuide gives next action and map readiness without extra complex
   assert.equal(guide.readiness.tone, 'safe');
   assert.ok(guide.nextAction.includes('草原討伐'));
   player.hp = 10;
-  assert.equal(progressionGuide(player, 'upper_tower_gate').readiness.tone, 'danger');
   assert.ok(progressionGuide(player, 'meadow').nextAction.includes('HP / MP'));
 });
 

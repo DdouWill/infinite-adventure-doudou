@@ -66,8 +66,8 @@ if (menuIconStyle.display !== 'grid' || menuIconStyle.borderTopWidth !== '1px') 
 }
 await desktop.locator('#guide-panel summary').click();
 const openedGuideText = await desktop.locator('#guide-panel').innerText();
-if (!openedGuideText.includes('修行者之塔')) {
-  throw new Error('Desktop smoke failed: guide content should live inside the function menu.');
+if (!openedGuideText.includes('森林') || !openedGuideText.includes('高塔')) {
+  throw new Error('Desktop smoke failed: guide content should live inside the function menu without hidden-map leaks.');
 }
 await desktop.locator('#ranking-panel summary').click();
 const rankingText = await desktop.locator('#ranking-panel').innerText();
@@ -81,8 +81,8 @@ const referenceCatalogCounts = await desktop.evaluate(() => ({
   ougis: document.querySelectorAll('#reference-ougi-catalog tbody tr').length,
   maps: document.querySelectorAll('#reference-map-catalog tbody tr').length
 }));
-if (referenceCatalogCounts.weapons < 100 || referenceCatalogCounts.items < 60 || referenceCatalogCounts.techniques < 150 || referenceCatalogCounts.ougis < 150 || referenceCatalogCounts.maps < 25) {
-  throw new Error(`Desktop smoke failed: original reference catalogs incomplete ${JSON.stringify(referenceCatalogCounts)}.`);
+if (referenceCatalogCounts.weapons < 100 || referenceCatalogCounts.items < 60 || referenceCatalogCounts.techniques < 150 || referenceCatalogCounts.ougis < 150 || referenceCatalogCounts.maps !== 9) {
+  throw new Error(`Desktop smoke failed: original reference catalogs or visible map catalog incomplete ${JSON.stringify(referenceCatalogCounts)}.`);
 }
 await desktop.locator('#icon-panel summary').click();
 const iconCellCount = await desktop.locator('#icon-panel .icon-grid__cell').count();
@@ -182,10 +182,14 @@ if (!desktopAreas.includes('vitals') || !desktopAreas.includes('info')) {
   throw new Error('Desktop smoke failed: HP/MP + character info grid areas missing.');
 }
 const mapOptionCount = await desktop.locator('#map-select option').count();
-if (mapOptionCount !== 29) throw new Error(`Desktop smoke failed: map dropdown should contain 29 original-reference maps, got ${mapOptionCount}.`);
+if (mapOptionCount !== 9) throw new Error(`Desktop smoke failed: new player map dropdown should only contain 9 original constant maps, got ${mapOptionCount}.`);
 const mapGroupLabels = await desktop.locator('#map-select optgroup').evaluateAll((nodes) => nodes.map((node) => node.label));
-for (const expected of ['常駐開放', '需消耗資源', '稀有／條件出現', '戰數觸發', '世界地圖']) {
-  if (!mapGroupLabels.includes(expected)) throw new Error(`Desktop smoke failed: missing map optgroup ${expected}.`);
+if (mapGroupLabels.length !== 1 || mapGroupLabels[0] !== '常駐開放') {
+  throw new Error(`Desktop smoke failed: hidden map optgroups should not leak before discovery (${mapGroupLabels.join(',')}).`);
+}
+const initialMapSelectText = await desktop.locator('#map-select').innerText();
+for (const hiddenMap of ['財寶洞穴', '修行者之塔', '神秘的湖泊', '艾恩葛朗特', '上塔之門', '???']) {
+  if (initialMapSelectText.includes(hiddenMap)) throw new Error(`Desktop smoke failed: hidden map leaked before unlock (${hiddenMap}).`);
 }
 await desktop.selectOption('#map-select', 'ruins');
 const selectedMapText = await desktop.locator('.selected-map-card').innerText();
@@ -241,7 +245,7 @@ const mobileMenuIconCount = await mobile.locator('#function-menu-panel .ui-icon'
 if (mobileMenuIconCount < 16) throw new Error(`Mobile smoke failed: function menu icons missing (${mobileMenuIconCount}).`);
 await mobile.locator('#guide-panel summary').click();
 const mobileGuideText = await mobile.locator('#guide-panel').innerText();
-if (!mobileGuideText.includes('修行者之塔')) throw new Error('Mobile smoke failed: function menu guide content missing.');
+if (!mobileGuideText.includes('森林') || !mobileGuideText.includes('高塔')) throw new Error('Mobile smoke failed: function menu guide content missing or leaking hidden maps.');
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-menu-open.png`, fullPage: true });
 await mobile.locator('#function-menu-panel a[href="#main"]').click();
 const mobileMenuClosedAfterLink = await mobile.locator('#function-menu-panel').evaluate((el) => el.hidden);
@@ -276,8 +280,10 @@ const mobileInfoVisible = await mobile.locator('.character-info-card').isVisible
 if (!mobileInfoVisible) throw new Error('Mobile smoke failed: character info block not visible.');
 const mobileMapSelectVisible = await mobile.locator('#map-select').isVisible();
 if (!mobileMapSelectVisible) throw new Error('Mobile smoke failed: map dropdown not visible.');
-await mobile.selectOption('#map-select', 'upper_tower_gate');
+const mobileMapOptionText = await mobile.locator('#map-select').innerText();
+if (mobileMapOptionText.includes('上塔之門') || mobileMapOptionText.includes('???')) throw new Error('Mobile smoke failed: hidden maps should not appear before discovery.');
+await mobile.selectOption('#map-select', 'ruins');
 const mobileSelectedMapText = await mobile.locator('.selected-map-card').innerText();
-if (!mobileSelectedMapText.includes('上塔之門')) throw new Error('Mobile smoke failed: map dropdown summary did not update.');
+if (!mobileSelectedMapText.includes('廢棄後山')) throw new Error('Mobile smoke failed: map dropdown summary did not update.');
 await browser.close();
 console.log('Smoke test passed.');

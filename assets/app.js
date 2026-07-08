@@ -1,4 +1,5 @@
 import {
+  availableMaps,
   availableRebirthJobs,
   bestiaryEntries,
   buyItem,
@@ -377,6 +378,7 @@ function render() {
   renderInventory();
   renderQuest();
   renderWorld();
+  renderReferenceCatalog();
   renderPanels();
 }
 
@@ -501,10 +503,11 @@ function renderAdventureGuide() {
 }
 
 function renderMaps() {
-  const selectedMap = maps.find((map) => map.id === selectedMapId) || maps[0];
+  const visibleMaps = availableMaps(state);
+  const selectedMap = visibleMaps.find((map) => map.id === selectedMapId) || visibleMaps[0] || maps[0];
   const guide = progressionGuide(state, selectedMap.id);
   selectedMapId = selectedMap.id;
-  const categories = maps.reduce((groups, map) => {
+  const categories = visibleMaps.reduce((groups, map) => {
     const category = map.category || '戰鬥地圖';
     groups[category] = groups[category] || [];
     groups[category].push(map);
@@ -526,7 +529,7 @@ function renderMaps() {
       <select id="map-select" class="map-select" aria-label="選擇戰鬥地圖">
         ${optionGroups}
       </select>
-      <small>以原版下拉選單方式切換一般 / 試煉 / 特殊 / 封閉地圖。</small>
+      <small>地圖會依冒險進度更新；目前只列已確認座標。</small>
     </label>
     <article class="selected-map-card" aria-live="polite">
       <div class="selected-map-card__header">
@@ -820,11 +823,13 @@ function renderWorld() {
 }
 
 function renderReferenceCatalog() {
+  const visibleMapNames = new Set(availableMaps(state).map((map) => map.name));
+  const visibleReferenceMaps = referenceCatalog.maps.filter((map) => visibleMapNames.has(map.name));
   renderReferenceTable('#reference-weapon-catalog', ['名稱', '奧義', '屬性', '威力', '重量', '價格', '產地'], referenceCatalog.weapons, (weapon) => [weapon.name, weapon.ougi, weapon.element, weapon.power, weapon.weight, weapon.price, weapon.origin]);
   renderReferenceTable('#reference-item-catalog', ['名稱', '說明'], referenceCatalog.items, (item) => [item.name, item.description]);
   renderReferenceTable('#reference-technique-catalog', ['技能', '威力', '發動率', '消耗MP', '職業', '說明'], referenceCatalog.techniques, (technique) => [technique.name, technique.power, `${technique.rate}%`, technique.mp, technique.job, technique.extra ? `${technique.description}｜${technique.extra}` : technique.description]);
   renderReferenceTable('#reference-ougi-catalog', ['奧義', '需要熟練', '職業', '說明'], referenceCatalog.ougis, (ougi) => [ougi.name, ougi.mastery, ougi.job, ougi.description]);
-  renderReferenceTable('#reference-map-catalog', ['地圖', '分類', '入場', '掉落／特色', '說明'], referenceCatalog.maps, (map) => [map.name, map.category, map.cost, map.drop, map.description]);
+  renderReferenceTable('#reference-map-catalog', ['地圖', '分類', '入場', '掉落／特色', '說明'], visibleReferenceMaps, (map) => [map.name, map.category, map.cost, map.drop, map.description]);
 }
 
 function renderReferenceTable(selector, headings, rows, mapRow) {
