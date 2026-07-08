@@ -1227,6 +1227,46 @@ textarea { margin-top: 14px; resize: vertical; }
 .world-view { display: grid; gap: 16px; }
 .quest-card { align-items: center; }
 
+.character-card--rebirth {
+  display: grid;
+}
+
+.muted-copy {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.rebirth-list {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+.rebirth-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  background: #050505;
+}
+
+.rebirth-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.rebirth-card small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.rebirth-card--hidden,
+.rebirth-card--ultimate {
+  border-style: double;
+}
+
 progress {
   width: 100%;
   height: 14px;

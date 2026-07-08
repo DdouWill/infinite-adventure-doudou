@@ -1,4 +1,4 @@
-# 無限冒險-豆豆版
+# 無限冒險：終端異界
 
 一個以早期文字型網頁 RPG 為靈感、但重新設計內容與介面的純 HTML/CSS/JS 小型專案。第一版不需要後端，玩家進度存在瀏覽器 `localStorage`，可直接部署到 Cloudflare Pages Free Plan。
 

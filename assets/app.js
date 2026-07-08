@@ -1,4 +1,5 @@
 import {
+  availableRebirthJobs,
   bestiaryEntries,
   buyItem,
   claimMilestone,
@@ -15,6 +16,7 @@ import {
   portraitForPlayer,
   progressionGuide,
   rankingsFor,
+  rebirthPlayer,
   restAtInn,
   serializePlayer,
   shopItems,
@@ -563,6 +565,7 @@ function renderCharacter() {
       return `<li>${iconMarkup(slotIcon(slot))}<span>${slotLabel(slot)}</span><strong>${item ? escapeHtml(item.name) : '未裝備'}</strong></li>`;
     })
     .join('');
+  const rebirthJobs = availableRebirthJobs(state);
 
   nodes.characterSheet.innerHTML = `
     <div class="character-card character-card--portrait">
@@ -575,13 +578,39 @@ function renderCharacter() {
         <li>${iconMarkup('✓')}<span>勝敗</span><strong>${state.wins} 勝 / ${state.losses} 敗</strong></li>
         <li>${iconMarkup('#')}<span>總戰數</span><strong>${state.battles}</strong></li>
         <li>${iconMarkup('✦')}<span>熟練度</span><strong>${state.mastery}</strong></li>
+        <li>${iconMarkup('⟲')}<span>轉生次數</span><strong>${state.rebirthCount || 0}</strong></li>
       </ul>
     </div>
     <div class="character-card">
       <h3>裝備中</h3>
       <ul class="clean-list">${equipped}</ul>
     </div>
+    <div class="character-card character-card--rebirth">
+      <h3>${iconMarkup('⟲')}轉生職業</h3>
+      <p class="muted-copy">達成條件後才會出現可選職業；特殊道路不會以未解鎖提示占位。</p>
+      ${rebirthJobs.length ? `
+        <div class="rebirth-list">
+          ${rebirthJobs.map((job) => `
+            <article class="rebirth-card rebirth-card--${escapeHtml(job.tier)}">
+              <div>
+                <strong>${escapeHtml(job.name)}</strong>
+                <p>${escapeHtml(job.description)}</p>
+                <small>招式：${escapeHtml(job.skillNames.slice(0, 3).join(' / '))}｜超奧義：${escapeHtml(job.ultimateName)}</small>
+              </div>
+              <button class="ghost-button compact-button" type="button" data-rebirth="${escapeHtml(job.id)}">轉生</button>
+            </article>
+          `).join('')}
+        </div>
+      ` : '<p>目前沒有可轉生職業。先提升 Lv.5、熟練 500、完成草原討伐與 5 場戰鬥。</p>'}
+    </div>
   `;
+  $$('[data-rebirth]').forEach((button) => {
+    button.addEventListener('click', () => {
+      state = rebirthPlayer(state, button.dataset.rebirth);
+      savePlayer();
+      render();
+    });
+  });
 }
 
 function renderInventory() {

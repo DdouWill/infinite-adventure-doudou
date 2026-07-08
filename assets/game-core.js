@@ -91,11 +91,11 @@ export const shopItems = [
   catalogWeapon('hope_bell', '希望之鐘', 480, 'trinket'),
   catalogWeapon('dark_key', '暗闇之鑰', 580, 'trinket'),
   consumable('herb', '藥草', 30, 'heal', 50, '原版道具：使用後可補血。'),
-  consumable('basic_potion', '初級回復藥', 120, 'heal', 120, '原版道具：在戰鬥後自動補血；豆豆版改為主動使用。'),
-  consumable('mastery_book', '熟練之書', 420, 'mastery', 1000, '原版道具：增加 1000 熟練。豆豆版同步為熟練大幅提升。'),
-  consumable('sword_book', '劍術之書', 360, 'attack', 3, '原版道具：增加劍術熟練；豆豆版轉為攻擊成長。'),
-  consumable('life_fruit', '生命之果', 520, 'maxHp', 12, '原版道具：生命力上限 +1；豆豆版轉為 HP 上限提升。'),
-  consumable('hope_fruit', '希望果實', 900, 'gold', 250, '原版道具：有機率進入星空下的夜；豆豆版轉為稀有冒險資金。')
+  consumable('basic_potion', '初級回復藥', 120, 'heal', 120, '原版道具：在戰鬥後自動補血；終端版改為主動使用。'),
+  consumable('mastery_book', '熟練之書', 420, 'mastery', 1000, '原版道具：增加 1000 熟練。終端版同步為熟練大幅提升。'),
+  consumable('sword_book', '劍術之書', 360, 'attack', 3, '原版道具：增加劍術熟練；終端版轉為攻擊成長。'),
+  consumable('life_fruit', '生命之果', 520, 'maxHp', 12, '原版道具：生命力上限 +1；終端版轉為 HP 上限提升。'),
+  consumable('hope_fruit', '希望果實', 900, 'gold', 250, '原版道具：有機率進入星空下的夜；終端版轉為稀有冒險資金。')
 ];
 
 export const milestones = [
@@ -149,9 +149,203 @@ export const milestones = [
   }
 ];
 
+export const jobDefinitions = [
+  {
+    id: 'blade',
+    name: '劍士',
+    tier: 'base',
+    branch: 'blade',
+    power: 1,
+    description: '攻擊較高的前線職業，適合穩定起步。',
+    skills: [
+      { name: '快速打擊', chance: 0.30, mpCost: 10, multiplier: 1.18, type: 'physical', phrase: '以基礎步伐快速切入' },
+      { name: '斬擊', chance: 0.25, mpCost: 20, multiplier: 1.42, type: 'physical', phrase: '揮出基礎劍技' },
+      { name: '破強劍', chance: 0.18, mpCost: 28, multiplier: 1.66, type: 'physical', defensePierce: 0.12, phrase: '突破敵人的防線' }
+    ]
+  },
+  {
+    id: 'sage',
+    name: '術士',
+    tier: 'base',
+    branch: 'sage',
+    power: 1.02,
+    description: 'MP 較高，依靠魔法與續戰能力成長。',
+    skills: [
+      { name: '魔法飛彈', chance: 0.34, mpCost: 12, multiplier: 1.28, type: 'magic', phrase: '凝出魔法飛彈' },
+      { name: '光彈', chance: 0.24, mpCost: 22, multiplier: 1.52, type: 'magic', phrase: '以光彈貫穿敵影' },
+      { name: '星火術', chance: 0.14, mpCost: 34, multiplier: 1.88, type: 'magic', phrase: '引燃細碎星火' }
+    ]
+  },
+  {
+    id: 'ranger',
+    name: '巡守',
+    tier: 'base',
+    branch: 'ranger',
+    power: 1.01,
+    description: '速度較高，適合先手與穩定探索。',
+    skills: [
+      { name: '迅捷射擊', chance: 0.32, mpCost: 10, multiplier: 1.22, type: 'speed', phrase: '以迅捷射擊壓制' },
+      { name: '追蹤打擊', chance: 0.24, mpCost: 18, multiplier: 1.48, type: 'speed', phrase: '循著破綻追擊' },
+      { name: '風切', chance: 0.16, mpCost: 28, multiplier: 1.76, type: 'speed', phrase: '斬出風切軌跡' }
+    ]
+  },
+  {
+    id: 'sword_heir',
+    name: '劍之傳人',
+    tier: 'advanced',
+    branch: 'blade',
+    power: 1.22,
+    statBonus: { attack: 8, speed: 2, maxHp: 18 },
+    description: '高攻擊、高連擊、擅長收尾斬殺。',
+    skills: [
+      { name: '破空斬', chance: 0.32, mpCost: 18, multiplier: 1.58, type: 'physical', defensePierce: 0.1, phrase: '斬開前方氣流' },
+      { name: '追星連斬', chance: 0.24, mpCost: 28, multiplier: 1.28, type: 'physical', hits: 2, phrase: '連續追擊兩段劍光' },
+      { name: '劍心凝聚', chance: 0.16, mpCost: 36, multiplier: 2.02, type: 'physical', phrase: '凝聚劍心後重擊' }
+    ],
+    ultimate: { name: '無限劍域', chance: 0.18, mpCost: 56, masteryCost: 30, multiplier: 1.35, hits: 3, type: 'physical', defensePierce: 0.18, phrase: '展開連續三段劍域' }
+  },
+  {
+    id: 'seraph',
+    name: '熾天使',
+    tier: 'advanced',
+    branch: 'blade',
+    power: 1.2,
+    statBonus: { maxHp: 34, defense: 6, attack: 4 },
+    description: '攻守平衡，能以聖盾反擊穩定推圖。',
+    skills: [
+      { name: '光斬', chance: 0.30, mpCost: 18, multiplier: 1.42, type: 'hybrid', healRatio: 0.16, phrase: '以光刃切入並回復傷勢' },
+      { name: '聖盾反擊', chance: 0.22, mpCost: 30, multiplier: 1.32, type: 'physical', guard: 0.34, phrase: '架起聖盾後反擊' },
+      { name: '天罰劍', chance: 0.15, mpCost: 42, multiplier: 1.96, type: 'hybrid', defensePierce: 0.12, phrase: '降下審判劍光' }
+    ],
+    ultimate: { name: '神聖護體・終', chance: 0.16, mpCost: 58, multiplier: 2.35, type: 'hybrid', guard: 0.55, healRatio: 0.22, phrase: '以神聖護體承受攻勢並反擊' }
+  },
+  {
+    id: 'archmage',
+    name: '大魔法師',
+    tier: 'advanced',
+    branch: 'sage',
+    power: 1.24,
+    statBonus: { maxMp: 42, attack: 4, speed: 1 },
+    description: '高 MP 與高法術爆發，適合挑戰高血量敵人。',
+    skills: [
+      { name: '多重魔法球', chance: 0.34, mpCost: 24, multiplier: 1.55, type: 'magic', hits: 2, phrase: '放出多重魔法球' },
+      { name: '火牆術', chance: 0.22, mpCost: 34, multiplier: 1.92, type: 'magic', phrase: '築起灼熱火牆' },
+      { name: '召喚魔龍', chance: 0.12, mpCost: 58, multiplier: 2.55, type: 'magic', defensePierce: 0.1, phrase: '召喚魔龍吐息' }
+    ],
+    ultimate: { name: '星界崩解', chance: 0.17, mpCost: 72, masteryCost: 45, multiplier: 3.05, type: 'magic', defensePierce: 0.2, phrase: '讓星界裂解成巨大衝擊' }
+  },
+  {
+    id: 'cleric',
+    name: '神職者',
+    tier: 'advanced',
+    branch: 'sage',
+    power: 1.18,
+    statBonus: { maxHp: 24, maxMp: 28, defense: 5 },
+    description: '恢復、防護、低血量逆轉，容錯最高。',
+    skills: [
+      { name: '恢復術', chance: 0.30, mpCost: 22, multiplier: 1.12, type: 'magic', healRatio: 0.42, phrase: '施展恢復術穩住戰線' },
+      { name: '祝福結界', chance: 0.24, mpCost: 30, multiplier: 1.18, type: 'magic', guard: 0.42, phrase: '張開祝福結界' },
+      { name: '審判光', chance: 0.18, mpCost: 40, multiplier: 2.0, type: 'magic', phrase: '以審判光照穿敵人' }
+    ],
+    ultimate: { name: '奇蹟再生', chance: 0.2, mpCost: 62, multiplier: 1.95, type: 'magic', guard: 0.5, healRatio: 0.75, phrase: '引發奇蹟再生並反擊' }
+  },
+  {
+    id: 'nightstalker',
+    name: '夜使者',
+    tier: 'advanced',
+    branch: 'ranger',
+    power: 1.23,
+    statBonus: { speed: 7, attack: 5, maxHp: 12 },
+    description: '速度、爆擊、毒與斬殺，傷害高但波動大。',
+    skills: [
+      { name: '影襲', chance: 0.32, mpCost: 18, multiplier: 1.52, type: 'speed', phrase: '從影中襲擊' },
+      { name: '猛毒斬', chance: 0.22, mpCost: 28, multiplier: 1.72, type: 'speed', phrase: '留下猛毒傷口' },
+      { name: '斷喉連擊', chance: 0.15, mpCost: 42, multiplier: 1.2, hits: 3, type: 'speed', phrase: '瞄準弱點連擊' }
+    ],
+    ultimate: { name: '月下瞬殺', chance: 0.16, mpCost: 60, multiplier: 2.85, type: 'speed', executeBelow: 0.25, phrase: '在月影下完成瞬殺' }
+  },
+  {
+    id: 'beastmaster',
+    name: '馴獸師',
+    tier: 'advanced',
+    branch: 'ranger',
+    power: 1.19,
+    statBonus: { maxHp: 20, speed: 4, defense: 3 },
+    description: '穩定輸出、探索收益與召喚支援。',
+    skills: [
+      { name: '召喚靈鳥', chance: 0.32, mpCost: 18, multiplier: 1.35, type: 'hybrid', healRatio: 0.14, phrase: '召喚靈鳥協同攻擊' },
+      { name: '野性號令', chance: 0.24, mpCost: 28, multiplier: 1.52, type: 'physical', guard: 0.18, phrase: '發出野性號令穩住攻防' },
+      { name: '追蹤射擊', chance: 0.18, mpCost: 36, multiplier: 1.9, type: 'speed', phrase: '以追蹤射擊命中破綻' }
+    ],
+    ultimate: { name: '萬獸同盟', chance: 0.17, mpCost: 64, multiplier: 2.55, hits: 2, type: 'hybrid', phrase: '號召獸群展開同盟攻勢' },
+    dropBonus: 0.08
+  },
+  {
+    id: 'boundary_cutter',
+    name: '界斷者',
+    tier: 'hidden',
+    branch: 'blade',
+    power: 1.58,
+    statBonus: { attack: 18, speed: 5, maxHp: 30 },
+    description: '極限物理爆發、破防與斬殺。',
+    skills: [
+      { name: '斷界斬', chance: 0.34, mpCost: 34, multiplier: 2.08, type: 'physical', defensePierce: 0.32, phrase: '切斷防線與界面' },
+      { name: '裂空連閃', chance: 0.24, mpCost: 48, multiplier: 1.35, hits: 3, type: 'speed', defensePierce: 0.16, phrase: '以裂空殘光連閃' },
+      { name: '終末劍痕', chance: 0.18, mpCost: 58, multiplier: 2.65, type: 'physical', executeBelow: 0.3, phrase: '留下終末劍痕' }
+    ],
+    ultimate: { name: '天地一閃', chance: 0.2, mpCost: 96, masteryCost: 120, multiplier: 4.0, type: 'physical', defensePierce: 0.45, executeBelow: 0.35, phrase: '以天地一閃抹去距離' }
+  },
+  {
+    id: 'astral_sage',
+    name: '星界賢者',
+    tier: 'hidden',
+    branch: 'sage',
+    power: 1.6,
+    statBonus: { maxMp: 90, attack: 8, defense: 4 },
+    description: '極限魔法、MP 轉換與法術連鎖。',
+    skills: [
+      { name: '星核魔法球', chance: 0.34, mpCost: 42, multiplier: 2.18, type: 'magic', phrase: '壓縮星核魔法球' },
+      { name: '禁咒詠唱', chance: 0.22, mpCost: 66, multiplier: 3.0, type: 'magic', defensePierce: 0.24, phrase: '完成禁咒詠唱' },
+      { name: '虛空返流', chance: 0.2, mpCost: 52, multiplier: 2.1, type: 'magic', mpRefund: 22, phrase: '讓虛空魔力返流' }
+    ],
+    ultimate: { name: '星界崩滅', chance: 0.2, mpCost: 110, masteryCost: 140, multiplier: 4.25, type: 'magic', defensePierce: 0.36, phrase: '引爆星界崩滅' }
+  },
+  {
+    id: 'eclipse_hunter',
+    name: '影月獵神',
+    tier: 'hidden',
+    branch: 'ranger',
+    power: 1.56,
+    statBonus: { speed: 18, attack: 10, maxHp: 20 },
+    description: '速度極限、毒、追擊、暗殺與探索收益。',
+    skills: [
+      { name: '月影穿喉', chance: 0.34, mpCost: 36, multiplier: 2.05, type: 'speed', defensePierce: 0.18, phrase: '以月影貫穿要害' },
+      { name: '黑毒標記', chance: 0.24, mpCost: 48, multiplier: 2.25, type: 'speed', phrase: '刻下黑毒標記' },
+      { name: '獵神追擊', chance: 0.2, mpCost: 62, multiplier: 1.5, hits: 3, type: 'speed', phrase: '展開獵神追擊' }
+    ],
+    ultimate: { name: '月蝕狩獵', chance: 0.21, mpCost: 104, masteryCost: 120, multiplier: 3.85, type: 'speed', executeBelow: 0.32, phrase: '在月蝕下完成終局狩獵' },
+    dropBonus: 0.12
+  },
+  {
+    id: 'unbound',
+    name: '無界者',
+    tier: 'ultimate',
+    branch: 'ultimate',
+    power: 1.88,
+    statBonus: { maxHp: 90, maxMp: 90, attack: 22, defense: 14, speed: 18 },
+    description: '超越職業、屬性與界線的終極道路。',
+    skills: [
+      { name: '斷界星痕', chance: 0.34, mpCost: 72, masteryCost: 80, multiplier: 2.95, type: 'hybrid', defensePierce: 0.35, phrase: '劃開斷界星痕' },
+      { name: '影月輪迴', chance: 0.26, mpCost: 88, masteryCost: 90, multiplier: 1.62, hits: 4, type: 'speed', defensePierce: 0.2, phrase: '讓影月殘像輪迴追擊' },
+      { name: '萬象歸一', chance: 0.22, mpCost: 110, masteryCost: 120, multiplier: 3.75, type: 'adaptive', defensePierce: 0.28, phrase: '令萬象歸於一擊' }
+    ],
+    ultimate: { name: '無限終焉', chance: 0.22, mpCost: 160, masteryCost: 260, multiplier: 5.35, hits: 2, type: 'adaptive', defensePierce: 0.5, executeBelow: 0.35, phrase: '展開無限終焉' }
+  }
+];
+
 export const countries = [
-  { name: '豆豆王國', element: '光', ruler: '小豆王', people: 42, gold: 124800, territory: 5 },
-  { name: '夜芽同盟', element: '闇', ruler: '黑豆參謀', people: 31, gold: 98300, territory: 4 },
+  { name: '晨露王國', element: '光', ruler: '晨星王', people: 42, gold: 124800, territory: 5 },
+  { name: '夜芽同盟', element: '闇', ruler: '夜芽參謀', people: 31, gold: 98300, territory: 4 },
   { name: '風車自由城', element: '風', ruler: '旅人晴空', people: 27, gold: 72100, territory: 3 }
 ];
 
@@ -215,7 +409,7 @@ export const monsterPortraits = {
   '啟動武器-樓層': './assets/sprites/monsters/crack_book.svg',
   '跳跳史萊姆': './assets/sprites/monsters/slime.svg',
   '迷路菇菇': './assets/sprites/monsters/mushroom.svg',
-  '貪吃豆鳥': './assets/sprites/monsters/bean_bird.svg',
+  '貪吃靈鳥': './assets/sprites/monsters/bean_bird.svg',
   '泥沼蛙兵': './assets/sprites/monsters/frog_soldier.svg',
   '毒霧水母': './assets/sprites/monsters/fog_jelly.svg',
   '濕地咒偶': './assets/sprites/monsters/marsh_doll.svg',
@@ -231,10 +425,10 @@ export const monsterPortraits = {
 };
 
 export const npcRankings = [
-  { name: '小豆王', level: 12, wins: 388, battles: 401, element: '光', hp: 1880, maxHp: 1880, mp: 920, maxMp: 920, job: '賢者', portrait: heroPortraits.king },
-  { name: '黑豆參謀', level: 10, wins: 301, battles: 326, element: '闇', hp: 1640, maxHp: 1640, mp: 610, maxMp: 610, job: '影術士', portrait: heroPortraits.shadow },
-  { name: '旅人晴空', level: 9, wins: 244, battles: 260, element: '風', hp: 1320, maxHp: 1320, mp: 520, maxMp: 520, job: '草原巡守', portrait: heroPortraits.wind },
-  { name: '紅豆騎士', level: 7, wins: 188, battles: 205, element: '火', hp: 1180, maxHp: 1180, mp: 360, maxMp: 360, job: '豆豆劍士', portrait: heroPortraits.knight }
+  { name: '晨星王', level: 12, wins: 388, battles: 401, element: '光', hp: 1880, maxHp: 1880, mp: 920, maxMp: 920, job: '賢者', jobId: 'astral_sage', portrait: heroPortraits.king },
+  { name: '夜芽參謀', level: 10, wins: 301, battles: 326, element: '闇', hp: 1640, maxHp: 1640, mp: 610, maxMp: 610, job: '影術士', jobId: 'nightstalker', portrait: heroPortraits.shadow },
+  { name: '旅人晴空', level: 9, wins: 244, battles: 260, element: '風', hp: 1320, maxHp: 1320, mp: 520, maxMp: 520, job: '巡守', jobId: 'ranger', portrait: heroPortraits.wind },
+  { name: '紅蓮騎士', level: 7, wins: 188, battles: 205, element: '火', hp: 1180, maxHp: 1180, mp: 360, maxMp: 360, job: '劍士', jobId: 'blade', portrait: heroPortraits.knight }
 ];
 
 export function createPlayer({ name, element, archetype }) {
@@ -243,16 +437,18 @@ export function createPlayer({ name, element, archetype }) {
   if (!elements.includes(element)) throw new Error('請選擇有效屬性。');
 
   const base = {
-    blade: { job: '豆豆劍士', hp: 120, mp: 28, attack: 18, defense: 8, speed: 9 },
-    sage: { job: '微光術士', hp: 92, mp: 62, attack: 13, defense: 7, speed: 8 },
-    ranger: { job: '草原巡守', hp: 104, mp: 36, attack: 15, defense: 7, speed: 14 }
-  }[archetype] || { job: '豆豆冒險者', hp: 105, mp: 36, attack: 15, defense: 8, speed: 10 };
+    blade: { jobId: 'blade', hp: 120, mp: 28, attack: 18, defense: 8, speed: 9 },
+    sage: { jobId: 'sage', hp: 92, mp: 62, attack: 13, defense: 7, speed: 8 },
+    ranger: { jobId: 'ranger', hp: 104, mp: 36, attack: 15, defense: 7, speed: 14 }
+  }[archetype] || { jobId: 'blade', hp: 105, mp: 36, attack: 15, defense: 8, speed: 10 };
+  const baseJob = jobById(base.jobId);
 
   return {
-    version: 1,
+    version: 2,
     name: safeName,
     element,
-    job: base.job,
+    jobId: base.jobId,
+    job: baseJob.name,
     level: 1,
     exp: 0,
     nextExp: 80,
@@ -274,7 +470,12 @@ export function createPlayer({ name, element, archetype }) {
     milestonesClaimed: [],
     bestiary: {},
     mapRuns: {},
-    log: ['歡迎來到豆豆冒險公會。先去草原試試身手吧！'],
+    mapWins: {},
+    careerWins: {},
+    careerBattles: {},
+    careerFlags: { lowHpWins: 0, lowMpWins: 0, highRiskWins: 0 },
+    rebirthCount: 0,
+    log: ['歡迎來到冒險者公會。先去草原試試身手吧！'],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -298,12 +499,53 @@ export function equipmentBonus(player) {
 }
 
 export function totalStats(player) {
-  const bonus = equipmentBonus(player);
+  const safe = normalizePlayer({ ...player });
+  const bonus = equipmentBonus(safe);
+  const job = jobById(safe.jobId);
+  const jobStatBias = job?.tier === 'base' ? 0 : Math.round((job?.power || 1) * 2);
   return {
-    attack: player.attack + bonus.attack,
-    defense: player.defense + bonus.defense,
-    speed: player.speed
+    attack: safe.attack + bonus.attack + jobStatBias,
+    defense: safe.defense + bonus.defense + Math.floor(jobStatBias / 2),
+    speed: safe.speed
   };
+}
+
+export function availableRebirthJobs(player) {
+  const safe = clonePlayer(player);
+  return jobDefinitions
+    .filter((job) => job.tier !== 'base' && job.id !== safe.jobId && jobRequirementMet(safe, job))
+    .map(publicJobView);
+}
+
+export function rebirthPlayer(player, jobId) {
+  const next = clonePlayer(player);
+  const job = jobById(jobId);
+  if (!job || job.tier === 'base') {
+    next.log = mergeLog(next.log, ['目前沒有可轉生為該職業的道路。']);
+    return next;
+  }
+  if (!availableRebirthJobs(next).some((candidate) => candidate.id === job.id)) {
+    next.log = mergeLog(next.log, ['轉生條件尚未達成。']);
+    return next;
+  }
+  applyJobBonus(next, job);
+  next.jobId = job.id;
+  next.job = job.name;
+  next.rebirthCount += 1;
+  next.careerBattles[job.id] = next.careerBattles[job.id] || 0;
+  next.careerWins[job.id] = next.careerWins[job.id] || 0;
+  next.hp = next.maxHp;
+  next.mp = next.maxMp;
+  next.updatedAt = new Date().toISOString();
+  const revealText = job.tier === 'hidden' || job.tier === 'ultimate'
+    ? `新的道路在沉默中開啟：${job.name}。`
+    : `轉生為「${job.name}」，獲得新的招式與成長加成。`;
+  next.log = mergeLog(next.log, [revealText]);
+  return next;
+}
+
+export function careerPowerScore(jobId) {
+  return jobById(jobId)?.power || 1;
 }
 
 export function chooseMap(mapId) {
@@ -319,6 +561,7 @@ export function createBattleEncounter(player, mapId, rng = Math.random) {
   const monsterName = map.monsters[Math.floor(rng() * map.monsters.length)] || map.monsters[0];
   const monster = createMonster(map, monsterName, rng);
   const playerStart = { hp: next.hp, maxHp: next.maxHp, mp: next.mp, maxMp: next.maxMp };
+  const startingLevel = next.level;
   const monsterStart = { hp: monster.hp, maxHp: monster.maxHp };
 
   if (next.gold < map.cost) {
@@ -338,6 +581,7 @@ export function createBattleEncounter(player, mapId, rng = Math.random) {
 
   next.gold -= map.cost;
   next.battles += 1;
+  next.careerBattles[next.jobId] = (next.careerBattles[next.jobId] || 0) + 1;
   next.mapRuns[map.id] = (next.mapRuns[map.id] || 0) + 1;
   turns.push({
     side: 'system',
@@ -349,15 +593,16 @@ export function createBattleEncounter(player, mapId, rng = Math.random) {
   });
 
   let guardRate = 0;
+  const skillState = { ultimateUsed: false };
   for (let round = 1; round <= 8 && next.hp > 0 && monster.hp > 0; round += 1) {
     turns.push({ side: 'system', round, text: `第 ${round} 回合`, playerHp: next.hp, playerMp: next.mp, monsterHp: monster.hp });
     const playerFirst = stats.speed + rng() * 10 >= monster.speed + rng() * 10;
     if (playerFirst) {
-      guardRate = takePlayerTurn({ next, monster, map, stats, turns, round, rng, guardRate });
+      guardRate = takePlayerTurn({ next, monster, map, stats, turns, round, rng, guardRate, skillState });
       if (monster.hp > 0) guardRate = takeMonsterTurn({ next, monster, map, stats, turns, round, rng, guardRate });
     } else {
       guardRate = takeMonsterTurn({ next, monster, map, stats, turns, round, rng, guardRate });
-      if (next.hp > 0) guardRate = takePlayerTurn({ next, monster, map, stats, turns, round, rng, guardRate });
+      if (next.hp > 0) guardRate = takePlayerTurn({ next, monster, map, stats, turns, round, rng, guardRate, skillState });
     }
   }
 
@@ -376,12 +621,14 @@ export function createBattleEncounter(player, mapId, rng = Math.random) {
     next.mastery += masteryGain;
     next.wins += 1;
     recordMonsterDefeat(next, monsterName, map);
+    recordCareerWin(next, map, playerStart, startingLevel);
     next.quest = updateQuest(next.quest, map.id);
     monster.hp = 0;
     messages.push(`你在 ${map.name} 擊倒了「${monsterName}」，獲得 ${expGain} EXP、${goldGain} 金幣、${masteryGain} 熟練。`);
     turns.push({ side: 'system', round: 9, text: `戰鬥結束！${next.name} 擊倒了「${monsterName}」。`, playerHp: next.hp, playerMp: next.mp, monsterHp: monster.hp });
 
-    if (rng() < itemDropChance(map.level)) {
+    const dropChance = itemDropChance(map.level) + (jobById(next.jobId)?.dropBonus || 0);
+    if (rng() < dropChance) {
       const drop = randomDrop(map.level, rng);
       next.inventory.push(drop.id);
       messages.push(`打寶成功：獲得「${drop.name}」。`);
@@ -438,14 +685,6 @@ function createMonster(map, name, rng) {
   };
 }
 
-const playerBattleSkills = [
-  { name: '快速打擊', chance: 0.30, mpCost: 10, multiplier: 1.18, phrase: '以新手技能快速切入' },
-  { name: '斬擊', chance: 0.25, mpCost: 20, multiplier: 1.42, phrase: '揮出基礎劍技' },
-  { name: '破強劍', chance: 0.18, mpCost: 28, multiplier: 1.66, phrase: '以武士劍技突破防線' },
-  { name: '彗星斬', chance: 0.12, mpCost: 36, multiplier: 1.92, phrase: '拖出彗星軌跡斬向敵人' },
-  { name: '雷擊劍', chance: 0.08, mpCost: 42, multiplier: 2.18, phrase: '將雷光灌入劍身爆發' }
-];
-
 const monsterBattleSkills = [
   { name: '強烈攻擊', chance: 0.25, multiplier: 1.32, phrase: '以強烈攻擊壓迫過來' },
   { name: '猛毒斬', chance: 0.16, multiplier: 1.52, phrase: '帶著猛毒斬擊逼近' },
@@ -453,14 +692,21 @@ const monsterBattleSkills = [
   { name: '魅惑', chance: 0.10, multiplier: 0.82, phrase: '以魅惑擾亂節奏後突襲' }
 ];
 
-function takePlayerTurn({ next, monster, stats, turns, round, rng }) {
-  const skill = chooseSkill(playerBattleSkills, rng, next.mp);
+function takePlayerTurn({ next, monster, stats, turns, round, rng, skillState }) {
+  const skill = choosePlayerSkill(next, monster, rng, skillState);
   const multiplier = skill?.multiplier || 1;
   const variance = 0.88 + rng() * 0.24;
-  const rawDamage = Math.round((stats.attack * multiplier + next.level * 4) * variance - monster.defense * 0.52);
-  const damage = Math.max(2, rawDamage);
-  if (skill) next.mp = Math.max(0, next.mp - skill.mpCost);
+  const rawDamage = Math.round(playerSkillBaseDamage(next, stats, skill) * multiplier * variance - monster.defense * (0.52 * (1 - (skill?.defensePierce || 0))));
+  let damage = Math.max(2, rawDamage);
+  if (skill?.hits) damage = Math.round(damage * skill.hits * 0.78);
+  if (skill?.executeBelow && monster.hp / monster.maxHp <= skill.executeBelow) damage = Math.max(damage, Math.round(monster.hp * 1.15));
+  if (skill) {
+    next.mp = Math.max(0, next.mp - (skill.mpCost || 0));
+    next.mastery = Math.max(0, next.mastery - (skill.masteryCost || 0));
+  }
   monster.hp = Math.max(0, monster.hp - damage);
+  if (skill?.healRatio) next.hp = Math.min(next.maxHp, next.hp + Math.max(1, Math.round(damage * skill.healRatio)));
+  if (skill?.mpRefund) next.mp = Math.min(next.maxMp, next.mp + skill.mpRefund);
   turns.push({
     side: 'player',
     round,
@@ -473,6 +719,30 @@ function takePlayerTurn({ next, monster, stats, turns, round, rng }) {
     monsterHp: monster.hp
   });
   return skill?.guard || 0;
+}
+
+function choosePlayerSkill(player, monster, rng, skillState) {
+  const job = jobById(player.jobId);
+  const ultimate = job?.ultimate;
+  if (ultimate && !skillState.ultimateUsed && canPaySkill(player, ultimate)) {
+    const hpPressure = monster.hp / Math.max(1, monster.maxHp) <= (ultimate.executeBelow || 0.28) ? 0.08 : 0;
+    if (rng() <= ultimate.chance + hpPressure) {
+      skillState.ultimateUsed = true;
+      return ultimate;
+    }
+  }
+  return chooseSkill(job?.skills || jobById('blade').skills, rng, player.mp, player.mastery);
+}
+
+function playerSkillBaseDamage(player, stats, skill) {
+  const type = skill?.type || 'physical';
+  const magicBase = player.maxMp * 0.32 + player.level * 5 + Math.sqrt(Math.max(0, player.mastery)) * 0.65;
+  const speedBase = stats.attack * 0.72 + stats.speed * 2.35 + player.level * 3;
+  if (type === 'magic') return magicBase;
+  if (type === 'speed') return speedBase;
+  if (type === 'hybrid') return (stats.attack * 0.82 + magicBase * 0.55 + stats.speed * 0.8 + player.level * 2);
+  if (type === 'adaptive') return Math.max(stats.attack * 1.35 + player.level * 5, magicBase * 1.12, speedBase * 1.08);
+  return stats.attack + player.level * 4;
 }
 
 function takeMonsterTurn({ next, monster, stats, turns, round, rng, guardRate }) {
@@ -498,26 +768,38 @@ function takeMonsterTurn({ next, monster, stats, turns, round, rng, guardRate })
   return 0;
 }
 
-function chooseSkill(skills, rng, availableMp = Infinity) {
+function chooseSkill(skills, rng, availableMp = Infinity, availableMastery = Infinity) {
   const roll = rng();
   let threshold = 0;
   for (const skill of skills) {
     threshold += skill.chance;
-    if (roll <= threshold && availableMp >= (skill.mpCost || 0)) return skill;
+    if (roll <= threshold && availableMp >= (skill.mpCost || 0) && availableMastery >= (skill.masteryCost || 0)) return skill;
   }
   return null;
 }
 
+function canPaySkill(player, skill) {
+  return player.mp >= (skill.mpCost || 0) && player.mastery >= (skill.masteryCost || 0);
+}
+
 export function portraitForPlayer(player) {
   if (!player) return heroPortraits.default;
+  const jobId = player.jobId || inferJobId(player.job);
   return {
-    '豆豆劍士': heroPortraits.blade,
-    '微光術士': heroPortraits.sage,
-    '草原巡守': heroPortraits.ranger,
-    '豆豆冒險者': heroPortraits.default,
-    '賢者': heroPortraits.king,
-    '影術士': heroPortraits.shadow
-  }[player.job] || player.portrait || heroPortraits.default;
+    blade: heroPortraits.blade,
+    sage: heroPortraits.sage,
+    ranger: heroPortraits.ranger,
+    sword_heir: heroPortraits.blade,
+    seraph: heroPortraits.knight,
+    archmage: heroPortraits.sage,
+    cleric: heroPortraits.king,
+    nightstalker: heroPortraits.shadow,
+    beastmaster: heroPortraits.ranger,
+    boundary_cutter: heroPortraits.knight,
+    astral_sage: heroPortraits.king,
+    eclipse_hunter: heroPortraits.shadow,
+    unbound: heroPortraits.default
+  }[jobId] || player.portrait || heroPortraits.default;
 }
 
 export function portraitForMonster(name) {
@@ -733,12 +1015,164 @@ function normalizePlayer(player) {
     armor: player.equipment?.armor || null,
     trinket: player.equipment?.trinket || null
   };
+  if (!player.jobId) player.jobId = inferJobId(player.job);
+  const job = jobById(player.jobId) || jobById('blade');
+  player.jobId = job.id;
+  player.job = job.name;
   if (!player.quest) player.quest = { id: 'first_hunt', title: '草原討伐', target: 3, progress: 0, completed: false };
   if (!Array.isArray(player.log)) player.log = [];
+  player.log = player.log.map(cleanLegacyName);
   if (!Array.isArray(player.milestonesClaimed)) player.milestonesClaimed = [];
   if (!player.bestiary || typeof player.bestiary !== 'object' || Array.isArray(player.bestiary)) player.bestiary = {};
   if (!player.mapRuns || typeof player.mapRuns !== 'object' || Array.isArray(player.mapRuns)) player.mapRuns = {};
+  if (!player.mapWins || typeof player.mapWins !== 'object' || Array.isArray(player.mapWins)) player.mapWins = {};
+  if (!player.careerWins || typeof player.careerWins !== 'object' || Array.isArray(player.careerWins)) player.careerWins = {};
+  if (!player.careerBattles || typeof player.careerBattles !== 'object' || Array.isArray(player.careerBattles)) player.careerBattles = {};
+  player.careerFlags = {
+    lowHpWins: Number(player.careerFlags?.lowHpWins) || 0,
+    lowMpWins: Number(player.careerFlags?.lowMpWins) || 0,
+    highRiskWins: Number(player.careerFlags?.highRiskWins) || 0
+  };
+  player.rebirthCount = Number(player.rebirthCount) || 0;
   return player;
+}
+
+function inferJobId(jobName = '') {
+  const legacy = {
+    '豆豆劍士': 'blade',
+    '微光術士': 'sage',
+    '草原巡守': 'ranger',
+    '豆豆冒險者': 'blade',
+    劍士: 'blade',
+    術士: 'sage',
+    巡守: 'ranger',
+    劍之傳人: 'sword_heir',
+    熾天使: 'seraph',
+    大魔法師: 'archmage',
+    神職者: 'cleric',
+    夜使者: 'nightstalker',
+    馴獸師: 'beastmaster',
+    界斷者: 'boundary_cutter',
+    星界賢者: 'astral_sage',
+    影月獵神: 'eclipse_hunter',
+    無界者: 'unbound'
+  };
+  return legacy[jobName] || 'blade';
+}
+
+function cleanLegacyName(text) {
+  return String(text)
+    .replaceAll('豆豆冒險公會', '冒險者公會')
+    .replaceAll('豆豆劍士', '劍士')
+    .replaceAll('微光術士', '術士')
+    .replaceAll('草原巡守', '巡守')
+    .replaceAll('豆豆冒險者', '冒險者')
+    .replaceAll('豆豆版', '終端版');
+}
+
+function jobById(jobId) {
+  return jobDefinitions.find((job) => job.id === jobId) || null;
+}
+
+function publicJobView(job) {
+  return {
+    id: job.id,
+    name: job.name,
+    tier: job.tier,
+    branch: job.branch,
+    description: job.description,
+    power: job.power,
+    skillNames: [...(job.skills || []).map((skill) => skill.name), job.ultimate?.name].filter(Boolean),
+    ultimateName: job.ultimate?.name || ''
+  };
+}
+
+function applyJobBonus(player, job) {
+  const bonus = job.statBonus || {};
+  player.maxHp += bonus.maxHp || 0;
+  player.maxMp += bonus.maxMp || 0;
+  player.attack += bonus.attack || 0;
+  player.defense += bonus.defense || 0;
+  player.speed += bonus.speed || 0;
+}
+
+function jobRequirementMet(player, job) {
+  if (job.tier === 'advanced') return regularRebirthReady(player);
+  if (job.id === 'boundary_cutter') return boundaryCutterReady(player);
+  if (job.id === 'astral_sage') return astralSageReady(player);
+  if (job.id === 'eclipse_hunter') return eclipseHunterReady(player);
+  if (job.id === 'unbound') return unboundReady(player);
+  return false;
+}
+
+function regularRebirthReady(player) {
+  return player.level >= 5 && player.mastery >= 500 && player.battles >= 5 && Boolean(player.quest?.completed);
+}
+
+function boundaryCutterReady(player) {
+  return player.level >= 12
+    && player.mastery >= 8000
+    && player.wins >= 80
+    && bestiaryCount(player) >= 20
+    && weaponCollectionCount(player) >= 5
+    && mapWinAtLeast(player, ['tower', 'forbidden', 'demon_castle'], 1)
+    && player.careerFlags.lowHpWins >= 3;
+}
+
+function astralSageReady(player) {
+  return player.level >= 12
+    && player.maxMp >= 180
+    && player.mastery >= 9000
+    && bestiaryCount(player) >= 15
+    && mapWinAtLeast(player, ['starlit_night', 'star_maze', 'aincrad'], 1)
+    && player.careerFlags.lowMpWins >= 3;
+}
+
+function eclipseHunterReady(player) {
+  return player.level >= 12
+    && player.speed >= 35
+    && player.mastery >= 8000
+    && bestiaryCount(player) >= 25
+    && Object.keys(player.mapWins || {}).length >= 10
+    && Object.values(player.mapWins || {}).filter((count) => Number(count) >= 3).length >= 5
+    && ['夜狐', '滿月狼人', '死神-路克'].some((name) => Number(player.bestiary?.[name]?.count) > 0);
+}
+
+function unboundReady(player) {
+  return player.level >= 25
+    && player.mastery >= 50000
+    && player.battles >= 500
+    && player.wins >= 400
+    && ['boundary_cutter', 'astral_sage', 'eclipse_hunter'].every((jobId) => Number(player.careerWins?.[jobId]) >= 30)
+    && mapWinAtLeast(player, ['forbidden', 'demon_castle', 'treasure_ship', 'ruins', 'dragon_tower', 'legendary_secret', 'aincrad', 'upper_tower_gate'], 3)
+    && bestiaryCount(player) >= 40
+    && Object.values(player.bestiary || {}).filter((entry) => Number(entry.count) >= 5).length >= 10
+    && player.careerFlags.lowHpWins >= 5
+    && player.careerFlags.lowMpWins >= 5
+    && player.careerFlags.highRiskWins >= 20;
+}
+
+function bestiaryCount(player) {
+  return Object.keys(player.bestiary || {}).length;
+}
+
+function weaponCollectionCount(player) {
+  const ids = new Set([...(player.inventory || []), ...Object.values(player.equipment || {})].filter(Boolean));
+  return [...ids].filter((itemId) => getItem(itemId)?.type === 'weapon').length;
+}
+
+function mapWinAtLeast(player, mapIds, count) {
+  return mapIds.every((mapId) => Number(player.mapWins?.[mapId]) >= count);
+}
+
+function recordCareerWin(player, map, playerStart, startingLevel) {
+  player.mapWins[map.id] = (player.mapWins[map.id] || 0) + 1;
+  player.careerWins[player.jobId] = (player.careerWins[player.jobId] || 0) + 1;
+  const hpRatio = player.hp / Math.max(1, player.maxHp);
+  const mpRatio = player.mp / Math.max(1, player.maxMp);
+  if (hpRatio <= 0.1 || playerStart.hp / Math.max(1, playerStart.maxHp) <= 0.1) player.careerFlags.lowHpWins += 1;
+  if (mpRatio <= 0.1 || playerStart.mp / Math.max(1, playerStart.maxMp) <= 0.1) player.careerFlags.lowMpWins += 1;
+  if (map.level > startingLevel + 4) player.careerFlags.highRiskWins += 1;
 }
 
 function recordMonsterDefeat(player, monsterName, map) {

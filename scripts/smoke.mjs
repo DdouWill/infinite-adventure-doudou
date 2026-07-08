@@ -108,7 +108,7 @@ const footerBlocks = await desktop.locator('.classic-footer').count();
 if (footerBlocks !== 0) throw new Error('Desktop smoke failed: footer info block should be moved out of the main screen.');
 const heroStatusBlocks = await desktop.locator('.hero__status').count();
 if (heroStatusBlocks !== 0) throw new Error('Desktop smoke failed: hero info cards should be moved into the function menu.');
-await desktop.fill('#hero-name', '豆豆測試員');
+await desktop.fill('#hero-name', '終端測試員');
 await desktop.selectOption('#hero-element', '光');
 await desktop.selectOption('#hero-archetype', 'blade');
 await desktop.click('button:has-text("建立角色")');
@@ -154,7 +154,7 @@ const returnHash = await desktop.evaluate(() => window.location.hash);
 if (returnHash !== '#main') throw new Error('Desktop smoke failed: return button should jump back to main hash.');
 await desktop.screenshot({ path: `${screenshotsDir}/desktop.png`, fullPage: true });
 const title = await desktop.locator('#player-title').innerText();
-if (!title.includes('豆豆測試員')) throw new Error('Desktop smoke failed: player title not rendered.');
+if (!title.includes('終端測試員')) throw new Error('Desktop smoke failed: player title not rendered.');
 const vitalBars = await desktop.locator('.vital-card .resource-meter').count();
 if (vitalBars !== 2) throw new Error('Desktop smoke failed: HP/MP vital block should contain exactly 2 meters.');
 const characterPortraitVisible = await desktop.locator('.character-info-card .character-portrait').isVisible();
@@ -191,6 +191,14 @@ if (!selectedMapText.includes('高風險') && !selectedMapText.includes('可挑�
 }
 const selectedMapIconVisible = await desktop.locator('.selected-map-card .map-card__category .ui-icon').isVisible();
 if (!selectedMapIconVisible) throw new Error('Desktop smoke failed: selected map category icon missing.');
+await desktop.click('.tab-button[data-view="character"]');
+const rebirthText = await desktop.locator('#character-sheet').innerText();
+if (!rebirthText.includes('轉生職業')) throw new Error('Desktop smoke failed: rebirth career panel missing.');
+for (const hiddenName of ['界斷者', '星界賢者', '影月獵神', '無界者', '???']) {
+  if (rebirthText.includes(hiddenName)) throw new Error(`Desktop smoke failed: hidden career leaked before unlock (${hiddenName}).`);
+}
+const visibleBodyText = await desktop.locator('body').innerText();
+if (visibleBodyText.includes('豆豆')) throw new Error('Desktop smoke failed: legacy visible naming should be removed.');
 await desktop.click('.tab-button[data-view="quest"]');
 const questText = await desktop.locator('#quest-board').innerText();
 for (const expected of ['冒險目標', '第一次出擊', '討伐圖鑑', '地圖紀錄', '草原']) {
@@ -230,7 +238,7 @@ await mobile.screenshot({ path: `${screenshotsDir}/mobile-menu-open.png`, fullPa
 await mobile.locator('#function-menu-panel a[href="#main"]').click();
 const mobileMenuClosedAfterLink = await mobile.locator('#function-menu-panel').evaluate((el) => el.hidden);
 if (!mobileMenuClosedAfterLink) throw new Error('Mobile smoke failed: function menu did not close after home link click.');
-await mobile.fill('#hero-name', '手機豆豆');
+await mobile.fill('#hero-name', '手機測試員');
 await mobile.selectOption('#hero-element', '水');
 await mobile.selectOption('#hero-archetype', 'sage');
 await mobile.click('button:has-text("建立角色")');

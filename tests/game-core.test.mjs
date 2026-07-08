@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  availableRebirthJobs,
   buyItem,
   bestiaryEntries,
+  careerPowerScore,
   claimMilestone,
   claimQuestReward,
   createBattleEncounter,
@@ -15,6 +17,7 @@ import {
   portraitForMonster,
   portraitForPlayer,
   progressionGuide,
+  rebirthPlayer,
   restAtInn,
   serializePlayer,
   shopItems,
@@ -28,14 +31,81 @@ function rngSequence(values) {
 }
 
 test('createPlayer validates name and initializes core stats', () => {
-  const player = createPlayer({ name: '小豆勇者', element: '光', archetype: 'blade' });
-  assert.equal(player.name, '小豆勇者');
+  const player = createPlayer({ name: '晨星勇者', element: '光', archetype: 'blade' });
+  assert.equal(player.name, '晨星勇者');
   assert.equal(player.level, 1);
   assert.equal(player.hp, player.maxHp);
   assert.equal(player.inventory.includes('novice_badge'), true);
   assert.deepEqual(player.milestonesClaimed, []);
   assert.deepEqual(player.bestiary, {});
   assert.deepEqual(player.mapRuns, {});
+  assert.equal(player.jobId, 'blade');
+  assert.equal(player.job, '劍士');
+  assert.equal(player.log.some((line) => line.includes('豆豆')), false);
+});
+
+test('rebirth jobs stay hidden until exact hard conditions are met', () => {
+  const player = createPlayer({ name: '轉生勇者', element: '光', archetype: 'blade' });
+  player.level = 5;
+  player.mastery = 500;
+  player.battles = 5;
+  player.quest.completed = true;
+  const basicNames = availableRebirthJobs(player).map((job) => job.name);
+  assert.deepEqual(basicNames, ['劍之傳人', '熾天使', '大魔法師', '神職者', '夜使者', '馴獸師']);
+  assert.equal(basicNames.includes('界斷者'), false);
+  player.level = 12;
+  player.mastery = 8000;
+  player.wins = 80;
+  player.bestiary = Object.fromEntries(Array.from({ length: 20 }, (_, index) => [`魔物${index}`, { name: `魔物${index}`, count: 1 }]));
+  player.mapWins = { tower: 1, forbidden: 1, demon_castle: 1 };
+  player.inventory.push('short_sword', 'long_sword', 'short_bow', 'double_axe', 'flame_sword');
+  player.careerFlags.lowHpWins = 3;
+  const hiddenNames = availableRebirthJobs(player).map((job) => job.name);
+  assert.equal(hiddenNames.includes('界斷者'), true);
+});
+
+test('career power tiers rise with difficulty without making regular rebirths obsolete', () => {
+  assert.ok(careerPowerScore('sword_heir') > careerPowerScore('blade'));
+  assert.ok(careerPowerScore('boundary_cutter') > careerPowerScore('sword_heir'));
+  assert.ok(careerPowerScore('unbound') > careerPowerScore('boundary_cutter'));
+  assert.ok(careerPowerScore('boundary_cutter') < careerPowerScore('unbound'));
+  assert.ok(careerPowerScore('sword_heir') <= 1.28);
+  assert.ok(careerPowerScore('boundary_cutter') <= 1.7);
+});
+
+test('rebirth applies a job once available and battle uses its skill kit with one ultimate max', () => {
+  let player = createPlayer({ name: '轉職勇者', element: '雷', archetype: 'blade' });
+  player.level = 5;
+  player.mastery = 1200;
+  player.battles = 6;
+  player.quest.completed = true;
+  player = rebirthPlayer(player, 'sword_heir');
+  assert.equal(player.job, '劍之傳人');
+  assert.equal(player.rebirthCount, 1);
+  player.mp = player.maxMp = 200;
+  player.attack = 80;
+  player.gold = 999;
+  const encounter = createBattleEncounter(player, 'meadow', rngSequence([0, 0.01, 0.99, 0.01, 0.01, 0.99, 0.99]));
+  const playerSkills = encounter.scene.turns.filter((turn) => turn.side === 'player').map((turn) => turn.skill);
+  assert.ok(playerSkills.some((skill) => ['破空斬', '追星連斬', '劍心凝聚', '無限劍域'].includes(skill)));
+  assert.ok(playerSkills.filter((skill) => skill === '無限劍域').length <= 1);
+});
+
+test('ultimate hidden job only appears after all hidden careers are mastered and remains absent otherwise', () => {
+  const player = createPlayer({ name: '終極勇者', element: '星', archetype: 'ranger' });
+  player.level = 25;
+  player.mastery = 50000;
+  player.battles = 500;
+  player.wins = 400;
+  player.careerWins = { boundary_cutter: 30, astral_sage: 30, eclipse_hunter: 29 };
+  player.mapWins = { forbidden: 3, demon_castle: 3, treasure_ship: 3, ruins: 3, dragon_tower: 3, legendary_secret: 3, aincrad: 3, upper_tower_gate: 3 };
+  player.bestiary = Object.fromEntries(Array.from({ length: 40 }, (_, index) => [`終局魔物${index}`, { name: `終局魔物${index}`, count: index < 10 ? 5 : 1 }]));
+  player.careerFlags.lowHpWins = 5;
+  player.careerFlags.lowMpWins = 5;
+  player.careerFlags.highRiskWins = 20;
+  assert.equal(availableRebirthJobs(player).some((job) => job.id === 'unbound'), false);
+  player.careerWins.eclipse_hunter = 30;
+  assert.equal(availableRebirthJobs(player).some((job) => job.id === 'unbound' && job.name === '無界者'), true);
 });
 
 test('portrait helpers resolve local character and monster sprites', () => {
@@ -115,6 +185,12 @@ test('parsePlayer migrates old saves with progression defaults', () => {
   assert.deepEqual(parsed.milestonesClaimed, []);
   assert.deepEqual(parsed.bestiary, {});
   assert.deepEqual(parsed.mapRuns, {});
+  assert.deepEqual(parsed.mapWins, {});
+  assert.deepEqual(parsed.careerWins, {});
+  assert.deepEqual(parsed.careerBattles, {});
+  assert.deepEqual(parsed.careerFlags, { lowHpWins: 0, lowMpWins: 0, highRiskWins: 0 });
+  assert.equal(parsed.jobId, 'blade');
+  assert.equal(parsed.job, '劍士');
   assert.equal(parsed.equipment.weapon, null);
 });
 
