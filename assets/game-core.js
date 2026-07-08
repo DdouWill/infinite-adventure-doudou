@@ -77,11 +77,40 @@ export const countries = [
   { name: '風車自由城', element: '風', ruler: '旅人晴空', people: 27, gold: 72100, territory: 3 }
 ];
 
+export const heroPortraits = {
+  blade: './assets/sprites/heroes/blade.svg',
+  sage: './assets/sprites/heroes/sage.svg',
+  ranger: './assets/sprites/heroes/ranger.svg',
+  default: './assets/sprites/heroes/default.svg',
+  king: './assets/sprites/heroes/king.svg',
+  shadow: './assets/sprites/heroes/shadow.svg',
+  wind: './assets/sprites/heroes/wind.svg',
+  knight: './assets/sprites/heroes/knight.svg'
+};
+
+export const monsterPortraits = {
+  '跳跳史萊姆': './assets/sprites/monsters/slime.svg',
+  '迷路菇菇': './assets/sprites/monsters/mushroom.svg',
+  '貪吃豆鳥': './assets/sprites/monsters/bean_bird.svg',
+  '泥沼蛙兵': './assets/sprites/monsters/frog_soldier.svg',
+  '毒霧水母': './assets/sprites/monsters/fog_jelly.svg',
+  '濕地咒偶': './assets/sprites/monsters/marsh_doll.svg',
+  '星光守衛': './assets/sprites/monsters/star_guard.svg',
+  '裂紋魔書': './assets/sprites/monsters/crack_book.svg',
+  '塔頂小惡魔': './assets/sprites/monsters/tower_imp.svg',
+  '後山山賊': './assets/sprites/monsters/bandit.svg',
+  '霧隱獸': './assets/sprites/monsters/mist_beast.svg',
+  '寶箱守衛': './assets/sprites/monsters/chest_guard.svg',
+  '封印守護者': './assets/sprites/monsters/seal_guardian.svg',
+  '星門魔像': './assets/sprites/monsters/star_golem.svg',
+  '裂界使者': './assets/sprites/monsters/rift_herald.svg'
+};
+
 export const npcRankings = [
-  { name: '小豆王', level: 12, wins: 388, battles: 401, element: '光', hp: 1880, maxHp: 1880, mp: 920, maxMp: 920, job: '賢者' },
-  { name: '黑豆參謀', level: 10, wins: 301, battles: 326, element: '闇', hp: 1640, maxHp: 1640, mp: 610, maxMp: 610, job: '影術士' },
-  { name: '旅人晴空', level: 9, wins: 244, battles: 260, element: '風', hp: 1320, maxHp: 1320, mp: 520, maxMp: 520, job: '草原巡守' },
-  { name: '紅豆騎士', level: 7, wins: 188, battles: 205, element: '火', hp: 1180, maxHp: 1180, mp: 360, maxMp: 360, job: '豆豆劍士' }
+  { name: '小豆王', level: 12, wins: 388, battles: 401, element: '光', hp: 1880, maxHp: 1880, mp: 920, maxMp: 920, job: '賢者', portrait: heroPortraits.king },
+  { name: '黑豆參謀', level: 10, wins: 301, battles: 326, element: '闇', hp: 1640, maxHp: 1640, mp: 610, maxMp: 610, job: '影術士', portrait: heroPortraits.shadow },
+  { name: '旅人晴空', level: 9, wins: 244, battles: 260, element: '風', hp: 1320, maxHp: 1320, mp: 520, maxMp: 520, job: '草原巡守', portrait: heroPortraits.wind },
+  { name: '紅豆騎士', level: 7, wins: 188, battles: 205, element: '火', hp: 1180, maxHp: 1180, mp: 360, maxMp: 360, job: '豆豆劍士', portrait: heroPortraits.knight }
 ];
 
 export function createPlayer({ name, element, archetype }) {
@@ -258,7 +287,7 @@ function buildBattleEncounter({ next, map, monsterName, monster, playerStart, mo
     messages,
     scene: {
       map: { id: map.id, name: map.name, category: map.category, level: map.level },
-      monster: { name: monsterName, maxHp: monster.maxHp },
+      monster: { name: monsterName, maxHp: monster.maxHp, portrait: portraitForMonster(monsterName) },
       playerStart,
       monsterStart,
       playerEnd: { hp: next.hp, maxHp: next.maxHp, mp: next.mp, maxMp: next.maxMp },
@@ -347,6 +376,22 @@ function chooseSkill(skills, rng, availableMp = Infinity) {
   return null;
 }
 
+export function portraitForPlayer(player) {
+  if (!player) return heroPortraits.default;
+  return {
+    '豆豆劍士': heroPortraits.blade,
+    '微光術士': heroPortraits.sage,
+    '草原巡守': heroPortraits.ranger,
+    '豆豆冒險者': heroPortraits.default,
+    '賢者': heroPortraits.king,
+    '影術士': heroPortraits.shadow
+  }[player.job] || player.portrait || heroPortraits.default;
+}
+
+export function portraitForMonster(name) {
+  return monsterPortraits[name] || './assets/sprites/monsters/unknown.svg';
+}
+
 export function restAtInn(player) {
   const next = clonePlayer(player);
   const cost = Math.max(10, Math.round(next.level * 18));
@@ -415,7 +460,8 @@ export function rankingsFor(player) {
     maxHp: player.maxHp,
     mp: player.mp,
     maxMp: player.maxMp,
-    job: player.job
+    job: player.job,
+    portrait: portraitForPlayer(player)
   }] : [];
   return [...playerRow, ...npcRankings]
     .sort((a, b) => b.level - a.level || b.wins - a.wins)

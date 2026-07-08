@@ -8,6 +8,8 @@ import {
   getItem,
   maps,
   parsePlayer,
+  portraitForMonster,
+  portraitForPlayer,
   rankingsFor,
   restAtInn,
   serializePlayer,
@@ -53,12 +55,14 @@ const nodes = {
   battlePage: $('#battle-page'),
   battlePageTitle: $('#battle-page-title'),
   battlePageStatus: $('#battle-page-status'),
+  battlePlayerPortrait: $('#battle-player-portrait'),
   battlePlayerName: $('#battle-player-name'),
   battlePlayerHp: $('#battle-player-hp'),
   battlePlayerHpText: $('#battle-player-hp-text'),
   battlePlayerMp: $('#battle-player-mp'),
   battlePlayerMpText: $('#battle-player-mp-text'),
   battleMapName: $('#battle-map-name'),
+  battleMonsterPortrait: $('#battle-monster-portrait'),
   battleMonsterName: $('#battle-monster-name'),
   battleMonsterHp: $('#battle-monster-hp'),
   battleMonsterHpText: $('#battle-monster-hp-text'),
@@ -172,8 +176,12 @@ function renderBattlePage(encounter) {
   document.body.classList.add('battle-page-active');
   nodes.battlePageTitle.textContent = `${scene.map.name}｜${scene.monster.name}`;
   nodes.battlePageStatus.textContent = '回合演出中';
+  nodes.battlePlayerPortrait.src = portraitForPlayer(state);
+  nodes.battlePlayerPortrait.alt = `${state.name} 圖像`;
   nodes.battlePlayerName.textContent = state.name;
   nodes.battleMapName.textContent = `${scene.map.category}｜Lv.${scene.map.level}`;
+  nodes.battleMonsterPortrait.src = scene.monster.portrait || portraitForMonster(scene.monster.name);
+  nodes.battleMonsterPortrait.alt = `${scene.monster.name} 圖像`;
   nodes.battleMonsterName.textContent = scene.monster.name;
   nodes.battleTurnFeed.innerHTML = '';
   nodes.battleReturnButton.disabled = true;
@@ -306,6 +314,7 @@ function renderStats() {
   const expRow = resourceRow({ label: 'EXP', current: state.exp, max: state.nextExp, tone: 'exp', caption: '升級進度' });
 
   const equipped = compactEquipmentSummary(state);
+  const portrait = portraitForPlayer(state);
   const statRows = [
     ['金幣', state.gold],
     ['攻擊', stats.attack],
@@ -329,6 +338,7 @@ function renderStats() {
     </article>
     <article class="stat-card character-info-card" aria-label="其餘角色資訊">
       <div class="character-info__header">
+        <img class="character-portrait" src="${escapeHtml(portrait)}" alt="${escapeHtml(state.name)} 圖像" width="64" height="64">
         <span>角色情報</span>
         <strong>${escapeHtml(state.element)}・${escapeHtml(state.job)}｜Lv.${state.level}</strong>
       </div>
@@ -442,9 +452,12 @@ function renderCharacter() {
     .join('');
 
   nodes.characterSheet.innerHTML = `
-    <div class="character-card">
-      <h3>${escapeHtml(state.name)}</h3>
-      <p>${escapeHtml(state.element)}屬性｜${escapeHtml(state.job)}｜Lv.${state.level}</p>
+    <div class="character-card character-card--portrait">
+      <img class="character-portrait character-portrait--large" src="${escapeHtml(portraitForPlayer(state))}" alt="${escapeHtml(state.name)} 圖像" width="96" height="96">
+      <div>
+        <h3>${escapeHtml(state.name)}</h3>
+        <p>${escapeHtml(state.element)}屬性｜${escapeHtml(state.job)}｜Lv.${state.level}</p>
+      </div>
       <ul class="clean-list">
         <li><span>勝敗</span><strong>${state.wins} 勝 / ${state.losses} 敗</strong></li>
         <li><span>總戰數</span><strong>${state.battles}</strong></li>
@@ -540,7 +553,7 @@ function renderWorld() {
   const rankingRows = rankingsFor(state).map((row) => `
     <tr>
       <td>${row.rank === 1 ? '★1位' : `${row.rank}位`}</td>
-      <td><span class="avatar-chip">${escapeHtml(avatarGlyph(row))}</span></td>
+      <td><img class="avatar-image" src="${escapeHtml(rankingPortrait(row))}" alt="${escapeHtml(row.name)} 圖像" width="28" height="28"></td>
       <td>${escapeHtml(row.name)}</td>
       <td>${escapeHtml(row.element)}</td>
       <td>${row.hp}/${row.maxHp}</td>
@@ -590,17 +603,9 @@ function loadPlayer() {
   }
 }
 
-function avatarGlyph(row) {
-  if (row.name === state?.name) return '自';
-  return {
-    '光': '光',
-    '闇': '闇',
-    '風': '風',
-    '火': '火',
-    '水': '水',
-    '雷': '雷',
-    '星': '星'
-  }[row.element] || '豆';
+function rankingPortrait(row) {
+  if (row.name === state?.name) return portraitForPlayer(state);
+  return row.portrait || portraitForPlayer(row);
 }
 
 function slotLabel(slot) {

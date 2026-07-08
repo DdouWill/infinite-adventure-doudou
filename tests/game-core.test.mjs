@@ -7,6 +7,8 @@ import {
   createPlayer,
   equipItem,
   parsePlayer,
+  portraitForMonster,
+  portraitForPlayer,
   performBattle,
   restAtInn,
   serializePlayer,
@@ -24,6 +26,14 @@ test('createPlayer validates name and initializes core stats', () => {
   assert.equal(player.level, 1);
   assert.equal(player.hp, player.maxHp);
   assert.equal(player.inventory.includes('novice_badge'), true);
+});
+
+test('portrait helpers resolve local character and monster sprites', () => {
+  const player = createPlayer({ name: '圖像勇者', element: '光', archetype: 'sage' });
+  assert.match(portraitForPlayer(player), /sprites\/heroes\/sage\.svg$/);
+  assert.match(portraitForMonster('跳跳史萊姆'), /sprites\/monsters\/slime\.svg$/);
+  const encounter = createBattleEncounter(player, 'meadow', rngSequence([0, 0.1, 0.9]));
+  assert.match(encounter.scene.monster.portrait, /sprites\/monsters\/.+\.svg$/);
 });
 
 test('performBattle can win, grants rewards, and advances grassland quest', () => {

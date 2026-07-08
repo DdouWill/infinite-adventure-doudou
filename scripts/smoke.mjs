@@ -68,6 +68,10 @@ for (const expected of ['頭像', 'HP', 'MP', '戰數', '打寶之王']) {
 await desktop.locator('#icon-panel summary').click();
 const iconCellCount = await desktop.locator('#icon-panel .icon-grid__cell').count();
 if (iconCellCount !== 70) throw new Error(`Desktop smoke failed: icon grid should contain 70 cells, got ${iconCellCount}.`);
+const iconImageCount = await desktop.locator('#icon-panel .icon-grid__image').count();
+if (iconImageCount < 30) throw new Error('Desktop smoke failed: icon grid should use local sprite thumbnails.');
+const menuRankingImageCount = await desktop.locator('#ranking-panel .avatar-image').count();
+if (menuRankingImageCount < 4) throw new Error('Desktop smoke failed: menu ranking should use character sprite images.');
 await desktop.locator('#lineage-panel summary').click();
 const lineageText = (await desktop.locator('#lineage-panel').innerText()).toLowerCase();
 if (!lineageText.includes('badgameshow') || !lineageText.includes('farland history')) {
@@ -103,6 +107,8 @@ if (!battlePageText.includes('第 1 回合') || !battlePageText.includes('返回
 if (!battlePageText.includes('施放') && !battlePageText.includes('使出')) {
   throw new Error('Desktop smoke failed: probabilistic skills were not shown in the battle page.');
 }
+const battleSpriteCount = await desktop.locator('#battle-page .battle-portrait').count();
+if (battleSpriteCount !== 2) throw new Error('Desktop smoke failed: battle page should show player and monster sprites.');
 await desktop.screenshot({ path: `${screenshotsDir}/desktop-battle-page.png` });
 await desktop.click('#battle-return-button');
 await desktop.waitForFunction(() => document.querySelector('#battle-page')?.classList.contains('is-hidden'));
@@ -113,6 +119,8 @@ const title = await desktop.locator('#player-title').innerText();
 if (!title.includes('豆豆測試員')) throw new Error('Desktop smoke failed: player title not rendered.');
 const vitalBars = await desktop.locator('.vital-card .resource-meter').count();
 if (vitalBars !== 2) throw new Error('Desktop smoke failed: HP/MP vital block should contain exactly 2 meters.');
+const characterPortraitVisible = await desktop.locator('.character-info-card .character-portrait').isVisible();
+if (!characterPortraitVisible) throw new Error('Desktop smoke failed: character portrait sprite not visible in status block.');
 const expBars = await desktop.locator('.character-info-card .resource-row--exp .resource-meter').count();
 if (expBars !== 1) throw new Error('Desktop smoke failed: EXP should be inside character info block.');
 const hpText = await desktop.locator('.vital-card .resource-row--hp .resource-card__header strong').innerText();
@@ -167,6 +175,8 @@ await mobile.waitForSelector('#battle-page:not(.is-hidden)');
 const mobileBattleHash = await mobile.evaluate(() => window.location.hash);
 if (mobileBattleHash !== '#battle-page') throw new Error('Mobile smoke failed: battle action should jump to battle page hash.');
 await mobile.waitForSelector('.battle-turn--player');
+const mobileBattleSpriteCount = await mobile.locator('#battle-page .battle-portrait').count();
+if (mobileBattleSpriteCount !== 2) throw new Error('Mobile smoke failed: battle page sprites missing.');
 await mobile.waitForFunction(() => !document.querySelector('#battle-return-button')?.disabled);
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-battle-page.png` });
 await mobile.click('#battle-return-button');

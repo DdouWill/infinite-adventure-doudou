@@ -2295,3 +2295,88 @@ select optgroup {
   .icon-grid { grid-template-columns: repeat(5, minmax(42px, 1fr)); }
   .classic-ranking-table { min-width: 620px; }
 }
+
+
+/* Local character / monster sprite layer. */
+.character-info__header {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
+.character-info__header strong {
+  grid-column: 2;
+}
+
+.character-portrait,
+.battle-portrait,
+.avatar-image,
+.icon-grid__image {
+  display: block;
+  image-rendering: pixelated;
+  background: #0a0a0a;
+  border: 1px solid var(--border);
+  object-fit: contain;
+}
+
+.character-portrait {
+  width: 56px;
+  height: 56px;
+  padding: 3px;
+  grid-row: span 2;
+}
+
+.character-portrait--large {
+  width: 84px;
+  height: 84px;
+  padding: 4px;
+}
+
+.character-card--portrait {
+  grid-template-columns: auto 1fr;
+  align-items: start;
+}
+
+.character-card--portrait .clean-list {
+  grid-column: 1 / -1;
+}
+
+.battle-portrait {
+  width: min(92px, 24vw);
+  height: min(92px, 24vw);
+  padding: 4px;
+  margin: 2px auto 4px;
+}
+
+.avatar-image {
+  width: 30px;
+  height: 30px;
+  padding: 2px;
+}
+
+.icon-grid__image {
+  width: 42px;
+  height: 42px;
+  padding: 2px;
+}
+
+.icon-grid__cell--empty strong {
+  color: var(--muted);
+}
+
+@media (max-width: 520px) {
+  .character-info__header {
+    grid-template-columns: 1fr;
+  }
+  .character-info__header strong,
+  .character-portrait {
+    grid-column: auto;
+  }
+  .character-portrait {
+    width: 48px;
+    height: 48px;
+  }
+  .battle-portrait {
+    width: 72px;
+    height: 72px;
+  }
+}
