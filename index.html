@@ -13,6 +13,8 @@
     <nav class="top-links" aria-label="主選單">
       <a href="#main">[首頁]</a>
       <a href="#help-panel">[遊戲說明]</a>
+      <a href="#guide-panel">[新手指南]</a>
+      <a href="#map-guide-panel">[戰鬥地圖]</a>
       <a href="#player-list-panel">[玩家列表]</a>
       <a href="#legend-panel">[傳說的英雄]</a>
       <a href="#ranking-panel">[各項排行]</a>
@@ -28,7 +30,7 @@
       <div class="hero__copy">
         <p class="eyebrow">異世界召喚公會</p>
         <h1>無限冒險-豆豆版</h1>
-        <p>穿越到豆豆大陸，接下冒險公會的委託。建立角色、討伐魔物、鍛造裝備、探索國度，所有進度都先封存在你的瀏覽器魔法書裡。</p>
+        <p>穿越到豆豆大陸，接下冒險公會的委託。這版同步參考老頭版系譜、BadGameShow 公開首頁與小白指南，把新手路線、地圖分組、排行欄位與角色狀態集中成更像原版的文字 RPG 入口。</p>
       </div>
       <section class="hero__status" aria-label="目前世界狀態">
         <div><strong id="online-count">19</strong><span>線上冒險者</span></div>
@@ -163,11 +165,11 @@
           <h2 class="classic-title">系統公告</h2>
           <p class="notice-legend"><strong>Steven公告為紅色</strong><strong>飛飛公告為藍色</strong></p>
           <div class="classic-log-list scroll-box">
-            <p>●[系統公告]【更新】豆豆版首頁補齊原版資訊區塊：開始遊戲、公告、紀錄、排行與頁尾版本資訊。</p>
-            <p>●[系統公告] 地圖選單保留簡化版，後續可擴充稀有試鍊、活動、PVP 與世界地圖分組。</p>
-            <p>●[系統公告] 異世界主題保留魔法金框，但排版回歸經典文字 RPG 入口。</p>
+            <p>●[系統公告]【同步】已查閱 BadGameShow 公開首頁、排行、狀態頁、小白指南與 PTT 老玩家回憶文，整理出豆豆版優化方向。</p>
+            <p>●[系統公告] 新手指南改用「先刷草原 → 裝備檢定 → 修行者高塔 → 廢棄後山」的階段式路線。</p>
+            <p>●[系統公告] 地圖選單加入一般地圖、試煉地圖、特殊地圖、封閉專區分組與 EXP / 熟練報酬提示。</p>
+            <p>●[系統公告] 角色狀態維持 HP / MP 同 block，其餘資訊集中在角色情報 block，對齊原版表格式資訊密度。</p>
             <p>●[系統公告] 第一版使用 localStorage 存檔，清除瀏覽器資料會移除角色。</p>
-            <p>●[系統公告] 手機版改用單欄與靜態導覽，避免原版固定底欄遮住操作。</p>
           </div>
         </section>
 
@@ -197,9 +199,27 @@
         </section>
 
         <section class="classic-info-grid" aria-label="公開資料索引">
-          <article id="help-panel" class="panel info-panel mini-panel">
+          <article id="help-panel" class="panel info-panel mini-panel wide-panel">
             <h2 class="classic-title">遊戲說明</h2>
-            <p>建立角色 → 出擊戰鬥 → 升級賺金幣 → 購買裝備 → 完成公會任務。這版是單機 demo，後續可接 D1 做多人資料。</p>
+            <p>豆豆版保留原版「首頁就是情報中心」的語法：線上人員、系統公告、最新情報、戰鬥紀錄、排行、世界/都市情報與版本系譜都在同頁可讀；遊戲本體則維持建立角色 → 出擊 → 休息 → 買裝 → 任務 → 存檔的單機 demo 流程。</p>
+          </article>
+          <article id="guide-panel" class="panel info-panel mini-panel wide-panel">
+            <h2 class="classic-title">小白版新手指南同步</h2>
+            <ol class="route-list">
+              <li><span>01</span><strong>草原起步</strong><em>先完成草原討伐，熟悉 HP / MP、旅店與任務。</em></li>
+              <li><span>02</span><strong>裝備檢定</strong><em>存錢買豆木短劍 / 旅行布衣，再穩定刷沼地。</em></li>
+              <li><span>03</span><strong>修行者高塔</strong><em>參考「學到神風、提升能力上限」的路線，刷熟練與升級。</em></li>
+              <li><span>04</span><strong>廢棄後山</strong><em>對齊原版掉寶地圖概念，作為進階打寶與高風險收益區。</em></li>
+            </ol>
+          </article>
+          <article id="map-guide-panel" class="panel info-panel mini-panel">
+            <h2 class="classic-title">戰鬥地圖分組</h2>
+            <ul class="compact-list tag-list">
+              <li><strong>一般地圖</strong><span>草原、沼地，負責新手練等。</span></li>
+              <li><strong>試煉地圖</strong><span>高塔，負責熟練與能力檢定。</span></li>
+              <li><strong>特殊地圖</strong><span>廢棄後山，負責掉寶與活動感。</span></li>
+              <li><strong>封閉專區</strong><span>封印之門，預留魔王 / 國戰。</span></li>
+            </ul>
           </article>
           <article id="legend-panel" class="panel info-panel mini-panel">
             <h2 class="classic-title">傳說的英雄</h2>
@@ -209,13 +229,33 @@
               <li><span>3. 星砂貓</span><strong>Lv.9</strong></li>
             </ol>
           </article>
-          <article id="ranking-panel" class="panel info-panel mini-panel">
+          <article id="ranking-panel" class="panel info-panel mini-panel wide-panel">
             <h2 class="classic-title">各項排行</h2>
-            <ol class="rank-list">
-              <li><span>討伐數</span><strong>36</strong></li>
-              <li><span>任務完成</span><strong>18</strong></li>
-              <li><span>持有金幣</span><strong>920</strong></li>
-            </ol>
+            <div class="table-wrap compact-rank-table">
+              <table>
+                <thead>
+                  <tr><th>名稱</th><th>屬性</th><th>HP</th><th>MP</th><th>職業</th><th>戰數</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>微豆術士</td><td>光</td><td>1880/1880</td><td>920/920</td><td>賢者</td><td>388戰</td></tr>
+                  <tr><td>小豆勇者</td><td>火</td><td>1640/1640</td><td>360/360</td><td>豆豆劍士</td><td>301戰</td></tr>
+                  <tr><td>星砂貓</td><td>風</td><td>1320/1320</td><td>520/520</td><td>草原巡守</td><td>244戰</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </article>
+          <article id="mechanics-panel" class="panel info-panel mini-panel">
+            <h2 class="classic-title">資料 / 研究索引</h2>
+            <ul class="compact-list tag-list">
+              <li><strong>基礎知識</strong><span>HP / MP、EXP、金幣、熟練。</span></li>
+              <li><strong>戰鬥公式</strong><span>攻擊、防禦、速度影響勝率。</span></li>
+              <li><strong>技能 / 奧義</strong><span>神風、戰技、防禦術作為後續技能線。</span></li>
+              <li><strong>裝備學</strong><span>武器、防具、飾品集中到角色 block。</span></li>
+            </ul>
+          </article>
+          <article id="lineage-panel" class="panel info-panel mini-panel">
+            <h2 class="classic-title">版本系譜</h2>
+            <p>公開資料可確認 BadGameShow 以 JK 版為核心架設；PTT 老玩家回憶提到老頭版、JK、石器、對岸 Farland；BadGameShow 頁尾標示 Farland History Ⅱ Ver2.11 / bean 原作。本版只同步資訊架構，不使用原站素材或玩家資料。</p>
           </article>
           <article id="world-panel" class="panel info-panel mini-panel">
             <h2 class="classic-title">世界情勢</h2>
@@ -232,9 +272,9 @@
           <article id="equip-panel" class="panel info-panel mini-panel">
             <h2 class="classic-title">裝備清單</h2>
             <ul class="compact-list">
-              <li>木劍｜攻擊 +2</li>
-              <li>旅人斗篷｜防禦 +2</li>
-              <li>星砂護符｜幸運 +1</li>
+              <li>豆木短劍｜攻擊 +7</li>
+              <li>旅行布衣｜防禦 +6</li>
+              <li>星砂護符｜攻防 +3</li>
             </ul>
           </article>
         </section>
@@ -266,11 +306,27 @@
         <section class="panel side-box">
           <h2 class="classic-title">召喚者指南</h2>
           <ol>
-            <li>先在公會登錄角色。</li>
-            <li>去「晨露草原」打怪。</li>
-            <li>HP 不足就回旅店恢復。</li>
-            <li>存到金幣後購買異界裝備。</li>
+            <li>先建立角色，確認 HP / MP 在同一區塊。</li>
+            <li>刷「晨露草原」完成草原討伐。</li>
+            <li>買第一件武器或防具，再前往沼地。</li>
+            <li>進入修行者高塔刷熟練與升級。</li>
           </ol>
+        </section>
+
+        <section class="panel side-box">
+          <h2 class="classic-title">小白指南目錄</h2>
+          <ul class="compact-list sidebar-link-list">
+            <li><a href="#guide-panel">新手常見問題</a></li>
+            <li><a href="#map-guide-panel">戰鬥地圖</a></li>
+            <li><a href="#mechanics-panel">基礎知識 / 戰鬥公式</a></li>
+            <li><a href="#equip-panel">裝備學 / 熟練用途</a></li>
+          </ul>
+        </section>
+
+        <section class="panel side-box">
+          <h2 class="classic-title">老頭版系譜</h2>
+          <p>老玩家回憶線：老頭版 → JK / 石器 / Farland → BadGameShow → 豆豆版。</p>
+          <p>本版只吸收版面與資訊架構，不搬原站素材。</p>
         </section>
 
         <section class="panel side-box">
@@ -310,13 +366,14 @@
     </main>
 
     <footer class="panel classic-footer" aria-label="版本資訊">
-      <h2>無限冒險-豆豆版 Ver0.1</h2>
+      <h2>無限冒險-豆豆版 Ver0.2</h2>
       <table>
         <tbody>
-          <tr><th>靈感來源</th><td>經典文字 RPG 首頁資訊架構 / BadGameShow 排版語法</td></tr>
-          <tr><th>目前版本</th><td>純 HTML/CSS/JS 單機 demo，可部署到 Cloudflare Pages</td></tr>
+          <tr><th>靈感來源</th><td>BadGameShow 公開首頁 / 排行 / 狀態頁、小白的無限冒險指南、PTT 老玩家回憶中的老頭版系譜</td></tr>
+          <tr><th>目前版本</th><td>純 HTML/CSS/JS 單機 demo，可部署到 Cloudflare Pages Free tier</td></tr>
+          <tr><th>同步重點</th><td>新手路線、戰鬥地圖分組、HP/MP 狀態表、排行欄位、版本系譜與原版資訊密度</td></tr>
           <tr><th>製作</th><td>微豆</td></tr>
-          <tr><th>說明</th><td>本作為學習與展示用 demo，未使用原站素材與玩家資料。</td></tr>
+          <tr><th>說明</th><td>本作為學習與展示用 demo，未使用原站素材與真實玩家資料。</td></tr>
         </tbody>
       </table>
     </footer>

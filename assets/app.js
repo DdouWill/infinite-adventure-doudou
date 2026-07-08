@@ -208,10 +208,12 @@ function renderMaps() {
     const active = map.id === selectedMapId ? ' is-selected' : '';
     return `
       <button class="map-card${active}" type="button" data-map-id="${map.id}">
-        <span class="map-card__level">Lv.${map.level}</span>
+        <span class="map-card__category">${escapeHtml(map.category || '戰鬥地圖')}</span>
+        <span class="map-card__level">Lv.${map.level}｜${escapeHtml(map.stage || '冒險')}</span>
         <strong>${escapeHtml(map.name)}</strong>
         <small>${escapeHtml(map.description)}</small>
-        <span>入場：${map.cost} 金幣</span>
+        <span class="map-card__meta">入場 ${map.cost} 金幣｜EXP ${map.reward.exp}｜熟練 ${map.reward.mastery}</span>
+        <em>${escapeHtml(map.routeHint || '依照目前 HP / MP 決定是否出擊。')}</em>
       </button>
     `;
   }).join('');

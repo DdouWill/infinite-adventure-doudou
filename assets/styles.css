@@ -449,8 +449,72 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
   gap: 12px;
 }
 
-.classic-info-grid .mini-panel:first-child {
+.wide-panel {
   grid-column: 1 / -1;
+}
+
+.route-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.route-list li {
+  display: grid;
+  gap: 5px;
+  min-height: 108px;
+  padding: 10px;
+  border: 1px solid rgba(246, 201, 109, 0.18);
+  border-radius: 11px;
+  background: rgba(9, 7, 16, 0.28);
+}
+
+.route-list span {
+  width: fit-content;
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: #2b1705;
+  background: linear-gradient(135deg, #fff0b0, var(--gold));
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.route-list strong,
+.tag-list strong {
+  color: #fff4d5;
+}
+
+.route-list em,
+.tag-list span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: normal;
+  line-height: 1.55;
+}
+
+.tag-list li {
+  display: grid;
+  gap: 3px;
+  padding-bottom: 7px;
+  border-bottom: 1px dotted rgba(246, 201, 109, 0.22);
+}
+
+.sidebar-link-list li {
+  padding-bottom: 5px;
+  border-bottom: 1px dotted rgba(246, 201, 109, 0.2);
+}
+
+.compact-rank-table table {
+  min-width: 0;
+  font-size: 0.84rem;
+}
+
+.compact-rank-table th,
+.compact-rank-table td {
+  padding: 8px 9px;
 }
 
 .mini-panel p,
@@ -799,8 +863,8 @@ textarea { margin-top: 14px; resize: vertical; }
 .map-card {
   position: relative;
   display: grid;
-  gap: 6px;
-  min-height: 112px;
+  gap: 5px;
+  min-height: 134px;
   padding: 12px;
   overflow: hidden;
   border: 1px solid rgba(246, 201, 109, 0.26);
@@ -834,14 +898,34 @@ textarea { margin-top: 14px; resize: vertical; }
   box-shadow: 0 0 28px rgba(246, 201, 109, 0.15);
 }
 
+.map-card__category,
 .map-card__level {
   width: fit-content;
   padding: 3px 8px;
   border-radius: 999px;
   color: #10220e;
   background: linear-gradient(135deg, #d9ffc0, var(--green));
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 900;
+}
+
+.map-card__category {
+  color: #271305;
+  background: linear-gradient(135deg, #fff0b0, var(--gold));
+}
+
+.map-card__meta,
+.map-card em {
+  position: relative;
+  z-index: 1;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-style: normal;
+  line-height: 1.45;
+}
+
+.map-card__meta {
+  color: var(--mana);
 }
 
 .battle-actions,
@@ -1021,6 +1105,7 @@ th {
   .hero__badge { width: 64px; height: 64px; border-radius: 20px; font-size: 0.78rem; }
   .hero__status,
   .map-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .route-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stat-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
@@ -1052,6 +1137,7 @@ th {
   .battle-actions,
   .save-actions,
   .tab-nav { grid-template-columns: 1fr; }
+  .route-list { grid-template-columns: 1fr; }
   .stat-chip-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .resource-stack { grid-template-columns: 1fr; }
   .resource-row + .resource-row { border-top: 1px solid rgba(246, 201, 109, 0.12); }

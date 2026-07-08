@@ -31,6 +31,18 @@ const desktopAreas = await desktop.locator('.stat-grid').evaluate((el) => getCom
 if (!desktopAreas.includes('vitals') || !desktopAreas.includes('info')) {
   throw new Error('Desktop smoke failed: HP/MP + character info grid areas missing.');
 }
+const guideText = await desktop.locator('#guide-panel').innerText();
+if (!guideText.includes('小白版新手指南同步') || !guideText.includes('修行者高塔')) {
+  throw new Error('Desktop smoke failed: Xiaobai guide sync panel missing.');
+}
+const lineageText = await desktop.locator('#lineage-panel').innerText();
+if (!lineageText.includes('老頭版') || !lineageText.includes('BadGameShow')) {
+  throw new Error('Desktop smoke failed: lineage panel missing old-version references.');
+}
+const mapCategories = await desktop.locator('.map-card__category').evaluateAll((nodes) => nodes.map((node) => node.textContent));
+for (const expected of ['一般地圖', '試煉地圖', '特殊地圖', '封閉專區']) {
+  if (!mapCategories.includes(expected)) throw new Error(`Desktop smoke failed: missing map category ${expected}.`);
+}
 
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
 await mobile.goto(url, { waitUntil: 'networkidle' });

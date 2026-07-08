@@ -4,29 +4,62 @@ export const maps = [
   {
     id: 'meadow',
     name: '晨露草原',
+    category: '一般地圖',
+    stage: '新手起點',
     level: 1,
     cost: 0,
-    description: '新手練功地。怪物弱，但仍要注意 HP。',
+    description: '新手練功地。先熟悉戰鬥、任務與旅店恢復。',
+    routeHint: '目標：完成草原討伐，存第一筆裝備錢。',
     monsters: ['跳跳史萊姆', '迷路菇菇', '貪吃豆鳥'],
     reward: { exp: 16, gold: 22, mastery: 8 }
   },
   {
     id: 'marsh',
     name: '霧氣沼地',
+    category: '一般地圖',
+    stage: '裝備檢定',
     level: 3,
     cost: 20,
     description: '需要一點裝備。怪物會造成較高傷害。',
+    routeHint: '建議：買木劍或布衣後再穩定刷。',
     monsters: ['泥沼蛙兵', '毒霧水母', '濕地咒偶'],
     reward: { exp: 34, gold: 58, mastery: 17 }
   },
   {
     id: 'tower',
-    name: '星屑高塔',
+    name: '修行者高塔',
+    category: '試煉地圖',
+    stage: '能力上限',
     level: 6,
     cost: 60,
-    description: '掉寶率較高，但新手硬闖很容易倒下。',
+    description: '參考小白指南的新手路線，高塔用來檢定能力與戰技。',
+    routeHint: '目標：刷熟練、升級，準備挑戰進階地圖。',
     monsters: ['星光守衛', '裂紋魔書', '塔頂小惡魔'],
     reward: { exp: 78, gold: 132, mastery: 38 }
+  },
+  {
+    id: 'ruins',
+    name: '廢棄後山',
+    category: '特殊地圖',
+    stage: '掉寶路線',
+    level: 9,
+    cost: 120,
+    description: '同步原版改版紀錄的掉寶地圖概念，風險高但報酬好。',
+    routeHint: '建議：有青銅胸甲與穩定勝率後再來。',
+    monsters: ['後山山賊', '霧隱獸', '寶箱守衛'],
+    reward: { exp: 128, gold: 220, mastery: 62 }
+  },
+  {
+    id: 'sealed_gate',
+    name: '封印之門',
+    category: '封閉專區',
+    stage: '魔王預告',
+    level: 12,
+    cost: 180,
+    description: '豆豆版預留的世界 Boss / 魔王城入口。',
+    routeHint: '目前作為高階挑戰展示，正式多人版再開放國戰。',
+    monsters: ['封印守護者', '星門魔像', '裂界使者'],
+    reward: { exp: 188, gold: 320, mastery: 96 }
   }
 ];
 
