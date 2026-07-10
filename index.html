@@ -311,6 +311,17 @@
               <p class="eyebrow">召喚儀式</p>
               <h2>登錄你的異界冒險者</h2>
             </div>
+            <section id="save-recovery" class="save-recovery" role="region" aria-labelledby="save-recovery-title" hidden>
+              <h3 id="save-recovery-title">偵測到損壞存檔</h3>
+              <p id="save-recovery-message" role="alert">原始存檔已保留，不會自動覆寫。</p>
+              <label for="save-recovery-data">原始存檔內容（可先複製備份或直接修復）</label>
+              <textarea id="save-recovery-data" rows="10" spellcheck="false"></textarea>
+              <div class="save-actions">
+                <button id="save-recovery-import" class="primary-action" type="button">匯入修復後存檔</button>
+                <button id="save-recovery-discard" class="danger-button" type="button">捨棄損壞存檔</button>
+              </div>
+              <p id="save-recovery-status" class="form-message" role="status" aria-live="polite"></p>
+            </section>
             <form id="create-form" class="create-form">
               <label>
                 角色名稱

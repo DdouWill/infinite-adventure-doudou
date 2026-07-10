@@ -36,7 +36,9 @@ import {
 } from './local-accounts.js';
 import { referenceCatalog } from './reference-catalog.js';
 
-const LOGIN_KEY = 'infinite-adventure-doudou-login-v1';
+const LOGIN_KEY = 'infinite-adventure-doudou-login-v2';
+const LEGACY_LOGIN_KEY = 'infinite-adventure-doudou-login-v1';
+const LOGIN_SESSION_VERSION = 2;
 const ACTIVE_PLAYERS_KEY = 'infinite-adventure-doudou-active-players-v1';
 const LOGIN_TOKEN_PATTERN = /^[A-Za-z0-9_]{4,8}$/;
 const GOOGLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -46,6 +48,7 @@ let loginSession = loadLoginSession();
 const initialPlayerLoad = loadPlayer();
 let state = initialPlayerLoad.player;
 let saveStatusMessage = initialPlayerLoad.warning || '';
+let saveRecovery = recoveryFromLoad(initialPlayerLoad);
 let selectedMapId = 'meadow';
 let currentView = 'battle';
 let battleTimers = [];
@@ -101,6 +104,12 @@ const nodes = {
   createView: $('#create-view'),
   gameView: $('#game-view'),
   createForm: $('#create-form'),
+  saveRecovery: $('#save-recovery'),
+  saveRecoveryMessage: $('#save-recovery-message'),
+  saveRecoveryData: $('#save-recovery-data'),
+  saveRecoveryImport: $('#save-recovery-import'),
+  saveRecoveryDiscard: $('#save-recovery-discard'),
+  saveRecoveryStatus: $('#save-recovery-status'),
   playerTitle: $('#player-title'),
   statGrid: $('#stat-grid'),
   adventureGuide: $('#adventure-guide'),
@@ -255,6 +264,10 @@ $$('[data-login-focus]').forEach((button) => {
 
 nodes.createForm.addEventListener('submit', (event) => {
   event.preventDefault();
+  if (saveRecovery) {
+    nodes.saveRecoveryStatus.textContent = '請先修復匯入或明確捨棄損壞存檔。';
+    return;
+  }
   const form = new FormData(nodes.createForm);
   state = createPlayer({
     name: form.get('hero-name'),
@@ -268,6 +281,37 @@ nodes.createForm.addEventListener('submit', (event) => {
     recordActivePlayer(loginSession, state.name);
   }
   render();
+});
+
+nodes.saveRecoveryImport.addEventListener('click', () => {
+  try {
+    const candidate = parsePlayer(nodes.saveRecoveryData.value);
+    if (!savePlayer(candidate)) throw new Error(saveStatusMessage || '瀏覽器無法寫入角色存檔。');
+    state = candidate;
+    saveRecovery = null;
+    saveStatusMessage = '損壞存檔已由修復後內容取代。';
+    nodes.saveRecoveryStatus.textContent = '';
+    recordActivePlayer(loginSession, state.name);
+    render();
+    focusGameEntry();
+  } catch (error) {
+    nodes.saveRecoveryStatus.textContent = `修復匯入失敗：${error.message}`;
+  }
+});
+
+nodes.saveRecoveryDiscard.addEventListener('click', () => {
+  const confirmed = window.confirm('確定要永久捨棄目前損壞的原始存檔嗎？請先自行複製備份。');
+  if (!confirmed) return;
+  try {
+    clearPlayerForSession(localStorage, loginSession);
+    saveRecovery = null;
+    saveStatusMessage = '';
+    nodes.saveRecoveryStatus.textContent = '';
+    render();
+    focusGameEntry();
+  } catch (error) {
+    nodes.saveRecoveryStatus.textContent = `無法捨棄損壞存檔：${error.message}`;
+  }
 });
 
 nodes.battleButton.addEventListener('click', () => {
@@ -320,6 +364,7 @@ nodes.logoutButton.addEventListener('click', () => {
   localStorage.removeItem(LOGIN_KEY);
   loginSession = null;
   state = null;
+  saveRecovery = null;
   saveStatusMessage = '';
   clearBattleTimers();
   activeBattleEncounter = null;
@@ -579,8 +624,11 @@ function render() {
   if (!state) {
     nodes.createView.classList.remove('is-hidden');
     nodes.gameView.classList.add('is-hidden');
+    renderSaveRecovery();
     return;
   }
+  nodes.createForm.hidden = false;
+  nodes.saveRecovery.hidden = true;
   nodes.createView.classList.add('is-hidden');
   nodes.gameView.classList.remove('is-hidden');
   nodes.playerTitle.textContent = `${state.name}｜Lv.${state.level} ${state.element}・${state.job}`;
@@ -594,6 +642,15 @@ function render() {
   renderWorld();
   renderReferenceCatalog();
   renderPanels();
+}
+
+function renderSaveRecovery() {
+  const isRecovering = Boolean(saveRecovery);
+  nodes.createForm.hidden = isRecovering;
+  nodes.saveRecovery.hidden = !isRecovering;
+  if (!isRecovering) return;
+  nodes.saveRecoveryMessage.textContent = saveRecovery.message;
+  if (document.activeElement !== nodes.saveRecoveryData) nodes.saveRecoveryData.value = saveRecovery.raw;
 }
 
 function renderStats() {
@@ -1108,6 +1165,11 @@ function loadPlayer() {
   }
 }
 
+function recoveryFromLoad(loaded) {
+  if (loaded?.player || !loaded?.warning) return null;
+  return { message: loaded.warning, raw: String(loaded.corruptRaw || '') };
+}
+
 function setSaveStatus(message) {
   saveStatusMessage = String(message || '');
   if (nodes?.saveMessage) nodes.saveMessage.textContent = saveStatusMessage;
@@ -1127,13 +1189,13 @@ function openRegisterModal() {
   nodes.registerId.focus();
 }
 
-function closeRegisterModal() {
+function closeRegisterModal({ restoreFocus = true } = {}) {
   nodes.registerModal.hidden = true;
   nodes.registerModal.classList.add('is-hidden');
   nodes.registerToggleButton.setAttribute('aria-expanded', 'false');
   setRegisterBackgroundInert(false);
   document.body.classList.remove('register-modal-active');
-  nodes.registerToggleButton.focus();
+  if (restoreFocus) nodes.registerToggleButton.focus();
 }
 
 function setRegisterBackgroundInert(isInert) {
@@ -1330,16 +1392,30 @@ function accountSourceLabel(source) {
 }
 
 function completeLoginSession(session, heroName) {
-  if (!nodes.registerModal.hidden) closeRegisterModal();
-  loginSession = { ...session, loginAt: new Date().toISOString() };
+  if (!nodes.registerModal.hidden) closeRegisterModal({ restoreFocus: false });
+  loginSession = { ...session, version: LOGIN_SESSION_VERSION, loginAt: new Date().toISOString() };
   saveLoginSession();
   const loaded = loadPlayer();
   state = loaded.player;
+  saveRecovery = recoveryFromLoad(loaded);
   saveStatusMessage = loaded.warning || '';
   recordActivePlayer(loginSession, state?.name || heroName || session.displayName || session.account);
   prefillHeroName(heroName || session.displayName || session.account);
   render();
   window.location.hash = 'game-panel';
+  window.requestAnimationFrame(focusGameEntry);
+}
+
+function focusGameEntry() {
+  if (saveRecovery) {
+    nodes.saveRecoveryData.focus();
+    return;
+  }
+  if (!state) {
+    nodes.createForm.elements['hero-name']?.focus();
+    return;
+  }
+  document.querySelector('.tab-button.is-active')?.focus();
 }
 
 function prefillHeroName(value) {
@@ -1363,11 +1439,14 @@ function saveLoginSession() {
 
 function loadLoginSession() {
   try {
+    localStorage.removeItem(LEGACY_LOGIN_KEY);
     const raw = localStorage.getItem(LOGIN_KEY);
     const session = raw ? JSON.parse(raw) : null;
+    if (session?.version !== LOGIN_SESSION_VERSION) return null;
     const account = String(session?.account || '');
     if (!account) return null;
     if (session.source === 'google-oauth') return GOOGLE_EMAIL_PATTERN.test(account) ? session : null;
+    if (!['password', 'local-register'].includes(session.source)) return null;
     return LOGIN_TOKEN_PATTERN.test(account) ? session : null;
   } catch {
     return null;
@@ -1438,3 +1517,4 @@ function escapeHtml(value) {
 
 renderReferenceCatalog();
 render();
+if (loginSession) window.requestAnimationFrame(focusGameEntry);

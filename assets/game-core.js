@@ -1116,6 +1116,11 @@ export function parsePlayer(json) {
     throw new Error('存檔 JSON 無法解析。');
   }
   if (!isPlainObject(data)) throw new Error('存檔格式錯誤。');
+  const sourceVersion = data.version === undefined ? 1 : data.version;
+  if (!Number.isSafeInteger(sourceVersion) || sourceVersion < 1 || sourceVersion > 3) throw new Error('存檔版本不支援。');
+  if (sourceVersion === 3 && (data.itemUseCounts === undefined || data.jobBonusesClaimed === undefined)) {
+    throw new Error('v3 存檔缺少一次性限制紀錄。');
+  }
 
   const name = importText(data.name, '角色名稱', { min: 2, max: 12 });
   if (!elements.includes(data.element)) throw new Error('存檔屬性無效。');
@@ -1172,13 +1177,24 @@ export function parsePlayer(json) {
   }
 
   player.itemUseCounts = importLimitedItemCounts(data.itemUseCounts);
+  if (sourceVersion < 3 && data.itemUseCounts === undefined) {
+    player.itemUseCounts = Object.fromEntries(
+      shopItems.filter((item) => item.useLimit).map((item) => [item.id, item.useLimit])
+    );
+  }
   player.jobBonusesClaimed = importIdList(data.jobBonusesClaimed, new Set(jobDefinitions.map((entry) => entry.id)), '轉生獎勵');
-  if (data.jobBonusesClaimed === undefined && job.tier !== 'base') player.jobBonusesClaimed = [job.id];
   player.milestonesClaimed = importIdList(data.milestonesClaimed, new Set(milestones.map((entry) => entry.id)), '里程碑');
   player.mapRuns = importCounterRecord(data.mapRuns, new Set(maps.map((map) => map.id)), '地圖紀錄');
   player.mapWins = importCounterRecord(data.mapWins, new Set(maps.map((map) => map.id)), '地圖勝場');
   player.careerWins = importCounterRecord(data.careerWins, new Set(jobDefinitions.map((entry) => entry.id)), '職業勝場');
   player.careerBattles = importCounterRecord(data.careerBattles, new Set(jobDefinitions.map((entry) => entry.id)), '職業戰數');
+  const historicalJobs = [...Object.keys(player.careerBattles), ...Object.keys(player.careerWins), job.id]
+    .filter((id) => jobById(id)?.tier !== 'base');
+  if (sourceVersion < 3 && data.jobBonusesClaimed === undefined) {
+    player.jobBonusesClaimed = [...new Set(historicalJobs)];
+  } else if (sourceVersion === 3 && historicalJobs.some((id) => !player.jobBonusesClaimed.includes(id))) {
+    throw new Error('存檔轉生獎勵紀錄與職業歷史不一致。');
+  }
   player.careerFlags = importCareerFlags(data.careerFlags);
   player.bestiary = importBestiary(data.bestiary);
   player.quest = importQuest(data.quest, player.quest);

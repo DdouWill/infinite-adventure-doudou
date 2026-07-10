@@ -165,12 +165,13 @@ async function registerLocalThroughGate(page, account, password) {
   await page.fill('#register-pass-confirm', password);
   await page.click('#register-submit');
   await page.waitForFunction(() => document.querySelector('#login-view')?.classList.contains('is-hidden'));
-  const session = await page.evaluate(() => JSON.parse(localStorage.getItem('infinite-adventure-doudou-login-v1')));
+  const session = await page.evaluate(() => JSON.parse(localStorage.getItem('infinite-adventure-doudou-login-v2')));
   if (session.source !== 'local-register' || session.account !== account) {
     throw new Error(`Register smoke failed: local registration session mismatch ${JSON.stringify(session)}.`);
   }
   const heroName = await page.locator('#hero-name').inputValue();
   if (heroName !== account) throw new Error(`Register smoke failed: local registration did not prefill hero name (${heroName}).`);
+  await page.waitForFunction(() => document.activeElement?.id === 'hero-name');
   await assertActivePlayers(page, [account]);
 }
 
@@ -202,7 +203,7 @@ async function authorizeGoogleThroughGate(page, email, displayName) {
   await openRegisterModal(page, 'Google OAuth register');
   await page.click('#google-oauth-button');
   await page.waitForFunction(() => document.querySelector('#login-view')?.classList.contains('is-hidden'));
-  const session = await page.evaluate(() => JSON.parse(localStorage.getItem('infinite-adventure-doudou-login-v1')));
+  const session = await page.evaluate(() => JSON.parse(localStorage.getItem('infinite-adventure-doudou-login-v2')));
   if (session.source !== 'google-oauth' || session.account !== email || session.displayName !== displayName) {
     throw new Error(`Register smoke failed: Google OAuth session mismatch ${JSON.stringify(session)}.`);
   }
@@ -214,6 +215,33 @@ async function authorizeGoogleThroughGate(page, email, displayName) {
 }
 
 const browser = await chromium.launch({ headless: true });
+const legacySessionProbe = await browser.newPage({ viewport: { width: 1024, height: 900 } });
+await legacySessionProbe.addInitScript(() => {
+  localStorage.setItem('infinite-adventure-doudou-login-v1', JSON.stringify({
+    account: 'legacy1',
+    source: 'password',
+    loginAt: '2025-01-01T00:00:00.000Z'
+  }));
+  localStorage.setItem('infinite-adventure-doudou-save-v1', JSON.stringify({
+    name: '舊共用角色',
+    element: '火',
+    job: '劍士',
+    level: 1
+  }));
+});
+await legacySessionProbe.goto(url, { waitUntil: 'networkidle' });
+if (!(await legacySessionProbe.locator('#login-view').isVisible()) || (await legacySessionProbe.locator('#app-shell').isVisible())) {
+  throw new Error('Legacy session smoke failed: an unverified v1 session bypassed the new login gate.');
+}
+const legacyMigrationState = await legacySessionProbe.evaluate(() => ({
+  legacySessionPresent: localStorage.getItem('infinite-adventure-doudou-login-v1') !== null,
+  legacySavePresent: localStorage.getItem('infinite-adventure-doudou-save-v1') !== null,
+  scopedSavePresent: Object.keys(localStorage).some((key) => key.startsWith('infinite-adventure-doudou-save-v3:'))
+}));
+if (legacyMigrationState.legacySessionPresent || !legacyMigrationState.legacySavePresent || legacyMigrationState.scopedSavePresent) {
+  throw new Error(`Legacy session smoke failed: shared save migrated under an unverified identity ${JSON.stringify(legacyMigrationState)}.`);
+}
+await legacySessionProbe.close();
 const actualListProbe = await browser.newPage({ viewport: { width: 1024, height: 900 } });
 await actualListProbe.goto(url, { waitUntil: 'networkidle' });
 await assertTerminalLoginGate(actualListProbe, 'Empty actual local account list');
@@ -229,6 +257,38 @@ await localRegisterProbe.goto(url, { waitUntil: 'networkidle' });
 await assertTerminalLoginGate(localRegisterProbe, 'Local register');
 await registerLocalThroughGate(localRegisterProbe, 'newhero', 'pass02');
 await localRegisterProbe.close();
+const corruptSaveProbe = await browser.newPage({ viewport: { width: 1024, height: 900 } });
+await corruptSaveProbe.goto(url, { waitUntil: 'networkidle' });
+await registerLocalThroughGate(corruptSaveProbe, 'broken1', 'pass01');
+const corruptSaveRaw = '{"name":"尚未修完"';
+const corruptSaveKey = await corruptSaveProbe.evaluate((raw) => {
+  const session = JSON.parse(localStorage.getItem('infinite-adventure-doudou-login-v2'));
+  const key = `infinite-adventure-doudou-save-v3:local:${encodeURIComponent(session.account.toLowerCase())}`;
+  localStorage.setItem(key, raw);
+  return key;
+}, corruptSaveRaw);
+await corruptSaveProbe.reload({ waitUntil: 'networkidle' });
+if (!(await corruptSaveProbe.locator('#save-recovery').isVisible()) || (await corruptSaveProbe.locator('#create-form').isVisible())) {
+  throw new Error('Corrupt save smoke failed: recovery UI was not shown exclusively before character creation.');
+}
+if ((await corruptSaveProbe.locator('#save-recovery-data').inputValue()) !== corruptSaveRaw) {
+  throw new Error('Corrupt save smoke failed: raw save was not exposed for backup and repair.');
+}
+await corruptSaveProbe.waitForFunction(() => document.activeElement?.id === 'save-recovery-data');
+await corruptSaveProbe.screenshot({ path: `${screenshotsDir}/desktop-save-recovery.png`, fullPage: true });
+await corruptSaveProbe.click('#save-recovery-import');
+await corruptSaveProbe.waitForFunction(() => document.querySelector('#save-recovery-status')?.textContent.includes('修復匯入失敗'));
+const rawBeforeDiscard = await corruptSaveProbe.evaluate((key) => localStorage.getItem(key), corruptSaveKey);
+if (rawBeforeDiscard !== corruptSaveRaw) throw new Error('Corrupt save smoke failed: raw save changed before explicit discard.');
+corruptSaveProbe.once('dialog', (dialog) => dialog.accept());
+await corruptSaveProbe.click('#save-recovery-discard');
+if (!(await corruptSaveProbe.locator('#create-form').isVisible()) || (await corruptSaveProbe.locator('#save-recovery').isVisible())) {
+  throw new Error('Corrupt save smoke failed: explicit discard did not return to character creation.');
+}
+if (await corruptSaveProbe.evaluate((key) => localStorage.getItem(key), corruptSaveKey)) {
+  throw new Error('Corrupt save smoke failed: explicit discard did not clear the corrupt save.');
+}
+await corruptSaveProbe.close();
 const googleRegisterProbe = await browser.newPage({ viewport: { width: 1024, height: 900 } });
 await googleRegisterProbe.goto(url, { waitUntil: 'networkidle' });
 await assertTerminalLoginGate(googleRegisterProbe, 'Google OAuth register');

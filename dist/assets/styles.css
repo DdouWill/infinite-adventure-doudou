@@ -805,6 +805,19 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 }
 
 .create-view { max-width: 680px; }
+.save-recovery {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--primary);
+  background: #0a0a0a;
+}
+.save-recovery[hidden] { display: none; }
+.save-recovery h3,
+.save-recovery p { margin: 0; }
+.save-recovery label { color: var(--primary); font-weight: 800; }
+.save-recovery textarea { width: 100%; box-sizing: border-box; }
+.create-form[hidden] { display: none; }
 .create-form,
 .save-actions,
 .battle-actions { display: grid; gap: 14px; }

@@ -280,7 +280,7 @@ test('progressionGuide never recommends a map the player cannot afford', () => {
   assert.equal(guide.suggestedMapId, 'meadow');
 });
 
-test('parsePlayer migrates old saves with progression defaults', () => {
+test('parsePlayer migrates old saves with progression defaults and closes unknown one-time ledgers', () => {
   const parsed = parsePlayer(JSON.stringify({
     name: '舊存檔',
     element: '星',
@@ -297,6 +297,43 @@ test('parsePlayer migrates old saves with progression defaults', () => {
   assert.equal(parsed.jobId, 'blade');
   assert.equal(parsed.job, '劍士');
   assert.equal(parsed.equipment.weapon, null);
+  shopItems.filter((item) => item.useLimit).forEach((item) => {
+    assert.equal(parsed.itemUseCounts[item.id], item.useLimit);
+  });
+});
+
+test('parsePlayer infers claimed careers from legacy career history', () => {
+  const parsed = parsePlayer(JSON.stringify({
+    version: 2,
+    name: '轉生舊檔',
+    element: '光',
+    jobId: 'seraph',
+    job: '熾天使',
+    level: 5,
+    careerBattles: { sword_heir: 0, seraph: 4 }
+  }));
+
+  assert.deepEqual(new Set(parsed.jobBonusesClaimed), new Set(['sword_heir', 'seraph']));
+});
+
+test('parsePlayer requires one-time ledgers in v3 saves and rejects unsupported versions', () => {
+  const base = createPlayer({ name: '新版存檔', element: '星', archetype: 'blade' });
+  const withoutItems = { ...base };
+  delete withoutItems.itemUseCounts;
+  const withoutJobs = { ...base };
+  delete withoutJobs.jobBonusesClaimed;
+  const resetCareerLedger = {
+    ...base,
+    jobId: 'sword_heir',
+    job: '劍之傳人',
+    careerBattles: { sword_heir: 1 },
+    jobBonusesClaimed: []
+  };
+
+  assert.throws(() => parsePlayer(JSON.stringify(withoutItems)), /一次性限制紀錄/);
+  assert.throws(() => parsePlayer(JSON.stringify(withoutJobs)), /一次性限制紀錄/);
+  assert.throws(() => parsePlayer(JSON.stringify(resetCareerLedger)), /不一致/);
+  assert.throws(() => parsePlayer(JSON.stringify({ ...base, version: 4 })), /版本/);
 });
 
 test('parsePlayer rejects invalid scalars and corrupt nested entries before persistence', () => {
@@ -326,7 +363,9 @@ test('parsePlayer rebuilds a canonical save and drops unknown fields', () => {
   assert.equal(parsed.hp, parsed.maxHp);
   assert.equal(parsed.wins, 0);
   assert.equal(parsed.injected, undefined);
-  assert.deepEqual(parsed.itemUseCounts, {});
+  shopItems.filter((item) => item.useLimit).forEach((item) => {
+    assert.equal(parsed.itemUseCounts[item.id], item.useLimit);
+  });
   assert.deepEqual(parsed.jobBonusesClaimed, []);
 });
 

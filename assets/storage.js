@@ -38,7 +38,11 @@ export function loadPlayerForSession(storage, session) {
     } catch {
       const recovered = recoverBackup(storage, key);
       if (recovered) return recovered;
-      return { player: null, warning: '目前身份的角色存檔已損壞，請匯入有效備份或重置角色。' };
+      return {
+        player: null,
+        corruptRaw: primary,
+        warning: '目前身份的角色存檔已損壞，請先匯出原始內容、修復匯入或明確捨棄。'
+      };
     }
   }
 

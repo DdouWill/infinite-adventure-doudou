@@ -74,15 +74,29 @@ test('legacy global save migrates once into the active account namespace', () =>
 
 test('corrupt primary save recovers the last known good backup', () => {
   const storage = new MemoryStorage();
-  const session = { account: 'backup01', source: 'password' };
-  savePlayerForSession(storage, session, player('備份勇者'));
-  const updated = player('更新勇者');
-  savePlayerForSession(storage, session, updated);
-  storage.setItem(playerStorageKey(session), '{broken');
+  const session = { account: 'recover01', source: 'password' };
+  const first = createPlayer({ name: '可復原角色', element: '光', archetype: 'blade' });
+  savePlayerForSession(storage, session, first);
+  const second = { ...first, level: 2 };
+  savePlayerForSession(storage, session, second);
+  storage.setItem(playerStorageKey(session), '{broken-json');
+
+  const loaded = loadPlayerForSession(storage, session);
+  assert.equal(loaded.recovered, true);
+  assert.equal(loaded.player.level, 1);
+  assert.match(loaded.warning, /恢復/);
+});
+
+test('corrupt primary without backup preserves the raw save for explicit recovery', () => {
+  const storage = new MemoryStorage();
+  const session = { account: 'broken01', source: 'password' };
+  const corruptRaw = '{"name":"尚未修完"';
+  storage.setItem(playerStorageKey(session), corruptRaw);
 
   const loaded = loadPlayerForSession(storage, session);
 
-  assert.equal(loaded.player.name, '備份勇者');
-  assert.equal(loaded.recovered, true);
-  assert.match(loaded.warning, /備份/);
+  assert.equal(loaded.player, null);
+  assert.equal(loaded.corruptRaw, corruptRaw);
+  assert.match(loaded.warning, /損壞/);
+  assert.equal(storage.getItem(playerStorageKey(session)), corruptRaw);
 });
