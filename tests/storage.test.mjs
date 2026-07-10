@@ -4,6 +4,7 @@ import { createPlayer, serializePlayer } from '../assets/game-core.js';
 import {
   LEGACY_PLAYER_STORAGE_KEY,
   clearPlayerForSession,
+  clearPlayerRecoveryForSession,
   loadPlayerForSession,
   playerStorageKey,
   savePlayerForSession
@@ -99,4 +100,46 @@ test('corrupt primary without backup preserves the raw save for explicit recover
   assert.equal(loaded.corruptRaw, corruptRaw);
   assert.match(loaded.warning, /損壞/);
   assert.equal(storage.getItem(playerStorageKey(session)), corruptRaw);
+});
+
+test('empty primary is corrupt and recovers a valid backup instead of allowing overwrite', () => {
+  const storage = new MemoryStorage();
+  const session = { account: 'empty001', source: 'password' };
+  const key = playerStorageKey(session);
+  const backupRaw = serializePlayer(player('空檔救援者'));
+  storage.setItem(key, '');
+  storage.setItem(`${key}:backup`, backupRaw);
+
+  const loaded = loadPlayerForSession(storage, session);
+
+  assert.equal(loaded.recovered, true);
+  assert.equal(loaded.player.name, '空檔救援者');
+  assert.equal(storage.getItem(key), backupRaw);
+});
+
+test('empty primary without backup enters recovery instead of character creation', () => {
+  const storage = new MemoryStorage();
+  const session = { account: 'empty002', source: 'password' };
+  storage.setItem(playerStorageKey(session), '');
+
+  const loaded = loadPlayerForSession(storage, session);
+
+  assert.equal(loaded.player, null);
+  assert.equal(loaded.corruptRaw, '');
+  assert.match(loaded.warning, /損壞/);
+});
+
+test('corrupt legacy save exposes raw content and can be explicitly discarded', () => {
+  const storage = new MemoryStorage();
+  const session = { account: 'legacy02', source: 'password' };
+  const corruptRaw = '{"name":"舊檔未修完"';
+  storage.setItem(LEGACY_PLAYER_STORAGE_KEY, corruptRaw);
+
+  const loaded = loadPlayerForSession(storage, session);
+
+  assert.equal(loaded.player, null);
+  assert.equal(loaded.corruptRaw, corruptRaw);
+  assert.equal(loaded.corruptSource, 'legacy');
+  clearPlayerRecoveryForSession(storage, session, loaded.corruptSource);
+  assert.equal(storage.getItem(LEGACY_PLAYER_STORAGE_KEY), null);
 });

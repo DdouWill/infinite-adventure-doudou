@@ -26,6 +26,7 @@ import {
 } from './game-core.js';
 import {
   clearPlayerForSession,
+  clearPlayerRecoveryForSession,
   loadPlayerForSession,
   savePlayerForSession
 } from './storage.js';
@@ -286,7 +287,9 @@ nodes.createForm.addEventListener('submit', (event) => {
 nodes.saveRecoveryImport.addEventListener('click', () => {
   try {
     const candidate = parsePlayer(nodes.saveRecoveryData.value);
+    const recoverySource = saveRecovery?.source || 'scoped';
     if (!savePlayer(candidate)) throw new Error(saveStatusMessage || '瀏覽器無法寫入角色存檔。');
+    if (recoverySource === 'legacy') clearPlayerRecoveryForSession(localStorage, loginSession, recoverySource);
     state = candidate;
     saveRecovery = null;
     saveStatusMessage = '損壞存檔已由修復後內容取代。';
@@ -303,7 +306,7 @@ nodes.saveRecoveryDiscard.addEventListener('click', () => {
   const confirmed = window.confirm('確定要永久捨棄目前損壞的原始存檔嗎？請先自行複製備份。');
   if (!confirmed) return;
   try {
-    clearPlayerForSession(localStorage, loginSession);
+    clearPlayerRecoveryForSession(localStorage, loginSession, saveRecovery?.source);
     saveRecovery = null;
     saveStatusMessage = '';
     nodes.saveRecoveryStatus.textContent = '';
@@ -1167,7 +1170,11 @@ function loadPlayer() {
 
 function recoveryFromLoad(loaded) {
   if (loaded?.player || !loaded?.warning) return null;
-  return { message: loaded.warning, raw: String(loaded.corruptRaw || '') };
+  return {
+    message: loaded.warning,
+    raw: String(loaded.corruptRaw ?? ''),
+    source: loaded.corruptSource === 'legacy' ? 'legacy' : 'scoped'
+  };
 }
 
 function setSaveStatus(message) {

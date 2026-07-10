@@ -289,6 +289,26 @@ if (await corruptSaveProbe.evaluate((key) => localStorage.getItem(key), corruptS
   throw new Error('Corrupt save smoke failed: explicit discard did not clear the corrupt save.');
 }
 await corruptSaveProbe.close();
+const corruptLegacyProbe = await browser.newPage({ viewport: { width: 1024, height: 900 } });
+await corruptLegacyProbe.goto(url, { waitUntil: 'networkidle' });
+await registerLocalThroughGate(corruptLegacyProbe, 'legacy2', 'pass01');
+const corruptLegacyRaw = '{"name":"舊檔未修完"';
+await corruptLegacyProbe.evaluate((raw) => localStorage.setItem('infinite-adventure-doudou-save-v1', raw), corruptLegacyRaw);
+await corruptLegacyProbe.reload({ waitUntil: 'networkidle' });
+if (!(await corruptLegacyProbe.locator('#save-recovery').isVisible())
+  || (await corruptLegacyProbe.locator('#save-recovery-data').inputValue()) !== corruptLegacyRaw) {
+  throw new Error('Legacy recovery smoke failed: corrupt legacy raw was not exposed for repair.');
+}
+corruptLegacyProbe.once('dialog', (dialog) => dialog.accept());
+await corruptLegacyProbe.click('#save-recovery-discard');
+if (await corruptLegacyProbe.evaluate(() => localStorage.getItem('infinite-adventure-doudou-save-v1'))) {
+  throw new Error('Legacy recovery smoke failed: explicit discard did not remove the corrupt legacy save.');
+}
+await corruptLegacyProbe.reload({ waitUntil: 'networkidle' });
+if (!(await corruptLegacyProbe.locator('#create-form').isVisible()) || (await corruptLegacyProbe.locator('#save-recovery').isVisible())) {
+  throw new Error('Legacy recovery smoke failed: discarded legacy save returned after reload.');
+}
+await corruptLegacyProbe.close();
 const googleRegisterProbe = await browser.newPage({ viewport: { width: 1024, height: 900 } });
 await googleRegisterProbe.goto(url, { waitUntil: 'networkidle' });
 await assertTerminalLoginGate(googleRegisterProbe, 'Google OAuth register');
