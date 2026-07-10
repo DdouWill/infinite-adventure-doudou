@@ -24,9 +24,18 @@ import {
   totalStats,
   useItem
 } from './game-core.js';
+import {
+  clearPlayerForSession,
+  loadPlayerForSession,
+  savePlayerForSession
+} from './storage.js';
+import {
+  hasLocalAccount,
+  registerLocalAccount,
+  verifyLocalAccount
+} from './local-accounts.js';
 import { referenceCatalog } from './reference-catalog.js';
 
-const STORAGE_KEY = 'infinite-adventure-doudou-save-v1';
 const LOGIN_KEY = 'infinite-adventure-doudou-login-v1';
 const ACTIVE_PLAYERS_KEY = 'infinite-adventure-doudou-active-players-v1';
 const LOGIN_TOKEN_PATTERN = /^[A-Za-z0-9_]{4,8}$/;
@@ -34,12 +43,18 @@ const GOOGLE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const GOOGLE_OAUTH_SCOPE = 'openid email profile';
 const GOOGLE_USERINFO_ENDPOINT = 'https://openidconnect.googleapis.com/v1/userinfo';
 let loginSession = loadLoginSession();
-let state = loadPlayer();
+const initialPlayerLoad = loadPlayer();
+let state = initialPlayerLoad.player;
+let saveStatusMessage = initialPlayerLoad.warning || '';
 let selectedMapId = 'meadow';
 let currentView = 'battle';
 let battleTimers = [];
+let activeBattleEncounter = null;
 let activeBattleFinalPlayer = null;
 let activeBattleFinished = false;
+let referenceCatalogRendered = false;
+let renderedMapCatalogKey = '';
+let googleSdkPromise = null;
 
 const uiIcons = {
   views: { battle: '⚔', character: '◎', inventory: '▣', quest: '?', world: '◇', save: '⇩' },
@@ -74,6 +89,7 @@ const nodes = {
   loginMessage: $('#login-message'),
   loginId: $('#login-id'),
   loginPass: $('#login-pass'),
+  loginSubmit: $('#login-submit'),
   registerToggleButton: $('#register-toggle-button'),
   registerModal: $('#register-modal'),
   registerPanel: $('#register-panel'),
@@ -103,6 +119,7 @@ const nodes = {
   logoutButton: $('#logout-button'),
   resetButton: $('#reset-button'),
   saveData: $('#save-data'),
+  saveMessage: $('#save-message'),
   onlineCount: $('#online-count'),
   loginOnlineCount: $('#login-online-count'),
   loginOnlineNames: $('#login-online-names'),
@@ -125,6 +142,8 @@ const nodes = {
   battleMonsterHp: $('#battle-monster-hp'),
   battleMonsterHpText: $('#battle-monster-hp-text'),
   battleTurnFeed: $('#battle-turn-feed'),
+  battleResultSummary: $('#battle-result-summary'),
+  battleSkipButton: $('#battle-skip-button'),
   battleReturnButton: $('#battle-return-button'),
   battleReturnHint: $('#battle-return-hint')
 };
@@ -145,13 +164,17 @@ document.addEventListener('click', (event) => {
 });
 
 document.addEventListener('keydown', (event) => {
+  if (!nodes.registerModal.hidden && event.key === 'Tab') {
+    trapRegisterFocus(event);
+    return;
+  }
   if (event.key === 'Escape') {
     if (!nodes.registerModal.hidden) closeRegisterModal();
     setFunctionMenuOpen(false);
   }
 });
 
-nodes.loginForm.addEventListener('submit', (event) => {
+nodes.loginForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const form = new FormData(nodes.loginForm);
   const account = String(form.get('id') || '').trim();
@@ -160,8 +183,24 @@ nodes.loginForm.addEventListener('submit', (event) => {
     nodes.loginMessage.textContent = '帳號與密碼請使用 4～8 個半形英數字或底線。';
     return;
   }
-  nodes.loginMessage.textContent = '登入成功，正在進入遊戲介面...';
-  completeLoginSession({ account, source: 'password' }, account);
+  nodes.loginSubmit.disabled = true;
+  try {
+    if (!hasLocalAccount(localStorage, account)) {
+      nodes.loginMessage.textContent = '找不到這個本機帳號，請先使用「帳號註冊」。';
+      return;
+    }
+    if (!(await verifyLocalAccount(localStorage, account, password))) {
+      nodes.loginMessage.textContent = '密碼不正確，請重新輸入。';
+      return;
+    }
+    const accountId = account.toLowerCase();
+    nodes.loginMessage.textContent = '登入成功，正在進入遊戲介面...';
+    completeLoginSession({ account: accountId, source: 'password' }, accountId);
+  } catch (error) {
+    nodes.loginMessage.textContent = `登入失敗：${error.message}`;
+  } finally {
+    nodes.loginSubmit.disabled = false;
+  }
 });
 
 nodes.loginForm.addEventListener('reset', () => {
@@ -176,7 +215,7 @@ $$('[data-register-close]').forEach((button) => {
   button.addEventListener('click', () => closeRegisterModal());
 });
 
-nodes.localRegisterForm.addEventListener('submit', (event) => {
+nodes.localRegisterForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const form = new FormData(nodes.localRegisterForm);
   const account = String(form.get('register-id') || '').trim();
@@ -190,8 +229,17 @@ nodes.localRegisterForm.addEventListener('submit', (event) => {
     nodes.registerMessage.textContent = '兩次密碼輸入不一致。';
     return;
   }
-  nodes.registerMessage.textContent = '本機帳號建立完成，正在進入遊戲介面...';
-  completeLoginSession({ account, source: 'local-register' }, account);
+  const submitButton = nodes.localRegisterForm.querySelector('[type="submit"]');
+  submitButton.disabled = true;
+  try {
+    const accountId = await registerLocalAccount(localStorage, account, password);
+    nodes.registerMessage.textContent = '本機帳號建立完成，正在進入遊戲介面...';
+    completeLoginSession({ account: accountId, source: 'local-register' }, accountId);
+  } catch (error) {
+    nodes.registerMessage.textContent = `帳號建立失敗：${error.message}`;
+  } finally {
+    submitButton.disabled = false;
+  }
 });
 
 nodes.googleOauthButton.addEventListener('click', () => {
@@ -232,6 +280,11 @@ nodes.battleReturnButton.addEventListener('click', () => {
   closeBattlePage();
 });
 
+nodes.battleSkipButton.addEventListener('click', () => {
+  if (!activeBattleEncounter || activeBattleFinished) return;
+  revealBattleResultImmediately(activeBattleEncounter);
+});
+
 nodes.restButton.addEventListener('click', () => {
   if (!state) return;
   state = restAtInn(state);
@@ -248,34 +301,46 @@ nodes.clearLogButton.addEventListener('click', () => {
 
 nodes.exportButton.addEventListener('click', () => {
   nodes.saveData.value = state ? serializePlayer(state) : '';
+  setSaveStatus(state ? '已產生目前身份的存檔 JSON。' : '目前沒有可匯出的角色。');
 });
 
 nodes.importButton.addEventListener('click', () => {
   try {
-    state = parsePlayer(nodes.saveData.value);
-    savePlayer();
+    const candidate = parsePlayer(nodes.saveData.value);
+    if (!savePlayer(candidate)) throw new Error(saveStatusMessage || '瀏覽器無法寫入角色存檔。');
+    state = candidate;
+    setSaveStatus('存檔匯入成功，原存檔已保留為上一份有效備份。');
     render();
   } catch (error) {
-    nodes.saveData.value = `匯入失敗：${error.message}`;
+    setSaveStatus(`匯入失敗：${error.message}`);
   }
 });
 
 nodes.logoutButton.addEventListener('click', () => {
   localStorage.removeItem(LOGIN_KEY);
   loginSession = null;
+  state = null;
+  saveStatusMessage = '';
   clearBattleTimers();
+  activeBattleEncounter = null;
   nodes.battlePage.classList.add('is-hidden');
+  setBattleBackgroundInert(false);
   setFunctionMenuOpen(false);
   render();
   window.location.hash = 'login';
 });
 
 nodes.resetButton.addEventListener('click', () => {
-  const confirmed = window.confirm('確定要刪除目前角色存檔嗎？');
+  const confirmed = window.confirm('確定要刪除目前身份的角色存檔嗎？');
   if (!confirmed) return;
-  localStorage.removeItem(STORAGE_KEY);
-  state = null;
-  render();
+  try {
+    clearPlayerForSession(localStorage, loginSession);
+    state = null;
+    setSaveStatus('目前身份的角色存檔已刪除。');
+    render();
+  } catch (error) {
+    setSaveStatus(`重置失敗：${error.message}`);
+  }
 });
 
 $$('.tab-button').forEach((button) => {
@@ -320,6 +385,13 @@ function setFunctionMenuOpen(isOpen) {
 function startBattlePage() {
   clearBattleTimers();
   const encounter = createBattleEncounter(state, selectedMapId, battleRng());
+  if (!savePlayer(encounter.player)) {
+    currentView = 'save';
+    render();
+    return;
+  }
+  state = encounter.player;
+  activeBattleEncounter = encounter;
   activeBattleFinalPlayer = encounter.player;
   activeBattleFinished = false;
   setFunctionMenuOpen(false);
@@ -342,11 +414,16 @@ function renderBattlePage(encounter) {
   nodes.battleMonsterPortrait.alt = `${scene.monster.name} 圖像`;
   nodes.battleMonsterName.textContent = scene.monster.name;
   nodes.battleTurnFeed.innerHTML = '';
+  nodes.battleTurnFeed.classList.remove('is-complete');
+  nodes.battleResultSummary.textContent = '';
+  nodes.battleSkipButton.disabled = false;
+  nodes.battleSkipButton.textContent = '立即顯示結果';
   nodes.battleReturnButton.disabled = true;
   nodes.battleReturnButton.textContent = '戰鬥進行中...';
   nodes.battleReturnHint.textContent = '回合攻擊正在進行，結束後即可返回主畫面。';
+  setBattleBackgroundInert(true);
   updateBattleMeters(scene.playerStart, scene.monsterStart);
-  nodes.battlePage.focus?.();
+  nodes.battlePage.focus();
 }
 
 function revealBattleTurns(encounter) {
@@ -370,12 +447,22 @@ function revealBattleTurns(encounter) {
   });
 }
 
+function revealBattleResultImmediately(encounter) {
+  clearBattleTimers();
+  document.querySelectorAll('.battle-actor').forEach((actor) => actor.classList.remove('is-hit-flash'));
+  nodes.battleTurnFeed.innerHTML = '';
+  nodes.battleTurnFeed.classList.add('is-complete');
+  encounter.scene.turns.forEach((turn) => appendBattleTurn(turn));
+  updateBattleMeters(encounter.scene.playerEnd, encounter.scene.monsterEnd);
+  finishBattlePage(encounter);
+}
+
 function appendBattleTurn(turn) {
   const line = document.createElement('p');
   line.className = `battle-turn battle-turn--${turn.side}`;
   line.innerHTML = `${iconMarkup(battleTurnIcon(turn.side), 'turn-icon')}<span>${escapeHtml(turn.text)}</span>`;
   nodes.battleTurnFeed.append(line);
-  pulseBattleActor(turn.side);
+  if (!nodes.battleTurnFeed.classList.contains('is-complete')) pulseBattleActor(turn.side);
   nodes.battleTurnFeed.scrollTop = nodes.battleTurnFeed.scrollHeight;
 }
 
@@ -393,28 +480,47 @@ function pulseBattleActor(side) {
 }
 
 function finishBattlePage(encounter) {
+  if (activeBattleFinished) return;
   activeBattleFinished = true;
+  nodes.battleTurnFeed.classList.add('is-complete');
   state = activeBattleFinalPlayer;
   activeBattleFinalPlayer = null;
-  savePlayer();
   render();
   nodes.battlePage.classList.remove('is-hidden');
   document.body.classList.add('battle-page-active');
   updateBattleMeters(encounter.scene.playerEnd, encounter.scene.monsterEnd);
   nodes.battlePageStatus.textContent = encounter.result === 'win' ? '戰鬥勝利' : encounter.result === 'blocked' ? '無法出擊' : '戰鬥結束';
+  nodes.battleResultSummary.textContent = battleResultSummary(encounter);
+  nodes.battleSkipButton.disabled = true;
+  nodes.battleSkipButton.textContent = '結果已顯示';
   nodes.battleReturnButton.disabled = false;
   nodes.battleReturnButton.textContent = '返回主頁面';
   nodes.battleReturnHint.textContent = '戰鬥已結束，可以返回主畫面。';
+  nodes.battleReturnButton.focus();
+}
+
+function battleResultSummary(encounter) {
+  const highlights = encounter.messages.filter((message) => /擊倒|獲得|掉落|升級|戰敗|無法|不足|歸零/.test(message));
+  return highlights.slice(0, 4).join('｜') || (encounter.result === 'win' ? '討伐完成，獎勵已寫入存檔。' : '本次戰鬥結果已寫入存檔。');
+}
+
+function setBattleBackgroundInert(isInert) {
+  [nodes.functionMenu, document.querySelector('.classic-hero'), document.querySelector('#main')]
+    .filter(Boolean)
+    .forEach((element) => { element.inert = isInert; });
 }
 
 function closeBattlePage() {
   clearBattleTimers();
+  activeBattleEncounter = null;
   activeBattleFinalPlayer = null;
   activeBattleFinished = false;
   nodes.battlePage.classList.add('is-hidden');
+  setBattleBackgroundInert(false);
   document.body.classList.remove('battle-page-active');
   if (window.location.hash === '#battle-page') window.history.pushState(null, '', '#main');
   document.querySelector('#game-panel')?.scrollIntoView({ block: 'start' });
+  nodes.battleButton.focus();
 }
 
 function updateBattleMeters(playerMeter, monsterMeter) {
@@ -459,6 +565,8 @@ function battleTurnDelayMs() {
 
 function render() {
   renderActivePlayerLists();
+  document.body.classList.toggle('has-player', Boolean(loginSession && state));
+  if (nodes.saveMessage) nodes.saveMessage.textContent = saveStatusMessage;
   if (!loginSession) {
     nodes.loginView.classList.remove('is-hidden');
     nodes.appShell.classList.add('is-hidden');
@@ -613,6 +721,11 @@ function renderMaps() {
   const selectedMap = visibleMaps.find((map) => map.id === selectedMapId) || visibleMaps[0] || maps[0];
   const guide = progressionGuide(state, selectedMap.id);
   selectedMapId = selectedMap.id;
+  const battleBlocked = state.hp <= 0 || selectedMap.cost > state.gold;
+  nodes.battleButton.disabled = battleBlocked;
+  nodes.battleButton.textContent = state.hp <= 0
+    ? '請先到旅店休息'
+    : selectedMap.cost > state.gold ? `尚缺 ${selectedMap.cost - state.gold} 金幣` : '接受討伐委託';
   const categories = visibleMaps.reduce((groups, map) => {
     const category = map.category || '戰鬥地圖';
     groups[category] = groups[category] || [];
@@ -931,11 +1044,18 @@ function renderWorld() {
 function renderReferenceCatalog() {
   const visibleMapNames = new Set(availableMaps(state).map((map) => map.name));
   const visibleReferenceMaps = referenceCatalog.maps.filter((map) => visibleMapNames.has(map.name));
-  renderReferenceTable('#reference-weapon-catalog', ['名稱', '奧義', '屬性', '威力', '重量', '價格', '產地'], referenceCatalog.weapons, (weapon) => [weapon.name, weapon.ougi, weapon.element, weapon.power, weapon.weight, weapon.price, weapon.origin]);
-  renderReferenceTable('#reference-item-catalog', ['名稱', '說明'], referenceCatalog.items, (item) => [item.name, item.description]);
-  renderReferenceTable('#reference-technique-catalog', ['技能', '威力', '發動率', '消耗MP', '職業', '說明'], referenceCatalog.techniques, (technique) => [technique.name, technique.power, `${technique.rate}%`, technique.mp, technique.job, technique.extra ? `${technique.description}｜${technique.extra}` : technique.description]);
-  renderReferenceTable('#reference-ougi-catalog', ['奧義', '需要熟練', '職業', '說明'], referenceCatalog.ougis, (ougi) => [ougi.name, ougi.mastery, ougi.job, ougi.description]);
-  renderReferenceTable('#reference-map-catalog', ['地圖', '分類', '入場', '掉落／特色', '說明'], visibleReferenceMaps, (map) => [map.name, map.category, map.cost, map.drop, map.description]);
+  if (!referenceCatalogRendered) {
+    renderReferenceTable('#reference-weapon-catalog', ['名稱', '奧義', '屬性', '威力', '重量', '價格', '產地'], referenceCatalog.weapons, (weapon) => [weapon.name, weapon.ougi, weapon.element, weapon.power, weapon.weight, weapon.price, weapon.origin]);
+    renderReferenceTable('#reference-item-catalog', ['名稱', '說明'], referenceCatalog.items, (item) => [item.name, item.description]);
+    renderReferenceTable('#reference-technique-catalog', ['技能', '威力', '發動率', '消耗MP', '職業', '說明'], referenceCatalog.techniques, (technique) => [technique.name, technique.power, `${technique.rate}%`, technique.mp, technique.job, technique.extra ? `${technique.description}｜${technique.extra}` : technique.description]);
+    renderReferenceTable('#reference-ougi-catalog', ['奧義', '需要熟練', '職業', '說明'], referenceCatalog.ougis, (ougi) => [ougi.name, ougi.mastery, ougi.job, ougi.description]);
+    referenceCatalogRendered = true;
+  }
+  const mapCatalogKey = visibleReferenceMaps.map((map) => map.name).join('|');
+  if (mapCatalogKey !== renderedMapCatalogKey) {
+    renderReferenceTable('#reference-map-catalog', ['地圖', '分類', '入場', '掉落／特色', '說明'], visibleReferenceMaps, (map) => [map.name, map.category, map.cost, map.drop, map.description]);
+    renderedMapCatalogKey = mapCatalogKey;
+  }
 }
 
 function renderReferenceTable(selector, headings, rows, mapRow) {
@@ -956,25 +1076,41 @@ function renderReferenceTable(selector, headings, rows, mapRow) {
 
 function renderPanels() {
   $$('.tab-button').forEach((button) => {
-    button.classList.toggle('is-active', button.dataset.view === currentView);
+    const isActive = button.dataset.view === currentView;
+    button.classList.toggle('is-active', isActive);
+    button.setAttribute('aria-selected', String(isActive));
+    button.tabIndex = isActive ? 0 : -1;
   });
   $$('.view-panel').forEach((panel) => {
-    panel.classList.toggle('is-hidden', panel.dataset.panel !== currentView);
+    const isActive = panel.dataset.panel === currentView;
+    panel.classList.toggle('is-hidden', !isActive);
+    panel.hidden = !isActive;
   });
 }
 
-function savePlayer() {
-  if (!state) return;
-  localStorage.setItem(STORAGE_KEY, serializePlayer(state));
+function savePlayer(player = state) {
+  if (!player || !loginSession) return false;
+  try {
+    savePlayerForSession(localStorage, loginSession, player);
+    return true;
+  } catch (error) {
+    setSaveStatus(`保存失敗：${error.message}`);
+    return false;
+  }
 }
 
 function loadPlayer() {
+  if (!loginSession) return { player: null, warning: '' };
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? parsePlayer(raw) : null;
-  } catch {
-    return null;
+    return loadPlayerForSession(localStorage, loginSession);
+  } catch (error) {
+    return { player: null, warning: `讀取存檔失敗：${error.message}` };
   }
+}
+
+function setSaveStatus(message) {
+  saveStatusMessage = String(message || '');
+  if (nodes?.saveMessage) nodes.saveMessage.textContent = saveStatusMessage;
 }
 
 function openRegisterModal() {
@@ -982,6 +1118,12 @@ function openRegisterModal() {
   nodes.registerModal.classList.remove('is-hidden');
   nodes.registerToggleButton.setAttribute('aria-expanded', 'true');
   nodes.registerMessage.textContent = '可自行設定帳密，或透過 Google OAuth 授權建立本機 session。';
+  const googleOauthConfigured = Boolean(getGoogleClientId());
+  nodes.googleOauthButton.disabled = !googleOauthConfigured;
+  if (!googleOauthConfigured) setGoogleOauthStatus('此部署尚未設定 Google OAuth，本機帳號仍可正常使用。');
+  else setGoogleOauthStatus('');
+  setRegisterBackgroundInert(true);
+  document.body.classList.add('register-modal-active');
   nodes.registerId.focus();
 }
 
@@ -989,18 +1131,55 @@ function closeRegisterModal() {
   nodes.registerModal.hidden = true;
   nodes.registerModal.classList.add('is-hidden');
   nodes.registerToggleButton.setAttribute('aria-expanded', 'false');
+  setRegisterBackgroundInert(false);
+  document.body.classList.remove('register-modal-active');
   nodes.registerToggleButton.focus();
 }
 
-function startGoogleAuthorization() {
+function setRegisterBackgroundInert(isInert) {
+  const mainPanel = nodes.registerModal.parentElement;
+  const backgroundRoots = [
+    ...Array.from(mainPanel.children).filter((child) => child !== nodes.registerModal),
+    document.querySelector('.terminal-login__header'),
+    document.querySelector('#login-online-list'),
+    document.querySelector('.terminal-login__side')
+  ].filter(Boolean);
+  backgroundRoots.forEach((element) => {
+    element.inert = isInert;
+    if (isInert) element.setAttribute('aria-hidden', 'true');
+    else element.removeAttribute('aria-hidden');
+  });
+}
+
+function trapRegisterFocus(event) {
+  const focusable = Array.from(nodes.registerPanel.querySelectorAll('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'))
+    .filter((element) => !element.hidden && element.getClientRects().length > 0);
+  if (!focusable.length) return;
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+async function startGoogleAuthorization() {
   const clientId = getGoogleClientId();
   if (!clientId) {
     setGoogleOauthStatus('尚未設定 Google OAuth Client ID，無法開啟 Google 授權。');
     return;
   }
   if (!window.google?.accounts?.oauth2?.initTokenClient) {
-    setGoogleOauthStatus('Google 授權 SDK 尚未載入完成，請稍後再試。');
-    return;
+    try {
+      setGoogleOauthStatus('正在載入 Google 授權元件...');
+      await loadGoogleIdentitySdk();
+    } catch (error) {
+      setGoogleOauthStatus(`Google 授權元件載入失敗：${error.message}`);
+      return;
+    }
   }
   setGoogleOauthStatus('正在開啟 Google 授權視窗...');
   const tokenClient = window.google.accounts.oauth2.initTokenClient({
@@ -1010,6 +1189,20 @@ function startGoogleAuthorization() {
     callback: handleGoogleAuthorizationResponse
   });
   tokenClient.requestAccessToken({ prompt: 'select_account' });
+}
+
+function loadGoogleIdentitySdk() {
+  if (window.google?.accounts?.oauth2?.initTokenClient) return Promise.resolve();
+  if (googleSdkPromise) return googleSdkPromise;
+  googleSdkPromise = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('無法連線 accounts.google.com'));
+    document.head.append(script);
+  });
+  return googleSdkPromise;
 }
 
 async function handleGoogleAuthorizationResponse(response) {
@@ -1140,7 +1333,10 @@ function completeLoginSession(session, heroName) {
   if (!nodes.registerModal.hidden) closeRegisterModal();
   loginSession = { ...session, loginAt: new Date().toISOString() };
   saveLoginSession();
-  recordActivePlayer(loginSession, heroName || session.displayName || session.account);
+  const loaded = loadPlayer();
+  state = loaded.player;
+  saveStatusMessage = loaded.warning || '';
+  recordActivePlayer(loginSession, state?.name || heroName || session.displayName || session.account);
   prefillHeroName(heroName || session.displayName || session.account);
   render();
   window.location.hash = 'game-panel';
@@ -1148,7 +1344,7 @@ function completeLoginSession(session, heroName) {
 
 function prefillHeroName(value) {
   const input = nodes.createForm.elements['hero-name'];
-  if (!state && input && !input.value) input.value = sanitizeHeroName(value);
+  if (!state && input) input.value = sanitizeHeroName(value);
 }
 
 function deriveGoogleHeroName(displayName, email) {

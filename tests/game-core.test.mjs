@@ -92,6 +92,35 @@ test('rebirth applies a job once available and battle uses its skill kit with on
   assert.ok(playerSkills.filter((skill) => skill === '無限劍域').length <= 1);
 });
 
+test('rebirth job bonuses are applied only once when switching back to a mastered career', () => {
+  let player = createPlayer({ name: '循環轉職者', element: '光', archetype: 'blade' });
+  player.level = 5;
+  player.mastery = 1200;
+  player.battles = 6;
+  player.quest.completed = true;
+
+  player = rebirthPlayer(player, 'sword_heir');
+  player = rebirthPlayer(player, 'seraph');
+  const statsBeforeReturn = {
+    maxHp: player.maxHp,
+    maxMp: player.maxMp,
+    attack: player.attack,
+    defense: player.defense,
+    speed: player.speed
+  };
+  player = rebirthPlayer(player, 'sword_heir');
+
+  assert.equal(player.jobId, 'sword_heir');
+  assert.deepEqual({
+    maxHp: player.maxHp,
+    maxMp: player.maxMp,
+    attack: player.attack,
+    defense: player.defense,
+    speed: player.speed
+  }, statsBeforeReturn);
+  assert.deepEqual(player.jobBonusesClaimed.sort(), ['seraph', 'sword_heir']);
+});
+
 test('ultimate hidden job only appears after all hidden careers are mastered and remains absent otherwise', () => {
   const player = createPlayer({ name: '終極勇者', element: '星', archetype: 'ranger' });
   player.level = 25;
@@ -130,6 +159,20 @@ test('reference catalogs drive original-style maps, weapons, items, and consumab
   const used = useItem(player, 'mastery_book');
   assert.equal(used.mastery, player.mastery + 1000);
   assert.equal(used.inventory.includes('mastery_book'), false);
+});
+
+test('permanent growth consumables cannot increase the same stat without limit', () => {
+  let player = createPlayer({ name: '節制勇者', element: '火', archetype: 'blade' });
+  player.inventory.push('sword_book', 'sword_book');
+
+  player = useItem(player, 'sword_book');
+  const attackAfterFirstUse = player.attack;
+  player = useItem(player, 'sword_book');
+
+  assert.equal(player.attack, attackAfterFirstUse);
+  assert.equal(player.inventory.filter((itemId) => itemId === 'sword_book').length, 1);
+  assert.equal(player.itemUseCounts.sword_book, 1);
+  assert.ok(player.log[0].includes('使用上限'));
 });
 
 test('availableMaps restores original hidden map visibility without placeholder leaks', () => {
@@ -225,6 +268,18 @@ test('progressionGuide gives next action and map readiness without extra complex
   assert.ok(progressionGuide(player, 'meadow').nextAction.includes('HP / MP'));
 });
 
+test('progressionGuide never recommends a map the player cannot afford', () => {
+  const player = createPlayer({ name: '節儉勇者', element: '風', archetype: 'ranger' });
+  player.level = 3;
+  player.battles = 5;
+  player.quest.completed = true;
+  player.gold = 0;
+
+  const guide = progressionGuide(player, 'meadow');
+
+  assert.equal(guide.suggestedMapId, 'meadow');
+});
+
 test('parsePlayer migrates old saves with progression defaults', () => {
   const parsed = parsePlayer(JSON.stringify({
     name: '舊存檔',
@@ -242,6 +297,37 @@ test('parsePlayer migrates old saves with progression defaults', () => {
   assert.equal(parsed.jobId, 'blade');
   assert.equal(parsed.job, '劍士');
   assert.equal(parsed.equipment.weapon, null);
+});
+
+test('parsePlayer rejects invalid scalars and corrupt nested entries before persistence', () => {
+  const base = createPlayer({ name: '安全存檔', element: '星', archetype: 'blade' });
+  const invalidSaves = [
+    { ...base, element: '錯誤屬性' },
+    { ...base, level: -99 },
+    { ...base, wins: '<img src=x onerror=alert(1)>' },
+    { ...base, bestiary: { broken: null } },
+    { ...base, inventory: ['unknown_item'] }
+  ];
+
+  invalidSaves.forEach((save) => {
+    assert.throws(() => parsePlayer(JSON.stringify(save)), /存檔/);
+  });
+});
+
+test('parsePlayer rebuilds a canonical save and drops unknown fields', () => {
+  const parsed = parsePlayer(JSON.stringify({
+    name: '舊版勇者',
+    element: '光',
+    level: 1,
+    inventory: ['novice_badge'],
+    injected: '<script>alert(1)</script>'
+  }));
+
+  assert.equal(parsed.hp, parsed.maxHp);
+  assert.equal(parsed.wins, 0);
+  assert.equal(parsed.injected, undefined);
+  assert.deepEqual(parsed.itemUseCounts, {});
+  assert.deepEqual(parsed.jobBonusesClaimed, []);
 });
 
 test('createBattleEncounter builds turn-by-turn page data with probabilistic skills', () => {
@@ -268,6 +354,19 @@ test('performBattle blocks maps when gold is insufficient before charging cost',
   assert.equal(result.player.gold, 0);
 });
 
+test('performBattle blocks a defeated player before charging gold or recording a battle', () => {
+  const player = createPlayer({ name: '倒地勇者', element: '星', archetype: 'ranger' });
+  player.hp = 0;
+  player.gold = 999;
+
+  const result = performBattle(player, 'meadow', rngSequence([0.1]));
+
+  assert.equal(result.result, 'blocked');
+  assert.equal(result.player.gold, 999);
+  assert.equal(result.player.battles, 0);
+  assert.ok(result.messages.join('\n').includes('旅店'));
+});
+
 test('buyItem and equipItem update inventory and total stats', () => {
   let player = createPlayer({ name: '裝備勇者', element: '雷', archetype: 'blade' });
   player.gold = 999;
@@ -277,12 +376,40 @@ test('buyItem and equipItem update inventory and total stats', () => {
   assert.ok(totalStats(player).attack > player.attack);
 });
 
+test('shop refuses growth consumables after the character use limit is reached', () => {
+  let player = createPlayer({ name: '理性消費者', element: '雷', archetype: 'blade' });
+  player.gold = 9999;
+  player = buyItem(player, 'sword_book');
+  player = useItem(player, 'sword_book');
+  const goldAfterUse = player.gold;
+
+  player = buyItem(player, 'sword_book');
+
+  assert.equal(player.gold, goldAfterUse);
+  assert.equal(player.inventory.includes('sword_book'), false);
+  assert.ok(player.log[0].includes('購買上限'));
+});
+
 test('restAtInn restores hp and consumes gold', () => {
   const player = createPlayer({ name: '旅店勇者', element: '水', archetype: 'sage' });
   player.hp = 10;
   const rested = restAtInn(player);
   assert.equal(rested.hp, rested.maxHp);
   assert.ok(rested.gold < player.gold);
+});
+
+test('restAtInn provides emergency recovery when a defeated player cannot afford the inn', () => {
+  const player = createPlayer({ name: '破產勇者', element: '水', archetype: 'sage' });
+  player.hp = 0;
+  player.mp = 0;
+  player.gold = 0;
+
+  const rested = restAtInn(player);
+
+  assert.equal(rested.gold, 0);
+  assert.equal(rested.hp, Math.ceil(rested.maxHp * 0.3));
+  assert.equal(rested.mp, Math.ceil(rested.maxMp * 0.3));
+  assert.ok(rested.log[0].includes('緊急救援'));
 });
 
 test('claimQuestReward only rewards after progress reaches target', () => {

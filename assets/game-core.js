@@ -92,8 +92,8 @@ function catalogWeapon(id, name, price, slot = 'weapon') {
   };
 }
 
-function consumable(id, name, price, effect, value, description) {
-  return { id, type: 'consumable', name, price, attack: 0, defense: 0, effect, value, description };
+function consumable(id, name, price, effect, value, description, useLimit = null) {
+  return { id, type: 'consumable', name, price, attack: 0, defense: 0, effect, value, description, useLimit };
 }
 
 export const shopItems = [
@@ -115,9 +115,9 @@ export const shopItems = [
   catalogWeapon('dark_key', '暗闇之鑰', 580, 'trinket'),
   consumable('herb', '藥草', 30, 'heal', 50, '原版道具：使用後可補血。'),
   consumable('basic_potion', '初級回復藥', 120, 'heal', 120, '原版道具：在戰鬥後自動補血；終端版改為主動使用。'),
-  consumable('mastery_book', '熟練之書', 420, 'mastery', 1000, '原版道具：增加 1000 熟練。終端版同步為熟練大幅提升。'),
-  consumable('sword_book', '劍術之書', 360, 'attack', 3, '原版道具：增加劍術熟練；終端版轉為攻擊成長。'),
-  consumable('life_fruit', '生命之果', 520, 'maxHp', 12, '原版道具：生命力上限 +1；終端版轉為 HP 上限提升。'),
+  consumable('mastery_book', '熟練之書', 420, 'mastery', 1000, '原版道具：增加 1000 熟練。終端版同步為熟練大幅提升；每名角色限用一次。', 1),
+  consumable('sword_book', '劍術之書', 360, 'attack', 3, '原版道具：增加劍術熟練；終端版轉為一次性攻擊成長。', 1),
+  consumable('life_fruit', '生命之果', 520, 'maxHp', 12, '原版道具：生命力上限 +1；終端版轉為一次性 HP 上限提升。', 1),
   consumable('hope_fruit', '希望果實', 900, 'gold', 250, '原版道具：有機率進入星空下的夜；終端版轉為稀有冒險資金。')
 ];
 
@@ -475,7 +475,7 @@ export function createPlayer({ name, element, archetype }) {
   const baseJob = jobById(base.jobId);
 
   return {
-    version: 2,
+    version: 3,
     name: safeName,
     element,
     jobId: base.jobId,
@@ -496,6 +496,7 @@ export function createPlayer({ name, element, archetype }) {
     losses: 0,
     battles: 0,
     inventory: ['novice_badge'],
+    itemUseCounts: {},
     equipment: { weapon: null, armor: null, trinket: null },
     quest: { id: 'first_hunt', title: '草原討伐', target: 3, progress: 0, completed: false },
     milestonesClaimed: [],
@@ -505,6 +506,7 @@ export function createPlayer({ name, element, archetype }) {
     careerWins: {},
     careerBattles: {},
     careerFlags: { lowHpWins: 0, lowMpWins: 0, highRiskWins: 0 },
+    jobBonusesClaimed: [],
     rebirthCount: 0,
     log: ['歡迎來到冒險者公會。先去草原試試身手吧！'],
     createdAt: new Date().toISOString(),
@@ -559,7 +561,10 @@ export function rebirthPlayer(player, jobId) {
     next.log = mergeLog(next.log, ['轉生條件尚未達成。']);
     return next;
   }
-  applyJobBonus(next, job);
+  if (!next.jobBonusesClaimed.includes(job.id)) {
+    applyJobBonus(next, job);
+    next.jobBonusesClaimed.push(job.id);
+  }
   next.jobId = job.id;
   next.job = job.name;
   next.rebirthCount += 1;
@@ -600,6 +605,21 @@ export function createBattleEncounter(player, mapId, rng = Math.random) {
   const playerStart = { hp: next.hp, maxHp: next.maxHp, mp: next.mp, maxMp: next.maxMp };
   const startingLevel = next.level;
   const monsterStart = { hp: monster.hp, maxHp: monster.maxHp };
+
+  if (next.hp <= 0) {
+    messages.push('HP 已歸零，請先到旅店休息。');
+    turns.push({
+      side: 'system',
+      round: 0,
+      text: '公會醫護員擋下了出擊：請先到旅店恢復體力。',
+      playerHp: next.hp,
+      playerMp: next.mp,
+      monsterHp: monster.hp
+    });
+    next.updatedAt = new Date().toISOString();
+    next.log = mergeLog(next.log, messages);
+    return buildBattleEncounter({ next, map, monsterName, monster, playerStart, monsterStart, turns, messages, result: 'blocked' });
+  }
 
   if (next.gold < map.cost) {
     messages.push(`金幣不足，無法前往 ${map.name}。`);
@@ -874,6 +894,13 @@ export function portraitForMonster(name) {
 export function restAtInn(player) {
   const next = clonePlayer(player);
   const cost = Math.max(10, Math.round(next.level * 18));
+  if (next.hp <= 0 && next.gold < cost) {
+    next.hp = Math.max(1, Math.ceil(next.maxHp * 0.3));
+    next.mp = Math.max(1, Math.ceil(next.maxMp * 0.3));
+    next.updatedAt = new Date().toISOString();
+    next.log = mergeLog(next.log, ['公會啟動緊急救援，免費恢復 30% HP / MP。']);
+    return next;
+  }
   if (next.gold < cost) {
     next.log = mergeLog(next.log, [`旅店需要 ${cost} 金幣，你目前金幣不足。`]);
     return next;
@@ -890,6 +917,11 @@ export function buyItem(player, itemId) {
   const item = getItem(itemId);
   if (!item || item.price <= 0) throw new Error('找不到商品。');
   const next = clonePlayer(player);
+  const ownedUses = (Number(next.itemUseCounts[item.id]) || 0) + next.inventory.filter((inventoryId) => inventoryId === item.id).length;
+  if (item.useLimit && ownedUses >= item.useLimit) {
+    next.log = mergeLog(next.log, [`「${item.name}」已達每名角色 ${item.useLimit} 次的購買上限。`]);
+    return next;
+  }
   if (next.gold < item.price) {
     next.log = mergeLog(next.log, [`金幣不足，無法購買「${item.name}」。`]);
     return next;
@@ -920,6 +952,11 @@ export function useItem(player, itemId) {
   const next = clonePlayer(player);
   const index = next.inventory.indexOf(itemId);
   if (index < 0) throw new Error('背包中沒有這個物品。');
+  const useCount = Number(next.itemUseCounts[itemId]) || 0;
+  if (item.useLimit && useCount >= item.useLimit) {
+    next.log = mergeLog(next.log, [`「${item.name}」已達每名角色 ${item.useLimit} 次的使用上限。`]);
+    return next;
+  }
   next.inventory.splice(index, 1);
   switch (item.effect) {
     case 'heal':
@@ -947,6 +984,7 @@ export function useItem(player, itemId) {
     default:
       next.log = mergeLog(next.log, [`使用「${item.name}」。`]);
   }
+  if (item.useLimit) next.itemUseCounts[itemId] = useCount + 1;
   next.updatedAt = new Date().toISOString();
   return next;
 }
@@ -1070,14 +1108,192 @@ export function serializePlayer(player) {
 }
 
 export function parsePlayer(json) {
-  const data = JSON.parse(json);
-  if (!data || typeof data !== 'object') throw new Error('存檔格式錯誤。');
-  if (!data.name || !data.element || !Number.isFinite(data.level)) throw new Error('存檔缺少必要角色資料。');
-  return normalizePlayer(data);
+  if (typeof json !== 'string' || json.length > 250000) throw new Error('存檔大小超過限制。');
+  let data;
+  try {
+    data = JSON.parse(json);
+  } catch {
+    throw new Error('存檔 JSON 無法解析。');
+  }
+  if (!isPlainObject(data)) throw new Error('存檔格式錯誤。');
+
+  const name = importText(data.name, '角色名稱', { min: 2, max: 12 });
+  if (!elements.includes(data.element)) throw new Error('存檔屬性無效。');
+  const requestedJobId = data.jobId === undefined ? inferJobId(data.job) : importText(data.jobId, '職業', { min: 1, max: 40 });
+  const job = jobById(requestedJobId);
+  if (!job) throw new Error('存檔職業無效。');
+  const baseArchetype = ['blade', 'sage', 'ranger'].includes(job.id)
+    ? job.id
+    : ['blade', 'sage', 'ranger'].includes(job.branch) ? job.branch : 'blade';
+  const player = createPlayer({ name, element: data.element, archetype: baseArchetype });
+  player.version = 3;
+  player.jobId = job.id;
+  player.job = job.name;
+
+  const scalarRules = [
+    ['level', 1, 1000],
+    ['exp', 0, 1000000000000],
+    ['nextExp', 1, 1000000000000],
+    ['gold', 0, 1000000000000],
+    ['maxHp', 1, 10000000],
+    ['maxMp', 1, 10000000],
+    ['attack', 0, 1000000],
+    ['defense', 0, 1000000],
+    ['speed', 0, 1000000],
+    ['mastery', 0, 1000000000000],
+    ['wins', 0, 1000000000],
+    ['losses', 0, 1000000000],
+    ['battles', 0, 1000000000],
+    ['rebirthCount', 0, 1000000]
+  ];
+  scalarRules.forEach(([key, min, max]) => {
+    player[key] = importInteger(data, key, player[key], min, max);
+  });
+  player.hp = importInteger(data, 'hp', player.maxHp, 0, player.maxHp);
+  player.mp = importInteger(data, 'mp', player.maxMp, 0, player.maxMp);
+
+  if (data.inventory !== undefined) {
+    if (!Array.isArray(data.inventory) || data.inventory.length > 500) throw new Error('存檔背包格式錯誤。');
+    player.inventory = data.inventory.map((itemId) => {
+      if (typeof itemId !== 'string' || !getItem(itemId)) throw new Error('存檔包含無效物品。');
+      return itemId;
+    });
+  }
+
+  if (data.equipment !== undefined) {
+    if (!isPlainObject(data.equipment)) throw new Error('存檔裝備格式錯誤。');
+    player.equipment = Object.fromEntries(['weapon', 'armor', 'trinket'].map((slot) => {
+      const itemId = data.equipment[slot];
+      if (itemId === undefined || itemId === null || itemId === '') return [slot, null];
+      const item = typeof itemId === 'string' ? getItem(itemId) : null;
+      if (!item || item.type !== slot) throw new Error('存檔包含無效裝備。');
+      return [slot, itemId];
+    }));
+  }
+
+  player.itemUseCounts = importLimitedItemCounts(data.itemUseCounts);
+  player.jobBonusesClaimed = importIdList(data.jobBonusesClaimed, new Set(jobDefinitions.map((entry) => entry.id)), '轉生獎勵');
+  if (data.jobBonusesClaimed === undefined && job.tier !== 'base') player.jobBonusesClaimed = [job.id];
+  player.milestonesClaimed = importIdList(data.milestonesClaimed, new Set(milestones.map((entry) => entry.id)), '里程碑');
+  player.mapRuns = importCounterRecord(data.mapRuns, new Set(maps.map((map) => map.id)), '地圖紀錄');
+  player.mapWins = importCounterRecord(data.mapWins, new Set(maps.map((map) => map.id)), '地圖勝場');
+  player.careerWins = importCounterRecord(data.careerWins, new Set(jobDefinitions.map((entry) => entry.id)), '職業勝場');
+  player.careerBattles = importCounterRecord(data.careerBattles, new Set(jobDefinitions.map((entry) => entry.id)), '職業戰數');
+  player.careerFlags = importCareerFlags(data.careerFlags);
+  player.bestiary = importBestiary(data.bestiary);
+  player.quest = importQuest(data.quest, player.quest);
+  player.log = importLog(data.log, player.log);
+  player.createdAt = importTimestamp(data.createdAt, player.createdAt);
+  player.updatedAt = importTimestamp(data.updatedAt, player.updatedAt);
+  return normalizePlayer(player);
+}
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function importText(value, label, { min = 0, max = 100 } = {}) {
+  if (typeof value !== 'string') throw new Error(`存檔${label}格式錯誤。`);
+  const text = value.trim();
+  if (text.length < min || text.length > max || /[\u0000-\u001f\u007f]/.test(text)) throw new Error(`存檔${label}格式錯誤。`);
+  return text;
+}
+
+function importInteger(source, key, fallback, min, max) {
+  if (source[key] === undefined) return fallback;
+  const value = source[key];
+  if (!Number.isSafeInteger(value) || value < min || value > max) throw new Error(`存檔欄位「${key}」格式錯誤。`);
+  return value;
+}
+
+function importIdList(value, validIds, label) {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > validIds.size) throw new Error(`存檔${label}格式錯誤。`);
+  const ids = value.map((id) => {
+    if (typeof id !== 'string' || !validIds.has(id)) throw new Error(`存檔${label}包含無效資料。`);
+    return id;
+  });
+  return [...new Set(ids)];
+}
+
+function importCounterRecord(value, validIds, label) {
+  if (value === undefined) return {};
+  if (!isPlainObject(value) || Object.keys(value).length > validIds.size) throw new Error(`存檔${label}格式錯誤。`);
+  return Object.fromEntries(Object.entries(value).map(([id, count]) => {
+    if (!validIds.has(id) || !Number.isSafeInteger(count) || count < 0 || count > 1000000000) {
+      throw new Error(`存檔${label}包含無效資料。`);
+    }
+    return [id, count];
+  }));
+}
+
+function importLimitedItemCounts(value) {
+  if (value === undefined) return {};
+  if (!isPlainObject(value) || Object.keys(value).length > shopItems.length) throw new Error('存檔道具使用紀錄格式錯誤。');
+  return Object.fromEntries(Object.entries(value).map(([itemId, count]) => {
+    const item = getItem(itemId);
+    if (!item?.useLimit || !Number.isSafeInteger(count) || count < 0 || count > item.useLimit) {
+      throw new Error('存檔道具使用紀錄包含無效資料。');
+    }
+    return [itemId, count];
+  }));
+}
+
+function importCareerFlags(value) {
+  if (value === undefined) return { lowHpWins: 0, lowMpWins: 0, highRiskWins: 0 };
+  if (!isPlainObject(value)) throw new Error('存檔職業旗標格式錯誤。');
+  return {
+    lowHpWins: importInteger(value, 'lowHpWins', 0, 0, 1000000000),
+    lowMpWins: importInteger(value, 'lowMpWins', 0, 0, 1000000000),
+    highRiskWins: importInteger(value, 'highRiskWins', 0, 0, 1000000000)
+  };
+}
+
+function importBestiary(value) {
+  if (value === undefined) return {};
+  if (!isPlainObject(value) || Object.keys(value).length > 250) throw new Error('存檔圖鑑格式錯誤。');
+  return Object.fromEntries(Object.entries(value).map(([key, entry]) => {
+    if (['__proto__', 'prototype', 'constructor'].includes(key) || !isPlainObject(entry)) throw new Error('存檔圖鑑包含無效資料。');
+    const name = importText(entry.name === undefined ? key : entry.name, '圖鑑名稱', { min: 1, max: 60 });
+    const count = importInteger(entry, 'count', 1, 1, 1000000000);
+    const lastMapId = entry.lastMapId === undefined || entry.lastMapId === ''
+      ? ''
+      : importText(entry.lastMapId, '圖鑑地圖', { min: 1, max: 50 });
+    if (lastMapId && !maps.some((map) => map.id === lastMapId)) throw new Error('存檔圖鑑地圖無效。');
+    return [name, {
+      name,
+      count,
+      firstMap: entry.firstMap === undefined ? '' : importText(entry.firstMap, '圖鑑初遇地圖', { max: 80 }),
+      lastMap: entry.lastMap === undefined ? '' : importText(entry.lastMap, '圖鑑最近地圖', { max: 80 }),
+      lastMapId,
+      portrait: portraitForMonster(name)
+    }];
+  }));
+}
+
+function importQuest(value, fallback) {
+  if (value === undefined) return fallback;
+  if (!isPlainObject(value)) throw new Error('存檔任務格式錯誤。');
+  const progress = importInteger(value, 'progress', 0, 0, fallback.target);
+  if (value.completed !== undefined && typeof value.completed !== 'boolean') throw new Error('存檔任務完成狀態格式錯誤。');
+  return { ...fallback, progress, completed: value.completed ?? false };
+}
+
+function importLog(value, fallback) {
+  if (value === undefined) return fallback;
+  if (!Array.isArray(value) || value.length > 40) throw new Error('存檔紀錄格式錯誤。');
+  return value.map((entry) => cleanLegacyName(importText(entry, '紀錄', { max: 300 })));
+}
+
+function importTimestamp(value, fallback) {
+  if (value === undefined) return fallback;
+  if (typeof value !== 'string' || value.length > 40 || !Number.isFinite(Date.parse(value))) throw new Error('存檔時間格式錯誤。');
+  return new Date(value).toISOString();
 }
 
 function normalizePlayer(player) {
   if (!Array.isArray(player.inventory)) player.inventory = [];
+  if (!player.itemUseCounts || typeof player.itemUseCounts !== 'object' || Array.isArray(player.itemUseCounts)) player.itemUseCounts = {};
   player.equipment = {
     weapon: player.equipment?.weapon || null,
     armor: player.equipment?.armor || null,
@@ -1101,6 +1317,7 @@ function normalizePlayer(player) {
     lowMpWins: Number(player.careerFlags?.lowMpWins) || 0,
     highRiskWins: Number(player.careerFlags?.highRiskWins) || 0
   };
+  if (!Array.isArray(player.jobBonusesClaimed)) player.jobBonusesClaimed = [];
   player.rebirthCount = Number(player.rebirthCount) || 0;
   return player;
 }
@@ -1291,9 +1508,11 @@ function recommendedMap(player) {
   const visibleMaps = availableMaps(player);
   const affordable = visibleMaps.filter((map) => map.cost <= player.gold && map.level <= player.level + 2);
   if (!player.quest?.completed) return chooseMap('meadow');
-  if (player.level < 3 && visibleMaps.some((map) => map.id === 'treasure_cave')) return chooseMap('treasure_cave');
-  if (player.level < 5 && visibleMaps.some((map) => map.id === 'training_tower')) return chooseMap('training_tower');
-  return affordable.sort((a, b) => b.level - a.level)[0] || visibleMaps[0] || chooseMap('meadow');
+  const treasureCave = affordable.find((map) => map.id === 'treasure_cave');
+  if (player.level < 3 && treasureCave) return treasureCave;
+  const trainingTower = affordable.find((map) => map.id === 'training_tower');
+  if (player.level < 5 && trainingTower) return trainingTower;
+  return affordable.sort((a, b) => b.level - a.level)[0] || visibleMaps.find((map) => map.cost <= player.gold) || chooseMap('meadow');
 }
 
 function mapReadiness(player, map) {

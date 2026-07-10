@@ -9,7 +9,7 @@ const ACTIVE_PLAYERS_KEY = 'infinite-adventure-doudou-active-players-v1';
 
 function withBattleDelay(rawUrl) {
   const nextUrl = new URL(rawUrl);
-  if (!nextUrl.searchParams.has('battleDelayMs')) nextUrl.searchParams.set('battleDelayMs', '35');
+  if (!nextUrl.searchParams.has('battleDelayMs')) nextUrl.searchParams.set('battleDelayMs', '120');
   if (!nextUrl.searchParams.has('battleSeed')) nextUrl.searchParams.set('battleSeed', 'turn-skill-showcase');
   return nextUrl.toString();
 }
@@ -69,7 +69,7 @@ async function assertTerminalLoginGate(page, label, options = {}) {
   const forbiddenAssets = await page.locator('#login-view img').evaluateAll((imgs) => imgs.map((img) => img.getAttribute('src') || '').filter((src) => src.includes('/assets/original/ui/') || src.includes('badgameshow')));
   if (forbiddenAssets.length) throw new Error(`${label} smoke failed: copied login assets leaked ${forbiddenAssets.join(',')}.`);
   const keyartSrc = await page.locator('#login-keyart').getAttribute('src');
-  if (!keyartSrc?.includes('/assets/generated/login-terminal-keyart.png')) throw new Error(`${label} smoke failed: generated terminal key art missing (${keyartSrc}).`);
+  if (!keyartSrc?.includes('/assets/generated/login-terminal-keyart.webp')) throw new Error(`${label} smoke failed: optimized terminal key art missing (${keyartSrc}).`);
   const loginPanelStyle = await page.locator('.terminal-login__panel--main').evaluate((el) => {
     const style = getComputedStyle(el);
     return { color: style.color, backgroundColor: style.backgroundColor, borderColor: style.borderColor, borderRadius: style.borderRadius, fontFamily: style.fontFamily };
@@ -93,6 +93,17 @@ async function loginThroughGate(page, account, password) {
   if (!createViewVisible) throw new Error('Login smoke failed: character creation should be visible after login when no save exists.');
 }
 
+async function loginExistingThroughGate(page, account, password, expectedPlayerName) {
+  await page.fill('#login-id', account);
+  await page.fill('#login-pass', password);
+  await page.click('#login-submit');
+  await page.waitForFunction(() => document.querySelector('#login-view')?.classList.contains('is-hidden'));
+  const title = await page.locator('#player-title').innerText();
+  if (!title.includes(expectedPlayerName)) {
+    throw new Error(`Login smoke failed: scoped player save missing after login (${title}).`);
+  }
+}
+
 async function openRegisterModal(page, label) {
   await page.click('#register-toggle-button');
   await page.waitForFunction(() => !document.querySelector('#register-modal')?.hidden);
@@ -106,6 +117,22 @@ async function openRegisterModal(page, label) {
   }
   const expanded = await page.locator('#register-toggle-button').getAttribute('aria-expanded');
   if (expanded !== 'true') throw new Error(`${label} smoke failed: register button aria-expanded not true after opening modal.`);
+  const modalIsolation = await page.evaluate(() => ({
+    loginFormInert: document.querySelector('#login-form')?.inert,
+    sideInert: document.querySelector('.terminal-login__side')?.inert,
+    scrollLocked: document.body.classList.contains('register-modal-active')
+  }));
+  if (!modalIsolation.loginFormInert || !modalIsolation.sideInert || !modalIsolation.scrollLocked) {
+    throw new Error(`${label} smoke failed: register modal background is not isolated ${JSON.stringify(modalIsolation)}.`);
+  }
+  await page.evaluate(() => {
+    const focusable = Array.from(document.querySelectorAll('#register-panel button:not([disabled]), #register-panel input:not([disabled]), #register-panel a[href]'))
+      .filter((element) => element.getClientRects().length > 0);
+    focusable.at(-1)?.focus();
+  });
+  await page.keyboard.press('Tab');
+  const focusStayedInside = await page.evaluate(() => document.querySelector('#register-panel')?.contains(document.activeElement));
+  if (!focusStayedInside) throw new Error(`${label} smoke failed: register modal focus escaped to the background.`);
 }
 
 async function closeRegisterModal(page, label) {
@@ -207,6 +234,30 @@ await googleRegisterProbe.goto(url, { waitUntil: 'networkidle' });
 await assertTerminalLoginGate(googleRegisterProbe, 'Google OAuth register');
 await authorizeGoogleThroughGate(googleRegisterProbe, 'adventurer@gmail.com', '星門旅人');
 await googleRegisterProbe.close();
+const battleReloadUrl = new URL(url);
+battleReloadUrl.searchParams.set('battleDelayMs', '1000');
+const battleReloadProbe = await browser.newPage({ viewport: { width: 1024, height: 900 } });
+await battleReloadProbe.goto(battleReloadUrl.toString(), { waitUntil: 'networkidle' });
+await registerLocalThroughGate(battleReloadProbe, 'reload1', 'pass01');
+await battleReloadProbe.fill('#hero-name', '重載測試員');
+await battleReloadProbe.selectOption('#hero-element', '火');
+await battleReloadProbe.selectOption('#hero-archetype', 'blade');
+await battleReloadProbe.click('button:has-text("建立角色")');
+await battleReloadProbe.click('#battle-button');
+const committedBattleCount = await battleReloadProbe.evaluate(() => {
+  const key = Object.keys(localStorage).find((name) => name.startsWith('infinite-adventure-doudou-save-v3:'));
+  return key ? JSON.parse(localStorage.getItem(key)).battles : null;
+});
+if (committedBattleCount !== 1) throw new Error(`Battle persistence smoke failed: result was not committed before animation (${committedBattleCount}).`);
+await battleReloadProbe.reload({ waitUntil: 'networkidle' });
+const reloadedBattleCount = await battleReloadProbe.evaluate(() => {
+  const key = Object.keys(localStorage).find((name) => name.startsWith('infinite-adventure-doudou-save-v3:'));
+  return key ? JSON.parse(localStorage.getItem(key)).battles : null;
+});
+if (reloadedBattleCount !== 1 || !(await battleReloadProbe.locator('#game-view').isVisible())) {
+  throw new Error(`Battle persistence smoke failed: reload lost the committed result (${reloadedBattleCount}).`);
+}
+await battleReloadProbe.close();
 const desktop = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 await desktop.goto(url, { waitUntil: 'networkidle' });
 await assertTerminalLoginGate(desktop, 'Desktop');
@@ -214,7 +265,7 @@ await desktop.screenshot({ path: `${screenshotsDir}/desktop-login.png`, fullPage
 await openRegisterModal(desktop, 'Desktop register screenshot');
 await desktop.screenshot({ path: `${screenshotsDir}/desktop-register-modal.png` });
 await closeRegisterModal(desktop, 'Desktop register screenshot');
-await loginThroughGate(desktop, 'test01', 'pass01');
+await registerLocalThroughGate(desktop, 'test01', 'pass01');
 const terminalTheme = await desktop.evaluate(() => {
   const body = getComputedStyle(document.body);
   const panel = getComputedStyle(document.querySelector('.game-card'));
@@ -327,6 +378,15 @@ if (!guideTextBeforeBattle.includes('冒險指南') || !guideTextBeforeBattle.in
 }
 const routeStepCount = await desktop.locator('#adventure-guide .route-step').count();
 if (routeStepCount !== 5) throw new Error(`Desktop smoke failed: adventure guide should show 5 route steps, got ${routeStepCount}.`);
+await desktop.click('.tab-button[data-view="save"]');
+const maliciousSave = '{"name":"壞資料","element":"火","level":1,"wins":"<img src=x onerror=alert(1)>"}';
+await desktop.fill('#save-data', maliciousSave);
+await desktop.click('#import-button');
+const importFailure = await desktop.locator('#save-message').innerText();
+if (!importFailure.includes('匯入失敗') || (await desktop.locator('#save-data').inputValue()) !== maliciousSave) {
+  throw new Error('Desktop smoke failed: invalid import replaced input or bypassed schema validation.');
+}
+await desktop.click('.tab-button[data-view="battle"]');
 const commandEffect = await desktop.locator('#battle-button').evaluate((el) => {
   const style = getComputedStyle(el);
   return { backgroundImage: style.backgroundImage, transitionDuration: style.transitionDuration };
@@ -338,9 +398,19 @@ await desktop.click('#battle-button');
 await desktop.waitForSelector('#battle-page:not(.is-hidden)');
 const battleHash = await desktop.evaluate(() => window.location.hash);
 if (battleHash !== '#battle-page') throw new Error('Desktop smoke failed: battle action should jump to the battle page hash.');
+const battleIsolation = await desktop.evaluate(() => ({
+  mainInert: document.querySelector('#main')?.inert,
+  dialogFocused: document.querySelector('#battle-page')?.contains(document.activeElement)
+}));
+if (!battleIsolation.mainInert || !battleIsolation.dialogFocused) {
+  throw new Error(`Desktop smoke failed: battle dialog did not isolate background focus ${JSON.stringify(battleIsolation)}.`);
+}
+await desktop.click('#battle-skip-button');
 await desktop.waitForSelector('.battle-turn--player');
 await desktop.waitForSelector('.battle-turn--monster');
 await desktop.waitForFunction(() => !document.querySelector('#battle-return-button')?.disabled);
+const battleSummary = await desktop.locator('#battle-result-summary').innerText();
+if (!battleSummary.trim()) throw new Error('Desktop smoke failed: battle result summary is empty after skip.');
 const battlePageText = await desktop.locator('#battle-page').innerText();
 if (!battlePageText.includes('第 1 回合') || !battlePageText.includes('返回主頁面')) {
   throw new Error('Desktop smoke failed: turn-by-turn battle page did not finish correctly.');
@@ -379,7 +449,7 @@ if (battleProgressTones.playerName !== 'rgb(245, 245, 245)' || battleProgressTon
   throw new Error(`Desktop smoke failed: battle names should stay monochrome ${JSON.stringify(battleProgressTones)}.`);
 }
 const battleTurnAnimation = await desktop.locator('#battle-page .battle-turn').first().evaluate((el) => getComputedStyle(el).animationName);
-if (!battleTurnAnimation.includes('terminal-line-in')) throw new Error(`Desktop smoke failed: battle turn line-in animation missing (${battleTurnAnimation}).`);
+if (battleTurnAnimation !== 'none') throw new Error(`Desktop smoke failed: skipped battle turns should render immediately (${battleTurnAnimation}).`);
 await desktop.screenshot({ path: `${screenshotsDir}/desktop-battle-page.png` });
 await desktop.click('#battle-return-button');
 await desktop.waitForFunction(() => document.querySelector('#battle-page')?.classList.contains('is-hidden'));
@@ -451,6 +521,10 @@ if (!selectedMapText.includes('廢棄後山') || !selectedMapText.includes('常�
 if (!selectedMapText.includes('高風險') && !selectedMapText.includes('可挑戰') && !selectedMapText.includes('金幣不足')) {
   throw new Error('Desktop smoke failed: selected map should include readiness guidance.');
 }
+const unaffordableBattleState = await desktop.locator('#battle-button').evaluate((button) => ({ disabled: button.disabled, text: button.textContent }));
+if (!unaffordableBattleState.disabled || !unaffordableBattleState.text.includes('尚缺')) {
+  throw new Error(`Desktop smoke failed: unaffordable map CTA should stay inline and disabled ${JSON.stringify(unaffordableBattleState)}.`);
+}
 const selectedMapIconVisible = await desktop.locator('.selected-map-card .map-card__category .ui-icon').isVisible();
 if (!selectedMapIconVisible) throw new Error('Desktop smoke failed: selected map category icon missing.');
 await desktop.click('.tab-button[data-view="character"]');
@@ -491,7 +565,7 @@ await mobile.screenshot({ path: `${screenshotsDir}/mobile-login.png`, fullPage: 
 await openRegisterModal(mobile, 'Mobile register screenshot');
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-register-modal.png` });
 await closeRegisterModal(mobile, 'Mobile register screenshot');
-await loginThroughGate(mobile, 'mobi01', 'pass01');
+await registerLocalThroughGate(mobile, 'mobi01', 'pass01');
 const mobileMenuButtonBox = await mobile.locator('#function-menu-button').boundingBox();
 if (!mobileMenuButtonBox || Math.abs((mobileMenuButtonBox.x + mobileMenuButtonBox.width) - 382) > 3 || mobileMenuButtonBox.y > 16) {
   throw new Error('Mobile smoke failed: function menu button is not fixed at the top-right.');
@@ -516,14 +590,48 @@ const mobileGuideVisible = await mobile.locator('#adventure-guide').isVisible();
 if (!mobileGuideVisible) throw new Error('Mobile smoke failed: adventure guide not visible after create.');
 const mobileRouteStepCount = await mobile.locator('#adventure-guide .route-step').count();
 if (mobileRouteStepCount !== 5) throw new Error(`Mobile smoke failed: route steps missing (${mobileRouteStepCount}).`);
+const mobileBattleButtonBox = await mobile.locator('#battle-button').boundingBox();
+if (!mobileBattleButtonBox || mobileBattleButtonBox.y < 0 || mobileBattleButtonBox.y + mobileBattleButtonBox.height > 844) {
+  throw new Error(`Mobile smoke failed: primary battle CTA is not visible without scrolling ${JSON.stringify(mobileBattleButtonBox)}.`);
+}
 await mobile.click('#battle-button');
 await mobile.waitForSelector('#battle-page:not(.is-hidden)');
 const mobileBattleHash = await mobile.evaluate(() => window.location.hash);
 if (mobileBattleHash !== '#battle-page') throw new Error('Mobile smoke failed: battle action should jump to battle page hash.');
+await mobile.click('#battle-skip-button');
 await mobile.waitForSelector('.battle-turn--player');
 const mobileBattleSpriteCount = await mobile.locator('#battle-page .battle-portrait').count();
 if (mobileBattleSpriteCount !== 2) throw new Error('Mobile smoke failed: battle page sprites missing.');
 await mobile.waitForFunction(() => !document.querySelector('#battle-return-button')?.disabled);
+const mobileBattleLayout = await mobile.evaluate(() => {
+  const frame = document.querySelector('.battle-page__frame');
+  const feed = document.querySelector('.battle-turn-feed');
+  return {
+    frameOverflow: frame.scrollHeight - frame.clientHeight,
+    feedOverflow: feed.scrollHeight - feed.clientHeight,
+    feedOverflowStyle: getComputedStyle(feed).overflowY
+  };
+});
+if (mobileBattleLayout.frameOverflow > 2 || !['auto', 'scroll'].includes(mobileBattleLayout.feedOverflowStyle)) {
+  throw new Error(`Mobile smoke failed: battle page should use one scroll container ${JSON.stringify(mobileBattleLayout)}.`);
+}
+const mobileBattleBoxes = await mobile.evaluate(() => {
+  const box = (selector) => {
+    const rect = document.querySelector(selector).getBoundingClientRect();
+    return { top: rect.top, bottom: rect.bottom, height: rect.height };
+  };
+  return {
+    header: box('.battle-page__header'),
+    arena: box('.battle-page__arena'),
+    feed: box('.battle-turn-feed'),
+    actions: box('.battle-page__actions')
+  };
+});
+if (mobileBattleBoxes.header.bottom > mobileBattleBoxes.arena.top + 1
+  || mobileBattleBoxes.arena.bottom > mobileBattleBoxes.feed.top + 1
+  || mobileBattleBoxes.feed.bottom > mobileBattleBoxes.actions.top + 1) {
+  throw new Error(`Mobile smoke failed: battle sections overlap ${JSON.stringify(mobileBattleBoxes)}.`);
+}
 await mobile.screenshot({ path: `${screenshotsDir}/mobile-battle-page.png` });
 await mobile.click('#battle-return-button');
 await mobile.waitForFunction(() => document.querySelector('#battle-page')?.classList.contains('is-hidden'));
@@ -546,5 +654,17 @@ if (!mobileSelectedMapText.includes('廢棄後山')) throw new Error('Mobile smo
 await desktop.click('.tab-button[data-view="save"]');
 await desktop.click('#logout-button');
 await assertTerminalLoginGate(desktop, 'Desktop logout', { expectedAccounts: ['終端測試員'] });
+await desktop.fill('#login-id', 'test01');
+await desktop.fill('#login-pass', 'wrong1');
+await desktop.click('#login-submit');
+await desktop.waitForFunction(() => document.querySelector('#login-message')?.textContent.includes('密碼不正確'));
+if (!(await desktop.locator('#login-view').isVisible())) throw new Error('Account smoke failed: wrong password should not enter the game.');
+await loginExistingThroughGate(desktop, 'test01', 'pass01', '終端測試員');
+await desktop.click('.tab-button[data-view="save"]');
+await desktop.click('#logout-button');
+await registerLocalThroughGate(desktop, 'other01', 'pass02');
+if (!(await desktop.locator('#create-view').isVisible()) || (await desktop.locator('#game-view').isVisible())) {
+  throw new Error('Account smoke failed: a second account inherited the first account player save.');
+}
 await browser.close();
 console.log('Smoke test passed.');

@@ -11,12 +11,14 @@
 - 裝備：商店購買、背包裝備、攻防加成。
 - 任務：討伐任務進度與獎勵。
 - 世界：國家勢力、城鎮、排行榜展示。
-- 存檔：localStorage 自動保存，可手動匯出 / 匯入 JSON。
+- 本機帳號：帳密只在此瀏覽器驗證，密碼保存為加鹽 SHA-256 摘要；不同帳號使用獨立角色存檔。
+- 存檔：localStorage 自動保存、上一份有效備份、嚴格 JSON 匯入驗證與舊版存檔移轉。
 - RWD：桌機與手機都可操作。
 
 ## 本機使用
 
 ```bash
+npm install
 npm run check
 python3 -m http.server 4173
 ```
@@ -46,7 +48,13 @@ http://127.0.0.1:4173
 | Build output directory | `dist` |
 | Root directory | `/` |
 
-`npm run check` 會執行語法檢查、單元測試、inline script/style 檢查、Free tier 靜態部署檢查，並產生 `dist/`。
+`npm run check` 會執行語法檢查、單元測試、inline script/style 檢查、Free tier 靜態部署檢查，並產生 `dist/`。`npm run check:full` 會再加跑 Playwright 桌機／手機 smoke，可直接作為 CI gate。`docs/github-actions-ci.yml.example` 提供 GitHub Actions 範例。
+
+### Google OAuth（選用）
+
+把 `index.html` 的 `google-oauth-client-id` meta content 設成部署網域對應的 Client ID。未設定時 Google 按鈕會停用，也不會下載 Google SDK；設定後只在使用者開啟授權時按需載入。
+
+> 本機帳號與 Google session 都只是純靜態單機身份分區，不是伺服器安全邊界。真正多人帳號仍需後端驗證 token、建立 server session 並把角色綁定伺服器 identity。
 
 > 目前 Cloudflare Pages 專案若沒有設定 Build command，仍會直接讀取 repo 內已提交的 `dist/`。因此本 repo 會提交 `dist/` 作為 no-build 部署保底；若你在 Cloudflare 後台把 Build command 設為 `npm run check`，Cloudflare 也會在部署前重新產生同一份 `dist/`。
 
@@ -84,14 +92,22 @@ npm run check:cloudflare-free
 ├── assets/
 │   ├── app.js
 │   ├── game-core.js
+│   ├── local-accounts.js
+│   ├── storage.js
 │   └── styles.css
+├── docs/
+│   └── github-actions-ci.yml.example
 ├── wrangler.toml
 ├── scripts/
 │   ├── build.mjs
 │   ├── check-cloudflare-free.mjs
-│   └── check-inline.mjs
+│   ├── check-inline.mjs
+│   ├── run-smoke.mjs
+│   └── smoke.mjs
 └── tests/
-    └── game-core.test.mjs
+    ├── game-core.test.mjs
+    ├── local-accounts.test.mjs
+    └── storage.test.mjs
 ```
 
 ## 後續可擴充方向

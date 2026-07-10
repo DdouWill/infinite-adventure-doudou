@@ -4,11 +4,13 @@
   "description": "無限冒險：終端異界：可部署到 Cloudflare Pages 的純 HTML/CSS/JS 文字 RPG demo。",
   "type": "module",
   "scripts": {
-    "check:syntax": "node --check assets/reference-catalog.js && node --check assets/game-core.js && node --check assets/app.js && node --check scripts/build.mjs && node --check scripts/check-inline.mjs && node --check scripts/check-cloudflare-free.mjs && node --check scripts/smoke.mjs && node --check tests/game-core.test.mjs",
+    "check:syntax": "node --check assets/reference-catalog.js && node --check assets/game-core.js && node --check assets/storage.js && node --check assets/local-accounts.js && node --check assets/app.js && node --check scripts/build.mjs && node --check scripts/check-inline.mjs && node --check scripts/check-cloudflare-free.mjs && node --check scripts/run-smoke.mjs && node --check scripts/smoke.mjs && node --check tests/game-core.test.mjs && node --check tests/storage.test.mjs && node --check tests/local-accounts.test.mjs",
     "check:inline": "node scripts/check-inline.mjs",
     "test": "node --test tests/*.test.mjs",
+    "test:smoke": "node scripts/run-smoke.mjs",
     "build": "node scripts/build.mjs",
     "check": "npm run check:syntax && npm run test && npm run check:inline && npm run build && npm run check:cloudflare-free",
+    "check:full": "npm run check && npm run test:smoke",
     "check:cloudflare-free": "node scripts/check-cloudflare-free.mjs",
     "deploy:cf:free": "npm run check && npx wrangler pages deploy dist --project-name infinite-adventure-doudou --branch main"
   },
@@ -20,6 +22,10 @@
     "text-game"
   ],
   "license": "MIT",
+  "devDependencies": {
+    "playwright": "1.58.0",
+    "wrangler": "4.110.0"
+  },
   "engines": {
     "node": ">=20"
   }
